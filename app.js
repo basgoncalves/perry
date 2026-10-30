@@ -176,6 +176,16 @@ $('#f-goal').onsubmit=e=>{e.preventDefault();
 /* ---------- invest ---------- */
 function project(start,month,years,rate){const r=rate/100/12;let v=start,out=[start];
   for(let i=1;i<=years*12;i++){v=v*(1+r)+month;if(i%12==0)out.push(v)}return out}
+// Annual average consumer inflation (%): Portugal INE IPC, Austria Statistik Austria VPI.
+const INFL={PT:{2015:0.5,2016:0.6,2017:1.4,2018:1.0,2019:0.3,2020:0.0,2021:1.3,2022:7.8,2023:4.3,2024:2.4,2025:2.3},
+            AT:{2015:0.9,2016:0.9,2017:2.1,2018:2.0,2019:1.5,2020:1.4,2021:2.8,2022:8.6,2023:7.8,2024:2.9,2025:3.6}};
+(function(){const avg=(c,n)=>{const ys=Object.keys(INFL[c]).slice(-n);return ys.reduce((a,y)=>a+INFL[c][y],0)/ys.length};
+  const grp=(c,name)=>`<optgroup label="${name}">`+[5,10].map(n=>`<option value="${avg(c,n).toFixed(2)}">${c} ${n}-yr average (${avg(c,n).toFixed(1)}%)</option>`).join('')+
+    Object.keys(INFL[c]).reverse().map(y=>`<option value="${INFL[c][y]}">${c} ${y} (${INFL[c][y]}%)</option>`).join('')+'</optgroup>';
+  $('#i-infl').innerHTML=`<option value="2" selected>ECB target (2.0%)</option><option value="0">No inflation (0%)</option>`+grp('PT','🇵🇹 Portugal')+grp('AT','🇦🇹 Austria');
+  try{const v=localStorage.getItem('perry.infl');if(v)$('#i-infl').value=v}catch{}
+  $('#i-infl').addEventListener('change',e=>{try{localStorage.setItem('perry.infl',e.target.value)}catch{}});
+})();
 function renderInvest(){
   const st=+$('#i-start').value||0,mo=+$('#i-month').value||0,y=Math.max(1,Math.min(60,+$('#i-years').value||1)),inf=+$('#i-infl').value||0;
   const tx=$('#i-tax').value==='PT'?.28:$('#i-tax').value==='AT'?.275:0,reg=$('#i-region').value;
