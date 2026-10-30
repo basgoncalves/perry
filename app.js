@@ -17,14 +17,30 @@ const RULES = [
   ['Income', /salary|sal[áa]rio|gehalt|payroll|universit|vencimento/i],
   ['Transfers', /transfer|transf|mb way|revolut|wise|paypal|sepa/i],
 ];
+// Rates checked 2026-10-30. r = gross %/yr. Edit in-app; user overrides saved locally.
 const INVEST = [
-  {n:'Savings account / term deposit', r:2.5, risk:'Very low', liq:'High', cost:'None', d:'Capital is protected (EU deposit guarantee up to €100k per bank). Returns often trail inflation over long periods.'},
-  {n:'Government bonds / bond ETFs', r:3.5, risk:'Low–medium', liq:'High (ETFs)', cost:'0.1–0.3%/yr', d:'Lend to governments for fixed interest. Prices fall when interest rates rise. Steadier than stocks.'},
-  {n:'Global stock ETF (e.g. MSCI World / All-World)', r:7, risk:'Medium–high', liq:'High', cost:'0.1–0.3%/yr', d:'Thousands of companies in one fund. Historically strong over 10+ years, but drops of 30–50% happen. Best for long horizons.'},
-  {n:'Individual stocks', r:7, risk:'High', liq:'High', cost:'Broker fees', d:'Can beat or badly lag the market. A single company can lose most of its value. Diversification matters.'},
-  {n:'Real estate / REITs', r:5.5, risk:'Medium', liq:'Low (property), high (REITs)', cost:'Varies', d:'Rental income plus price growth. Direct property ties up a lot of capital; REITs trade like stocks.'},
-  {n:'Crypto', r:null, risk:'Very high', liq:'High', cost:'Exchange fees', d:'Extremely volatile with no reliable long-run return figure. Many investors only allocate money they can afford to lose entirely.'},
+  {id:'pt-bk',  g:'PT', n:'Bankinter BK Mini (12m)',          r:5.00, risk:'Very low', d:'Term deposit, min €100. New clients & new money only — promo, not renewable at this rate.'},
+  {id:'pt-bai', g:'PT', n:'BAI Europa Não Mobilizável (12m)', r:3.05, risk:'Very low', d:'Term deposit, min €1,000. Cannot withdraw early.'},
+  {id:'pt-nb',  g:'PT', n:'Novo Banco Novos Recursos (12m)',  r:3.00, risk:'Very low', d:'Term deposit, min €100, new money only.'},
+  {id:'pt-bis', g:'PT', n:'Bison Bank Rendimento Premium (12m)',r:3.00,risk:'Very low', d:'Term deposit, min €5,000, new money only.'},
+  {id:'pt-big', g:'PT', n:'Big-bank standard deposit (CGD/BCP/BPI/Santander)', r:1.50, risk:'Very low', d:'Typical untargeted rate at the large banks is well below the promo offers — estimate; check your bank.'},
+  {id:'pt-ca',  g:'PT', n:'Certificados de Aforro Série F',   r:2.50, risk:'Very low', d:'State savings certificates (via CTT/AforroNet). Base rate 2.5% (Oct 2026), tied to 3m Euribor, plus small permanence bonuses. Redeemable after 3 months.'},
+  {id:'pt-ot',  g:'PT', n:'Obrigações do Tesouro 10y (OT)',   r:3.15, risk:'Low',      d:'Portuguese government bonds via a broker. ~2.75% (2y), ~2.9% (5y), ~3.15% (10y). Price moves if sold before maturity.'},
+  {id:'pt-otrv',g:'PT', n:'OTRV retail floating bonds',       r:3.80, risk:'Low',      d:'Retail government bonds paying 6m Euribor + spread (~3.8% gross recently). Only when a new series is issued.'},
+  {id:'at-bs1', g:'AT', n:'Bundesschatz 12 months',           r:2.85, risk:'Very low', d:'Austrian Treasury direct savings (bundesschatz.at), free, from €100. Sep 2026 rate.'},
+  {id:'at-bs10',g:'AT', n:'Bundesschatz 10 years',            r:3.40, risk:'Very low', d:'Fixed 10 years with the Republic of Austria. 4y: 3.00%, 6m: 2.60%.'},
+  {id:'at-big', g:'AT', n:'Bigbank Festgeld (12m+)',          r:3.50, risk:'Very low', d:'Top Festgeld in Austria (Oct 2026), 12–120 months. Covered by Estonian deposit guarantee.'},
+  {id:'at-kk',  g:'AT', n:'Kommunalkredit Invest (5–10y)',    r:3.40, risk:'Very low', d:'Austrian bank, Festgeld 3.00% (12m) up to 3.40% (60–120m).'},
+  {id:'at-sant',g:'AT', n:'Santander BestFix (24–36m)',       r:3.00, risk:'Very low', d:'Santander Consumer Bank AT, 2.90% for 12m, 3.00% for 24–36m.'},
+  {id:'at-tg',  g:'AT', n:'Bigbank Tagesgeld (promo)',        r:4.00, risk:'Very low', d:'Instant-access savings, 4.00% promo for 4 months only, then lower.'},
+  {id:'mk-world',g:'MK',n:'Global stocks ETF (MSCI World)',   r:13.1, risk:'High',     d:'+13.1% over the last 12 months (to 28 Oct 2026). Long-run average closer to 7–8%; falls of 30%+ happen.'},
+  {id:'mk-sp',  g:'MK', n:'US stocks ETF (S&P 500)',          r:13.7, risk:'High',     d:'+13.7% year-to-date 2026 (USD). Euro returns differ with the exchange rate.'},
+  {id:'mk-gold',g:'MK', n:'Gold',                             r:-5,   risk:'Medium–high',d:'Among 2026\'s weakest assets (negative YTD). Set your own estimate — rate is a placeholder.'},
+  {id:'mk-btc', g:'MK', n:'Bitcoin',                          r:-10,  risk:'Very high', d:'Among 2026\'s weakest assets (negative YTD). Extremely volatile — placeholder rate, edit it.'},
 ];
+const FLAG={PT:'🇵🇹',AT:'🇦🇹',MK:'🌍'};
+function rateOf(o){return (S.rates&&S.rates[o.id]!=null)?S.rates[o.id]:o.r}
+function onChart(o){return S.inv&&S.inv[o.id]!=null?S.inv[o.id]:['pt-bk','pt-ca','pt-ot','at-bs10','at-big','mk-world'].includes(o.id)}
 
 let S = load();
 function blank(){return {tx:[],budgets:{},holdings:[],goals:[],settings:{key:'',voice:true}}}
@@ -161,18 +177,29 @@ $('#f-goal').onsubmit=e=>{e.preventDefault();
 function project(start,month,years,rate){const r=rate/100/12;let v=start,out=[start];
   for(let i=1;i<=years*12;i++){v=v*(1+r)+month;if(i%12==0)out.push(v)}return out}
 function renderInvest(){
-  const st=+$('#i-start').value||0,mo=+$('#i-month').value||0,y=Math.min(60,+$('#i-years').value||1),inf=+$('#i-infl').value||0;
-  const opts=INVEST.filter(o=>o.r!=null),labels=[...Array(y+1).keys()].map(i=>'Y'+i);
-  const contrib=labels.map((_,i)=>st+mo*12*i);
-  chart('#c-grow',{type:'line',data:{labels,datasets:[{label:'Paid in',data:contrib,borderColor:'#7d97ab',borderDash:[4,4],pointRadius:0},
-    ...opts.filter((o,i)=>i!=3).map((o,i)=>({label:o.n.split(' (')[0].split(' /')[0],data:project(st,mo,y,o.r),borderColor:PAL[i],pointRadius:0,tension:.2}))]},
+  const st=+$('#i-start').value||0,mo=+$('#i-month').value||0,y=Math.max(1,Math.min(60,+$('#i-years').value||1)),inf=+$('#i-infl').value||0;
+  const tx=$('#i-tax').value==='PT'?.28:$('#i-tax').value==='AT'?.275:0,reg=$('#i-region').value;
+  $('#i-yl').textContent=y;
+  const list=INVEST.filter(o=>reg==='all'||o.g===reg);
+  const net=o=>rateOf(o)>0?rateOf(o)*(1-tx):rateOf(o); // tax only on gains
+  const labels=[...Array(y+1).keys()].map(i=>'Y'+i),paid=st+mo*12*y;
+  const shown=list.filter(onChart);
+  chart('#c-grow',{type:'line',data:{labels,datasets:[{label:'Paid in',data:labels.map((_,i)=>st+mo*12*i),borderColor:'#7d97ab',borderDash:[4,4],pointRadius:0},
+    ...shown.map((o,i)=>({label:o.n.replace(/ \(.*\)/,''),data:project(st,mo,y,net(o)),borderColor:PAL[i%PAL.length],pointRadius:0,tension:.2}))]},
     options:{plugins:{legend:{labels:{boxWidth:10,font:{size:10}}}},scales:{y:{ticks:{callback:v=>'€'+(v/1000).toFixed(0)+'k'}}}}});
-  $('#grow-out').innerHTML=opts.filter((o,i)=>i!=3).map(o=>{const f=project(st,mo,y,o.r).at(-1),real=f/Math.pow(1+inf/100,y);
-    return `<div class="item"><span>${o.n.split(' (')[0]}<small>assumes ~${o.r}%/yr</small></span><span>${eur(f)}<small>${eur(real)} in today's money</small></span></div>`}).join('')+
-    `<div class="item"><span>Total paid in</span><span>${eur(contrib.at(-1))}</span></div>`;
-  $('#options').innerHTML=INVEST.map(o=>`<div class="opt"><b>${o.n}</b><div><span class="tag">Risk: ${o.risk}</span><span class="tag">Access: ${o.liq}</span><span class="tag">Cost: ${o.cost}</span>${o.r?`<span class="tag">Hist. ~${o.r}%/yr</span>`:''}</div><p>${o.d}</p></div>`).join('');
+  const res=list.map(o=>({o,f:project(st,mo,y,net(o)).at(-1)})).sort((a,b)=>b.f-a.f);
+  $('#grow-out').innerHTML=res.map(({o,f})=>`<div class="item"><span>${FLAG[o.g]} ${esc(o.n)}<small>${rateOf(o)}% gross · ${net(o).toFixed(2)}% after tax · risk ${o.risk}</small></span><span class="${f>=paid?'pos':'neg'}">${eur(f)}<small>gain ${eur(f-paid)} · ${eur(f/Math.pow(1+inf/100,y))} today</small></span></div>`).join('')+
+    `<div class="item"><span>Total paid in</span><span>${eur(paid)}</span></div>`;
+  $('#options').innerHTML=['PT','AT','MK'].filter(g=>reg==='all'||g===reg).map(g=>`<h3>${FLAG[g]} ${{PT:'Portugal',AT:'Austria',MK:'Markets (last 12 months)'}[g]}</h3>`+
+    INVEST.filter(o=>o.g===g).map(o=>`<div class="opt"><label class="check"><input type="checkbox" data-on="${o.id}" ${onChart(o)?'checked':''}> <b>${esc(o.n)}</b></label>
+      <div><span class="tag">Risk: ${o.risk}</span><span class="tag">Rate <input data-r="${o.id}" type="number" step="0.05" value="${rateOf(o)}" style="width:62px;padding:2px 4px;font-size:11px;display:inline">%</span></div><p>${esc(o.d)}</p></div>`).join('')).join('');
 }
-['#i-start','#i-month','#i-years','#i-infl'].forEach(s=>$(s).oninput=renderInvest);
+$('#options').addEventListener('change',e=>{const d=e.target.dataset;
+  if(d.on){S.inv=S.inv||{};S.inv[d.on]=e.target.checked}
+  if(d.r){S.rates=S.rates||{};S.rates[d.r]=+e.target.value}
+  save();renderInvest()});
+$('#i-reset').onclick=()=>{S.rates={};S.inv={};save();renderInvest()};
+['#i-start','#i-month','#i-years','#i-infl','#i-tax','#i-region'].forEach(s=>$(s).oninput=$(s).onchange=renderInvest);
 
 /* ---------- settings ---------- */
 $('#s-key').value=S.settings.key;$('#s-voice').checked=S.settings.voice;
@@ -209,7 +236,7 @@ function answer(raw){
   if(/help|what can you/.test(q))return "Try:\n• How much did I spend this month?\n• Spending on groceries last month\n• Am I over budget?\n• How's my portfolio?\n• How are my goals?\n• If I invest 200 a month for 20 years?\n• Compare investment options";
   const inv=q.match(/(\d[\d.,]*)\D+(?:a |per |each )?month\D+(\d+)\s*year/);
   if(inv){const mo=num(inv[1]),y=+inv[2];return `Investing ${eur(mo)} a month for ${y} years (${eur(mo*12*y)} paid in) could grow to roughly:\n`+
-    INVEST.filter(o=>o.r).filter((o,i)=>i!=3).map(o=>`• ${o.n.split(' (')[0]}: ${eur(project(0,mo,y,o.r).at(-1))}`).join('\n')+"\nIllustrative only — not a forecast."}
+    [...INVEST].map(o=>({o,f:project(0,mo,y,rateOf(o)>0?rateOf(o)*0.72:rateOf(o)).at(-1)})).sort((a,b)=>b.f-a.f).slice(0,5).map(({o,f})=>`• ${o.n}: ${eur(f)}`).join('\n')+'\n(after 28% tax, using current rates)'+"\nIllustrative only — not a forecast."}
   const cat=CATS.find(c=>q.includes(c.toLowerCase())||(c=='Eating out'&&/restaurant|food out|eat/.test(q))||(c=='Groceries'&&/food|supermarket/.test(q)));
   if(/spen|cost|paid|expens/.test(q)&&cat){const v=catTotals(m)[cat]||0,b=S.budgets[cat];
     return `You spent ${eur2(v)} on ${cat.toLowerCase()} in ${m}.`+(b?` That's ${Math.round(v/b*100)}% of your ${eur(b)} budget.`:'')}
@@ -227,6 +254,7 @@ function answer(raw){
     return `Portfolio is worth ${eur(v)}, ${g>=0?'up':'down'} ${eur(Math.abs(g))} (${(g/c*100).toFixed(1)}%). Best performer: ${best.sym}.`}
   if(/goal|target/.test(q)){if(!S.goals.length)return "No savings goals yet. Add one in the Goals tab.";
     return S.goals.map(g=>`${g.name}: ${Math.round(g.saved/g.target*100)}% — ${goalETA(g)}`).join('\n')}
+  if(/best (rate|deposit)|deposit|bond|aforro|bundesschatz|festgeld/.test(q)){const t=[...INVEST].filter(o=>o.g!=='MK').sort((a,b)=>rateOf(b)-rateOf(a)).slice(0,4);show('invest');return 'Top safe rates right now:\n'+t.map(o=>`• ${FLAG[o.g]} ${o.n}: ${rateOf(o)}%`).join('\n')+'\nCheck conditions — the highest are often promos for new clients.'}
   if(/invest|option|where.*money|compare/.test(q)){show('invest');return "Here are the main options with risk, access and typical long-run returns. It's general information, not advice for your situation — a licensed advisor can tailor it to you."}
   if(/buy|sell|should i/.test(q))return "I can't tell you what to buy or sell, sir — I'm not a licensed advisor. I can show your numbers, compare options and project growth so you can decide.";
   if(/time|date/.test(q))return new Date().toLocaleString('en-GB',{weekday:'long',hour:'2-digit',minute:'2-digit',day:'numeric',month:'long'});

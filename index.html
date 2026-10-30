@@ -114,21 +114,27 @@
   <!-- INVEST -->
   <section id="tab-invest" class="tab">
     <div class="card">
-      <h2>Growth calculator</h2>
+      <h2>Compare investments</h2>
       <div class="grid">
-        <label>Start €<input id="i-start" type="number" value="1000"></label>
+        <label>Start €<input id="i-start" type="number" value="10000"></label>
         <label>Monthly €<input id="i-month" type="number" value="200"></label>
-        <label>Years<input id="i-years" type="number" value="15"></label>
+        <label>Years<input id="i-years" type="number" value="5"></label>
         <label>Inflation %<input id="i-infl" type="number" value="2" step="0.1"></label>
+        <label>Tax residence<select id="i-tax"><option value="PT">Portugal (28%)</option><option value="AT">Austria (27.5% KESt)</option><option value="0">Ignore tax</option></select></label>
+        <label>Show<select id="i-region"><option value="all">All</option><option value="PT">🇵🇹 Portugal</option><option value="AT">🇦🇹 Austria</option><option value="MK">🌍 Markets</option></select></label>
       </div>
-      <canvas id="c-grow" height="240"></canvas>
-      <div id="grow-out" class="list"></div>
-      <p class="hint">Returns are illustrative long-run historical ranges, not predictions. Real returns vary year to year and can be negative.</p>
+      <canvas id="c-grow" height="260"></canvas>
+      <p class="hint">Tick options below to add or remove them from the chart. Tap a rate to edit it.</p>
     </div>
     <div class="card">
-      <h2>Investment options</h2>
+      <h2>Results after <span id="i-yl">5</span> years</h2>
+      <div id="grow-out" class="list"></div>
+    </div>
+    <div class="card">
+      <h2>Options &amp; rates</h2>
       <div id="options"></div>
-      <p class="hint">General education, not personal financial advice. For decisions about your own money, consider a licensed independent advisor.</p>
+      <p class="hint">Rates checked 30 Oct 2026 from public comparison sites; banks change them often, so confirm before subscribing. Deposit rates are fixed only for their term and are assumed to renew at the same rate. Market figures are last-12-month returns, which don't predict next year. Gross rates; tax applied using your tax residence. General information, not financial advice.</p>
+      <button id="i-reset" class="btn small ghost">Reset rates to defaults</button>
     </div>
   </section>
 
