@@ -87,7 +87,7 @@ function monthTx(m){return S.tx.filter(t=>ym(t.date)===m)}
 function catTotals(m){const o={};monthTx(m).filter(t=>t.amt<0&&t.cat!=='Transfers').forEach(t=>o[t.cat]=(o[t.cat]||0)-t.amt);return o}
 let charts={};
 function chart(id,cfg){charts[id]?.destroy();if(window.Chart)charts[id]=new Chart($(id),cfg)}
-Chart && (Chart.defaults.color='#7d97ab', Chart.defaults.borderColor='#16314a');
+window.Chart && (Chart.defaults.color='#7d97ab', Chart.defaults.borderColor='#16314a');
 const PAL=['#3fd8ff','#3ee59a','#ffc24a','#ff5a6a','#b48cff','#ff8fd1','#6fa8ff','#9be15d','#ff9f43','#54e0c7','#c0c9d4','#8a7dff','#e0e070'];
 
 function renderSpend(){
@@ -207,6 +207,9 @@ function answer(raw){
   if(/daddy'?s home/.test(q))return "Welcome home, sir. Session restore runs on the desktop Perry — open it on your PC with Ctrl+Alt+P. Here, all financial systems are online.";
   if(!q||/^(hi|hello|hey|yo)\b/.test(q))return "At your service, sir. Ask me about spending, budgets, your portfolio or goals.";
   if(/help|what can you/.test(q))return "Try:\n• How much did I spend this month?\n• Spending on groceries last month\n• Am I over budget?\n• How's my portfolio?\n• How are my goals?\n• If I invest 200 a month for 20 years?\n• Compare investment options";
+  const inv=q.match(/(\d[\d.,]*)\D+(?:a |per |each )?month\D+(\d+)\s*year/);
+  if(inv){const mo=num(inv[1]),y=+inv[2];return `Investing ${eur(mo)} a month for ${y} years (${eur(mo*12*y)} paid in) could grow to roughly:\n`+
+    INVEST.filter(o=>o.r).filter((o,i)=>i!=3).map(o=>`• ${o.n.split(' (')[0]}: ${eur(project(0,mo,y,o.r).at(-1))}`).join('\n')+"\nIllustrative only — not a forecast."}
   const cat=CATS.find(c=>q.includes(c.toLowerCase())||(c=='Eating out'&&/restaurant|food out|eat/.test(q))||(c=='Groceries'&&/food|supermarket/.test(q)));
   if(/spen|cost|paid|expens/.test(q)&&cat){const v=catTotals(m)[cat]||0,b=S.budgets[cat];
     return `You spent ${eur2(v)} on ${cat.toLowerCase()} in ${m}.`+(b?` That's ${Math.round(v/b*100)}% of your ${eur(b)} budget.`:'')}
@@ -224,9 +227,6 @@ function answer(raw){
     return `Portfolio is worth ${eur(v)}, ${g>=0?'up':'down'} ${eur(Math.abs(g))} (${(g/c*100).toFixed(1)}%). Best performer: ${best.sym}.`}
   if(/goal|target/.test(q)){if(!S.goals.length)return "No savings goals yet. Add one in the Goals tab.";
     return S.goals.map(g=>`${g.name}: ${Math.round(g.saved/g.target*100)}% — ${goalETA(g)}`).join('\n')}
-  const inv=q.match(/(\d[\d.,]*)\D+(?:a |per |each )?month\D+(\d+)\s*year/);
-  if(inv){const mo=num(inv[1]),y=+inv[2];return `Investing ${eur(mo)} a month for ${y} years (${eur(mo*12*y)} paid in) could grow to roughly:\n`+
-    INVEST.filter(o=>o.r).filter((o,i)=>i!=3).map(o=>`• ${o.n.split(' (')[0]}: ${eur(project(0,mo,y,o.r).at(-1))}`).join('\n')+"\nIllustrative only — not a forecast."}
   if(/invest|option|where.*money|compare/.test(q)){show('invest');return "Here are the main options with risk, access and typical long-run returns. It's general information, not advice for your situation — a licensed advisor can tailor it to you."}
   if(/buy|sell|should i/.test(q))return "I can't tell you what to buy or sell, sir — I'm not a licensed advisor. I can show your numbers, compare options and project growth so you can decide.";
   if(/time|date/.test(q))return new Date().toLocaleString('en-GB',{weekday:'long',hour:'2-digit',minute:'2-digit',day:'numeric',month:'long'});
