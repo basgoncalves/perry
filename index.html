@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05080f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Perry</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="core" id="core" title="Talk to Perry"><span></span></div>
+  <div>
+    <h1>PERRY</h1>
+    <p class="sub" id="status">Online. All systems nominal.</p>
+  </div>
+</header>
+
+<main>
+  <!-- PERRY CHAT -->
+  <section id="tab-perry" class="tab active">
+    <div id="log" class="log"></div>
+    <form id="ask" class="ask">
+      <button type="button" id="mic" class="mic" aria-label="Speak">🎙</button>
+      <input id="q" autocomplete="off" placeholder="Ask Perry… e.g. spending on food this month">
+      <button class="send" aria-label="Send">➤</button>
+    </form>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <!-- SPENDING -->
+  <section id="tab-spend" class="tab">
+    <div class="card">
+      <h2>Spending</h2>
+      <div class="row">
+        <select id="month"></select>
+        <label class="btn small">Import CSV<input type="file" id="csv" accept=".csv,text/csv" hidden></label>
+      </div>
+      <div class="kpis">
+        <div><b id="k-out">€0</b><span>Spent</span></div>
+        <div><b id="k-in">€0</b><span>Income</span></div>
+        <div><b id="k-net">€0</b><span>Net</span></div>
+      </div>
+      <canvas id="c-cat" height="220"></canvas>
+    </div>
+    <div class="card">
+      <h2>Budgets</h2>
+      <div id="budgets"></div>
+      <form id="f-budget" class="row">
+        <select id="b-cat"></select><input id="b-amt" type="number" min="0" step="1" placeholder="€ / month"><button class="btn small">Set</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Add transaction</h2>
+      <form id="f-tx" class="grid">
+        <input id="t-date" type="date" required>
+        <input id="t-desc" placeholder="Description" required>
+        <input id="t-amt" type="number" step="0.01" placeholder="Amount (− = spend)" required>
+        <select id="t-cat"></select>
+        <button class="btn">Add</button>
+      </form>
+      <h3>Transactions</h3>
+      <div id="txlist" class="list"></div>
+    </div>
+  </section>
+
+  <!-- PORTFOLIO -->
+  <section id="tab-port" class="tab">
+    <div class="card">
+      <h2>Portfolio</h2>
+      <div class="kpis">
+        <div><b id="p-val">€0</b><span>Value</span></div>
+        <div><b id="p-cost">€0</b><span>Cost</span></div>
+        <div><b id="p-gain">€0</b><span>Gain</span></div>
+      </div>
+      <canvas id="c-port" height="220"></canvas>
+      <button id="refresh" class="btn small">Refresh prices</button>
+      <p class="hint" id="price-hint"></p>
+    </div>
+    <div class="card">
+      <h2>Holdings</h2>
+      <div id="holdings" class="list"></div>
+      <form id="f-hold" class="grid">
+        <input id="h-sym" placeholder="Ticker (e.g. VWCE.DE, AAPL)" required>
+        <input id="h-qty" type="number" step="any" placeholder="Quantity" required>
+        <input id="h-cost" type="number" step="any" placeholder="Avg buy price" required>
+        <input id="h-price" type="number" step="any" placeholder="Current price (optional)">
+        <button class="btn">Add holding</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- GOALS -->
+  <section id="tab-goals" class="tab">
+    <div class="card">
+      <h2>Savings goals</h2>
+      <div id="goals"></div>
+      <form id="f-goal" class="grid">
+        <input id="g-name" placeholder="Goal (e.g. Emergency fund)" required>
+        <input id="g-target" type="number" min="1" placeholder="Target €" required>
+        <input id="g-saved" type="number" min="0" placeholder="Saved so far €" required>
+        <input id="g-month" type="number" min="0" placeholder="Adding per month €" required>
+        <button class="btn">Add goal</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- INVEST -->
+  <section id="tab-invest" class="tab">
+    <div class="card">
+      <h2>Growth calculator</h2>
+      <div class="grid">
+        <label>Start €<input id="i-start" type="number" value="1000"></label>
+        <label>Monthly €<input id="i-month" type="number" value="200"></label>
+        <label>Years<input id="i-years" type="number" value="15"></label>
+        <label>Inflation %<input id="i-infl" type="number" value="2" step="0.1"></label>
+      </div>
+      <canvas id="c-grow" height="240"></canvas>
+      <div id="grow-out" class="list"></div>
+      <p class="hint">Returns are illustrative long-run historical ranges, not predictions. Real returns vary year to year and can be negative.</p>
+    </div>
+    <div class="card">
+      <h2>Investment options</h2>
+      <div id="options"></div>
+      <p class="hint">General education, not personal financial advice. For decisions about your own money, consider a licensed independent advisor.</p>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="tab-set" class="tab">
+    <div class="card">
+      <h2>Settings</h2>
+      <label>Finnhub API key (optional, for live prices — free at finnhub.io)
+        <input id="s-key" placeholder="Stored only on this device"></label>
+      <label class="check"><input type="checkbox" id="s-voice" checked> Perry speaks replies</label>
+      <div class="row">
+        <button id="export" class="btn small">Export backup</button>
+        <label class="btn small">Import backup<input type="file" id="import" accept=".json" hidden></label>
+        <button id="demo" class="btn small ghost">Load demo data</button>
+        <button id="wipe" class="btn small danger">Erase all data</button>
+      </div>
+      <p class="hint">Your financial data never leaves this device. It's saved in this browser only. Export a backup to move it to another device.</p>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs">
+  <button data-tab="perry" class="on">◎<span>Perry</span></button>
+  <button data-tab="spend">€<span>Spend</span></button>
+  <button data-tab="port">▲<span>Portfolio</span></button>
+  <button data-tab="goals">◆<span>Goals</span></button>
+  <button data-tab="invest">%<span>Invest</span></button>
+  <button data-tab="set">⚙<span>Settings</span></button>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>
