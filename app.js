@@ -259,6 +259,7 @@ function answer(raw){
     const out=-tx.filter(t=>t.amt<0).reduce((a,t)=>a+t.amt,0),inc=tx.filter(t=>t.amt>0).reduce((a,t)=>a+t.amt,0);
     if(!tx.length)return `No transactions for ${m} yet. Import a bank CSV in the Spend tab.`;
     return `In ${m}: spent ${eur(out)}, income ${eur(inc)}, net ${eur(inc-out)}${inc?` (saving ${Math.round((inc-out)/inc*100)}%)`:''}.`}
+  if(/business|biz|coaching|practice/.test(q)){show('biz');return 'Opening the business plan, sir.';}
   if(/portfolio|stock|holding|shares|etf/.test(q)){if(!S.holdings.length)return "No holdings yet. Add them in the Portfolio tab.";
     const {v,c,g}=portTotals(),best=[...S.holdings].sort((a,b)=>((b.price||b.cost)/b.cost)-((a.price||a.cost)/a.cost))[0];
     return `Portfolio is worth ${eur(v)}, ${g>=0?'up':'down'} ${eur(Math.abs(g))} (${(g/c*100).toFixed(1)}%). Best performer: ${best.sym}.`}
