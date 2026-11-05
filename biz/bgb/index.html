@@ -4,172 +4,102 @@
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="../bgb-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="../bgb-192.png"><meta name="theme-color" content="#2f7a55">
 <title>BGB Health</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Work+Sans:wght@400;500;600&display=swap">
-<style>
-:root{--bg:#f4f7f4;--card:#fff;--fg:#17221c;--muted:#5b6a61;--line:#d9e2db;--accent:#2f7a55;--accent2:#e3f0e8;--warm:#c0663e;
---display:"Fraunces",Georgia,serif;--body:"Work Sans",system-ui,sans-serif}
-@media (prefers-color-scheme:dark){:root{--bg:#111714;--card:#19211d;--fg:#e4ece6;--muted:#95a59b;--line:#2a3630;--accent:#5fbf8c;--accent2:#1f3329;--warm:#e08b62;color-scheme:dark}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
-.w{max-width:980px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left,0px))}
-.draft{background:var(--warm);color:#fff;font-size:.78rem;text-align:center;padding:5px 12px}
-.draft a{color:#fff}
-header{padding:18px 0;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.logo{font-family:var(--display);font-weight:650;font-size:1.35rem;letter-spacing:-.01em}
-.logo span{color:var(--accent)}
-nav a{color:var(--muted);text-decoration:none;margin-left:16px;font-size:.9rem}
-.hero{padding:36px 0 28px;display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:center}
-@media(max-width:760px){.hero{grid-template-columns:1fr}nav{display:none}}
-h1{font-family:var(--display);font-weight:500;font-size:clamp(2rem,5vw,3rem);line-height:1.08;margin:0 0 14px;text-wrap:balance}
-.lede{color:var(--muted);max-width:52ch;margin:0 0 20px}
-.btn{display:inline-block;background:var(--accent);color:#fff;border:0;border-radius:999px;padding:11px 20px;font:600 .95rem var(--body);cursor:pointer;text-decoration:none}
-.btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-.btn:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.team{display:grid;gap:12px}
-.person{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;gap:14px;align-items:center}
-.av{width:52px;height:52px;border-radius:50%;background:var(--accent2);color:var(--accent);display:grid;place-items:center;font:650 1.1rem var(--display);flex:none}
-.person b{display:block}.person small{color:var(--muted)}
-section{padding:28px 0}
-h2{font-family:var(--display);font-weight:500;font-size:1.6rem;margin:0 0 6px}
-.sub{color:var(--muted);margin:0 0 18px}
-.steps{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
-.steps span{font-size:.8rem;padding:4px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--muted)}
-.steps span.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.svc{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
-.s{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;text-align:left;font:inherit;color:inherit;display:flex;flex-direction:column;gap:6px}
-.s[aria-pressed="true"]{border-color:var(--accent);background:var(--accent2)}
-.s .t{font-weight:600}.s .d{color:var(--muted);font-size:.87rem;flex:1}
-.s .m{display:flex;justify-content:space-between;font-size:.85rem;font-variant-numeric:tabular-nums}
-.tag{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:600}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
-.days{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
-.day,.slot{border:1.5px solid var(--line);background:var(--bg);color:var(--fg);border-radius:10px;font:inherit;cursor:pointer}
-.day{min-width:64px;padding:8px 6px;text-align:center}
-.day small{display:block;color:var(--muted);font-size:.72rem}
-.day[aria-pressed="true"],.slot[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
-.day[aria-pressed="true"] small{color:#fff}
-.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-top:14px}
-.slot{padding:8px;font-variant-numeric:tabular-nums}
-.slot:disabled{opacity:.35;text-decoration:line-through;cursor:not-allowed}
-form{display:grid;gap:12px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:560px){.two{grid-template-columns:1fr}}
-label{display:grid;gap:4px;font-size:.87rem;color:var(--muted)}
-input,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
-.check{display:flex;gap:8px;align-items:flex-start}.check input{width:auto;margin-top:4px}
-.sum{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 14px;border-radius:10px;background:var(--accent2);margin-bottom:6px;font-size:.92rem}
-.nav{display:flex;justify-content:space-between;margin-top:16px;gap:10px}
-.done{text-align:center;padding:30px 10px}
-.done .ok{width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:1.6rem;margin:0 auto 12px}
-footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);font-size:.82rem}
-</style></head><body>
+<link rel="stylesheet" href="site.css">
+</head><body>
 <div class="draft">Test version. Bookings are saved to the test database; no payment is taken. <a href="../../">Back to Perry</a></div>
 <div class="w">
-<header><div class="logo" style="display:flex;align-items:center;gap:10px"><img src="../bgb-icon.svg" alt="" width="36" height="36" style="border-radius:9px">BGB <span>Health</span></div>
-<nav><a href="#services">Services</a><a href="#about">About</a><a href="#book">Book</a></nav></header>
-
+<header><a href="index.html" class="logo" style="display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none"><img src="../bgb-icon.svg" alt="" width="36" height="36" style="border-radius:9px">BGB <span>Health</span></a>
+<nav class="topnav"><a href="index.html" class=on>Home</a><a href="index.html#how">How it works</a><a href="basilio.html">Basílio</a><a href="gwen.html">Gwen</a><a class="btn" href="book.html" style="padding:7px 14px;color:#fff;margin-left:16px">Book</a></nav></header>
 <div class="hero">
  <div>
-  <h1>Training and nutrition, built on research.</h1>
-  <p class="lede">Online consultations with a PhD biomechanist and a nutrition scientist. We plan how you train and how you eat together, so the two actually fit.</p>
-  <a class="btn" href="#book">Book a consultation</a> <a class="btn ghost" href="#services">See services</a>
+  <p class="eyebrow">For athletes and busy adults · women 35+</p>
+  <h1>Train stronger, eat smarter, and keep it going.</h1>
+  <p class="lede">Online coaching from a PhD biomechanist and a nutrition scientist. We assess how you move and how you eat, then build one plan where training and food work together.</p>
+  <a class="btn" href="book.html">Book a consultation</a> <a class="btn ghost" href="#how">How it works</a>
  </div>
  <div class="team" id="about">
-  <div class="person"><div class="av">BG</div><div><b>Dr. Basílio Gonçalves</b><small>PhD Biomechanics · Sport Sciences. Training, running technique, joint load.</small></div></div>
-  <div class="person"><div class="av">GB</div><div><b>Ms Gwen Bachner</b><small>BSc Nutritional Sciences, MSc in progress. Performance and everyday nutrition.</small></div></div>
+  <a class="person" href="basilio.html"><div class="av">BG</div><div><b>Dr. Basílio Gonçalves</b><small>PhD Biomechanics · Sport Sciences. Training, running technique, joint load.</small><span class="more">View profile →</span></div></a>
+  <a class="person" href="gwen.html"><div class="av">GB</div><div><b>Ms Gwen Bachner</b><small>BSc Nutritional Sciences, MSc in progress. Performance and everyday nutrition.</small><span class="more">View profile →</span></div></a>
  </div>
 </div>
 
-<section id="book">
-<h2 id="services">Book a consultation</h2>
-<p class="sub">All sessions are online by video. For healthy adults; we don't treat medical conditions.</p>
-<div class="steps" id="steps"><span class="on">1 · Service</span><span>2 · Date &amp; time</span><span>3 · Your details</span></div>
+<section class="band">
+ <p class="eyebrow">Who we work with</p>
+ <h2 class="h2">Built for people who don't have time to get it wrong.</h2>
+ <div class="aud">
+  <div><b>Athletes</b>Runners, triathletes and team-sport players who want to perform better, recover faster and stay injury-free across a season.</div>
+  <div><b>Working adults, especially women 35+</b>You juggle work, family and training. You want strength, energy and a body that keeps up, without extreme diets or two-hour gym sessions.</div>
+ </div>
+</section>
 
-<div id="st1"><div class="svc" id="svc"></div>
-<div class="nav"><span></span><button class="btn" id="n1" disabled>Choose a time</button></div></div>
+<section class="band" id="how">
+ <div class="split">
+  <div>
+   <p class="eyebrow">Physical assessment · with Basílio</p>
+   <h2 class="h2">See how you really move.</h2>
+   <p class="lede">Using phone video and simple at-home tests, we measure what usually only a lab can see: how your joints move, where you're strong, and where load builds up.</p>
+   <ul class="ticks"><li>Movement screen for squat, lunge, hinge and balance</li><li>Running or sport-technique video analysis</li><li>Strength and mobility benchmarks to track over time</li><li>A training plan that fits your week and your goals</li></ul>
+  </div>
+  <div class="art"><svg viewBox="0 0 360 260" role="img" aria-label="Geometric figure with measured joints and force arrows">
+<rect x="0" y="0" width="360" height="260" rx="14" fill="var(--accent2)"/>
+<line x1="20" y1="228" x2="340" y2="228" stroke="var(--line)" stroke-width="2"/>
+<rect x="130" y="222" width="110" height="10" rx="3" fill="#9b6a41" opacity=".35"/>
+<circle cx="182" cy="46" r="18" fill="#9b6a41"/>
+<polygon points="168,68 200,68 206,128 160,128" fill="#2f7a55"/>
+<polyline points="168,74 140,106 124,96" fill="none" stroke="#2f7a55" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="200,74 226,98 246,82" fill="none" stroke="#2f7a55" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="170,128 152,172 166,222" fill="none" stroke="#9b6a41" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="198,128 214,174 236,214" fill="none" stroke="#9b6a41" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+<g fill="#fff" stroke="#e08b62" stroke-width="3"><circle cx="170" cy="128" r="5"/><circle cx="152" cy="172" r="5"/><circle cx="166" cy="222" r="5"/><circle cx="198" cy="128" r="5"/><circle cx="214" cy="174" r="5"/><circle cx="236" cy="214" r="5"/></g>
+<path d="M152 172 A26 26 0 0 1 128 160" fill="none" stroke="#e08b62" stroke-width="2" stroke-dasharray="4 4"/>
+<line x1="236" y1="226" x2="236" y2="176" stroke="#e08b62" stroke-width="3"/><polygon points="229,180 236,166 243,180" fill="#e08b62"/>
+<g font-family="Work Sans,sans-serif" font-size="12" fill="var(--muted)"><text x="40" y="168">knee angle</text><text x="252" y="184">ground force</text><text x="254" y="120">strength</text><text x="34" y="96">mobility</text></g>
+<g fill="none" stroke="var(--muted)" stroke-width="1"><line x1="96" y1="164" x2="150" y2="170"/><line x1="250" y1="180" x2="240" y2="190"/></g>
+</svg></div>
+ </div>
+</section>
 
-<div id="st2" hidden><div class="panel">
- <div class="sum" id="sum2"></div>
- <div class="days" id="days"></div>
- <div class="slots" id="slots"></div>
- <p class="sub" style="margin:12px 0 0;font-size:.82rem">Times shown in Vienna time (CET).</p>
-</div>
-<div class="nav"><button class="btn ghost" data-back="1">Back</button><button class="btn" id="n2" disabled>Continue</button></div></div>
+<section class="band">
+ <div class="split rev">
+  <div>
+   <p class="eyebrow">Nutrition assessment · with Gwen</p>
+   <h2 class="h2">Eat for the life you actually live.</h2>
+   <p class="lede">We start from what you already eat, then adjust it to your training, your work schedule and your goals. No meal plans you'll drop after two weeks.</p>
+   <ul class="ticks"><li>3-day food and energy diary review</li><li>Protein, carbohydrate and recovery needs for your training</li><li>Meal timing around work, workouts and sleep</li><li>Simple, realistic swaps and a shopping guide</li></ul>
+  </div>
+  <div class="art"><svg viewBox="0 0 360 260" role="img" aria-label="Geometric plate split into food groups with an energy timeline">
+<rect width="360" height="260" rx="14" fill="var(--accent2)"/>
+<circle cx="130" cy="130" r="88" fill="#fff" stroke="var(--line)" stroke-width="2"/>
+<path d="M130 130 L130 52 A78 78 0 0 1 204 152Z" fill="#2f7a55"/>
+<path d="M130 130 L204 152 A78 78 0 0 1 88 196Z" fill="#e3c58a"/>
+<path d="M130 130 L88 196 A78 78 0 0 1 130 52Z" fill="#e08b62"/>
+<circle cx="130" cy="130" r="20" fill="#fff"/>
+<g font-family="Work Sans,sans-serif" font-size="12" fill="#fff" font-weight="600"><text x="146" y="104">veg</text><text x="96" y="122">protein</text></g>
+<text x="138" y="176" font-family="Work Sans,sans-serif" font-size="12" fill="#5b4a20" font-weight="600">carbs</text>
+<g font-family="Work Sans,sans-serif" font-size="12" fill="var(--muted)"><text x="240" y="60">energy over the day</text><text x="240" y="216">6h</text><text x="314" y="216">22h</text></g>
+<polyline points="240,190 256,150 272,160 288,118 304,132 330,110" fill="none" stroke="#2f7a55" stroke-width="3" stroke-linejoin="round"/>
+<line x1="240" y1="200" x2="334" y2="200" stroke="var(--line)" stroke-width="2"/>
+<g fill="#e08b62"><circle cx="256" cy="150" r="4"/><circle cx="288" cy="118" r="4"/><circle cx="330" cy="110" r="4"/></g>
+</svg></div>
+ </div>
+</section>
 
-<div id="st3" hidden><div class="panel">
- <div class="sum" id="sum3"></div>
- <form id="f">
-  <div class="two"><label for="nm">Full name<input id="nm" required autocomplete="name"></label>
-  <label for="em">Email<input id="em" type="email" required autocomplete="email"></label></div>
-  <label for="goal">What would you like help with?<textarea id="goal" rows="3" placeholder="e.g. first half marathon in spring, want to fuel properly"></textarea></label>
-  <label class="check" for="hc"><input id="hc" type="checkbox" required> I'm a healthy adult and not looking for treatment of a medical condition.</label>
-  <label class="check" for="gd"><input id="gd" type="checkbox" required> I agree that BGB Health stores my details to run the consultation (privacy policy).</label>
-  <div class="nav"><button type="button" class="btn ghost" data-back="2">Back</button><button class="btn" id="pay">Confirm and pay</button></div>
- </form>
-</div></div>
+<section class="band">
+ <p class="eyebrow">What you can achieve</p>
+ <h2 class="h2">Goals our clients come to us with.</h2>
+ <div class="goals"><div class="goal"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--accent2)"/><rect x="8" y="18" width="24" height="4" rx="2" fill="#9b6a41"/><rect x="10" y="12" width="5" height="16" rx="2" fill="#2f7a55"/><rect x="25" y="12" width="5" height="16" rx="2" fill="#2f7a55"/></svg><b>Get stronger, protect your bones</b><span>Strength training planned around your week. Muscle and bone strength matter more every year after 35.</span></div><div class="goal"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--accent2)"/><polyline points="7,22 14,22 17,14 22,28 25,18 28,22 33,22" fill="none" stroke="#2f7a55" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Run or play without niggles</b><span>We look at technique and training load, so you can train more consistently.</span></div><div class="goal"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--accent2)"/><path d="M22 6 L12 22 H20 L18 34 L28 17 H20Z" fill="#e08b62"/></svg><b>Steady energy through the workday</b><span>Meals and snacks timed around work, training and sleep, not a rigid diet.</span></div><div class="goal"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--accent2)"/><circle cx="20" cy="20" r="12" fill="none" stroke="#2f7a55" stroke-width="3"/><path d="M20 20 L20 8 A12 12 0 0 1 31 24Z" fill="#e08b62"/></svg><b>Change body composition sensibly</b><span>Lose fat or build muscle at a pace you can keep, with progress you can measure.</span></div><div class="goal"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--accent2)"/><polygon points="20,7 24,16 33,17 26,23 28,32 20,27 12,32 14,23 7,17 16,16" fill="#2f7a55"/></svg><b>Fuel for competition</b><span>Race-day and training-day fuelling for athletes, from 10k to team sport.</span></div><div class="goal"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--accent2)"/><circle cx="15" cy="20" r="7" fill="#9b6a41"/><circle cx="25" cy="20" r="7" fill="none" stroke="#2f7a55" stroke-width="3"/></svg><b>Train well through midlife changes</b><span>Adapting training and nutrition as your body changes in your late 30s, 40s and beyond.</span></div></div>
+</section>
 
-<div id="st4" hidden><div class="panel done">
- <div class="ok">✓</div><h2>Booking received</h2>
- <p class="sub" id="sum4"></p>
- <p class="sub">Payment and the email with your video link are not live yet in this test version.</p>
- <button class="btn ghost" id="again">Book another</button>
-</div></div>
+<section class="band">
+ <p class="eyebrow">How it works</p>
+ <h2 class="h2">Three steps, all online.</h2>
+ <div class="steps3">
+  <div><b>Initial assessment</b>75 minutes with both of us: goals, movement screen, eating habits.</div>
+  <div><b>Your plan</b>Within a week you get one combined training and nutrition plan.</div>
+  <div><b>Coaching</b>Monthly check-ins adjust the plan as you progress.</div>
+ </div>
+ <div class="cta"><h2 class="h2">Ready to start?</h2><a class="btn" href="book.html">Book your initial assessment</a></div>
 </section>
 </div>
 <footer><div class="w">BGB Health · Vienna, Austria · Online across Europe<br>Draft site. Prices and services are examples. Impressum and privacy policy will go here.</div></footer>
-
-<script>
-const SV=[
- {id:"init",tag:"Start here",t:"Initial assessment",d:"Joint 75-minute session: goals, training history, eating habits, movement screen. You leave with a plan.",min:75,p:120,who:"Both"},
- {id:"train",tag:"Training",t:"Training consultation",d:"Programme design, running technique, load management, return to training.",min:50,p:80,who:"Basílio"},
- {id:"nutri",tag:"Nutrition",t:"Nutrition consultation",d:"Everyday eating, fuelling for sport, body composition goals.",min:50,p:80,who:"Gwen"},
- {id:"gait",tag:"Biomechanics",t:"Running video analysis",d:"Send phone videos of your running; we review technique and give drills.",min:45,p:95,who:"Basílio"},
- {id:"coach",tag:"Monthly",t:"Coaching package",d:"Monthly plan updates, two check-in calls and chat support. Cancel any time.",min:30,p:150,who:"Both",per:"/ month"},
- {id:"chk",tag:"Follow-up",t:"Follow-up call",d:"Short check-in to adjust your plan.",min:25,p:45,who:"Either"}];
-const SB="https://gfzqvaumziuiwfrwhhes.supabase.co",KEY="sb_publishable_NxmiKUulD7hNH6CkUsEwIA_ki8EDWyC";
-const H={apikey:KEY,"Content-Type":"application/json"};
-function vienna(d,t){const [h,m]=t.split(":").map(Number);const probe=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate(),h,m));
- const off=new Intl.DateTimeFormat("en-US",{timeZone:"Europe/Vienna",timeZoneName:"longOffset"}).formatToParts(probe).find(x=>x.type==="timeZoneName").value.replace("GMT","")||"+00:00";
- const p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${t}:00${off}`}
-async function taken(d){try{const a=vienna(d,"00:00"),n=new Date(d);n.setDate(n.getDate()+1);
- const r=await fetch(SB+"/rest/v1/rpc/taken_slots",{method:"POST",headers:H,body:JSON.stringify({from_ts:a,to_ts:vienna(n,"00:00")})});
- return r.ok?(await r.json()).map(x=>new Date(x).getTime()):[]}catch{return[]}}
-const B={};let step=1;
-const $=i=>document.getElementById(i);
-const eur=n=>"€"+n;
-function go(n){step=n;[1,2,3,4].forEach(i=>$("st"+i).hidden=i!==n);
- [...$("steps").children].forEach((s,i)=>s.classList.toggle("on",i<Math.min(n,3)));
- const s=B.svc,line=s?`<span><b>${s.t}</b> · ${s.min} min</span><span>${eur(s.p)}${s.per||""}</span>`:"";
- $("sum2").innerHTML=line;$("sum3").innerHTML=line+(B.when?`<span style="flex-basis:100%">${B.when}</span>`:"");
- $("book").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});}
-$("svc").innerHTML=SV.map(s=>`<button class="s" aria-pressed="false" data-id="${s.id}"><span class="tag">${s.tag}</span><span class="t">${s.t}</span><span class="d">${s.d}</span><span class="m"><span>${s.min} min · ${s.who}</span><b>${eur(s.p)}${s.per||""}</b></span></button>`).join("");
-$("svc").onclick=e=>{const b=e.target.closest(".s");if(!b)return;
- document.querySelectorAll(".s").forEach(x=>x.setAttribute("aria-pressed",x===b));B.svc=SV.find(s=>s.id===b.dataset.id);$("n1").disabled=false};
-$("n1").onclick=()=>{drawDays();go(2)};
-function drawDays(){const out=[],d=new Date();d.setHours(0,0,0,0);
- while(out.length<10){d.setDate(d.getDate()+1);if(d.getDay()!==0)out.push(new Date(d))}
- $("days").innerHTML=out.map((x,i)=>`<button class="day" aria-pressed="false" data-i="${i}" data-d="${x.toISOString()}"><small>${x.toLocaleDateString("en-GB",{weekday:"short"})}</small>${x.getDate()} <small>${x.toLocaleDateString("en-GB",{month:"short"})}</small></button>`).join("");
- $("slots").innerHTML='<p class="sub" style="grid-column:1/-1;margin:0">Pick a day to see free times.</p>';B.when=null;$("n2").disabled=true}
-$("days").onclick=async e=>{const b=e.target.closest(".day");if(!b)return;
- document.querySelectorAll(".day").forEach(x=>x.setAttribute("aria-pressed",x===b));
- const d=new Date(b.dataset.d),sat=d.getDay()===6,times=sat?["09:00","10:00","11:00"]:["08:00","09:00","12:30","17:00","18:00","19:00"];
- B.day=d;B.when=null;$("n2").disabled=true;$("slots").innerHTML='<p class="sub" style="grid-column:1/-1;margin:0">Checking free times…</p>';
- const busy=await taken(d);
- $("slots").innerHTML=times.map(t=>`<button class="slot" aria-pressed="false" ${busy.includes(new Date(vienna(d,t)).getTime())?"disabled":""} data-t="${t}">${t}</button>`).join("")};
-$("slots").onclick=e=>{const b=e.target.closest(".slot");if(!b||b.disabled)return;
- document.querySelectorAll(".slot").forEach(x=>x.setAttribute("aria-pressed",x===b));
- B.time=b.dataset.t;B.when=B.day.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})+" at "+b.dataset.t;$("n2").disabled=false};
-$("n2").onclick=()=>go(3);
-document.querySelectorAll("[data-back]").forEach(b=>b.onclick=()=>go(+b.dataset.back));
-$("f").onsubmit=async e=>{e.preventDefault();const btn=$("pay");btn.disabled=true;btn.textContent="Booking…";
- const row={service_id:B.svc.id,start_at:vienna(B.day,B.time),duration_min:B.svc.min,name:$("nm").value.trim(),email:$("em").value.trim(),goal:$("goal").value.trim().slice(0,500)||null,consent_healthy:true,consent_gdpr:true};
- try{const r=await fetch(SB+"/rest/v1/bookings",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify(row)});
-  if(r.status===409){alertBox("That time was just booked by someone else. Please pick another.");go(2);return}
-  if(!r.ok)throw new Error(await r.text());
-  $("sum4").textContent=`${B.svc.t} on ${B.when} for ${row.name}. We'll confirm by email at ${row.email}.`;go(4)}
- catch(err){alertBox("The booking couldn't be saved. Check your connection and try again.")}
- finally{btn.disabled=false;btn.textContent="Confirm and pay"}};
-function alertBox(m){let el=$("err");if(!el){el=document.createElement("p");el.id="err";el.setAttribute("role","alert");el.style.cssText="color:var(--warm);font-weight:600;margin:8px 0 0";$("book").querySelector(".steps").after(el)}el.textContent=m;setTimeout(()=>el.textContent="",6000)}
-$("again").onclick=()=>{$("f").reset();B.svc=null;document.querySelectorAll(".s").forEach(x=>x.setAttribute("aria-pressed",false));$("n1").disabled=true;go(1)};
-</script>
 </body></html>
