@@ -38,7 +38,9 @@ input,select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid 
 
 <div id="login" class="card" hidden>
  <form id="lf">
-  <p class="msg" style="margin:0">Sign in with the account for an approved BGB Health admin email.</p>
+  <p class="msg" style="margin:0">Sign in with an approved BGB Health admin account.</p>
+  <button type="button" class="btn" id="gg" style="background:var(--card);color:var(--fg);border:1.5px solid var(--line)">Continue with Google</button>
+  <p class="msg" style="margin:0;text-align:center">or use email</p>
   <label for="le">Email<input id="le" type="email" required autocomplete="email"></label>
   <label for="lp">Password<input id="lp" type="password" required minlength="8" autocomplete="current-password"></label>
   <div class="bar"><button class="btn">Sign in</button><button type="button" class="btn ghost" id="su">Create account</button></div>
@@ -74,6 +76,9 @@ $("lf").onsubmit=async e=>{e.preventDefault();$("lm").textContent="Signing in…
 $("su").onclick=async()=>{if(!$("lf").reportValidity())return;$("lm").textContent="Creating account…";
  const {error}=await db.auth.signUp({email:$("le").value,password:$("lp").value,options:{emailRedirectTo:location.href}});
  $("lm").textContent=error?error.message:"Check your inbox and open the confirmation link. If it opens a page that doesn't load, that's fine: your account is confirmed. Come back here and sign in."};
+$("gg").onclick=async()=>{$("lm").textContent="Opening Google…";
+ const {error}=await db.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname}});
+ if(error)$("lm").textContent=/not enabled|provider/i.test(error.message)?"Google sign-in isn't switched on in Supabase yet.":error.message};
 $("lo").onclick=()=>db.auth.signOut();
 $("rf").onclick=load;$("flt").onchange=load;
 
