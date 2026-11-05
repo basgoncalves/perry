@@ -61,7 +61,7 @@ input,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px soli
 .done .ok{width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:1.6rem;margin:0 auto 12px}
 footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);font-size:.82rem}
 </style></head><body>
-<div class="draft">Draft preview for testing. Bookings are not saved or sent. <a href="plan.html">Back to the financial plan</a></div>
+<div class="draft">Test version. Bookings are saved to the test database; no payment is taken. <a href="plan.html">Back to the financial plan</a></div>
 <div class="w">
 <header><div class="logo">BGB <span>Health</span></div>
 <nav><a href="#services">Services</a><a href="#about">About</a><a href="#book">Book</a></nav></header>
@@ -107,9 +107,9 @@ footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);f
 </div></div>
 
 <div id="st4" hidden><div class="panel done">
- <div class="ok">✓</div><h2>You're booked (demo)</h2>
+ <div class="ok">✓</div><h2>Booking received</h2>
  <p class="sub" id="sum4"></p>
- <p class="sub">In the real version, payment runs through Stripe and you get an email with the video link.</p>
+ <p class="sub">Payment and the email with your video link are not live yet in this test version.</p>
  <button class="btn ghost" id="again">Book another</button>
 </div></div>
 </section>
@@ -124,6 +124,14 @@ const SV=[
  {id:"gait",tag:"Biomechanics",t:"Running video analysis",d:"Send phone videos of your running; we review technique and give drills.",min:45,p:95,who:"Basílio"},
  {id:"coach",tag:"Monthly",t:"Coaching package",d:"Monthly plan updates, two check-in calls and chat support. Cancel any time.",min:30,p:150,who:"Both",per:"/ month"},
  {id:"chk",tag:"Follow-up",t:"Follow-up call",d:"Short check-in to adjust your plan.",min:25,p:45,who:"Either"}];
+const SB="https://gfzqvaumziuiwfrwhhes.supabase.co",KEY="sb_publishable_NxmiKUulD7hNH6CkUsEwIA_ki8EDWyC";
+const H={apikey:KEY,"Content-Type":"application/json"};
+function vienna(d,t){const [h,m]=t.split(":").map(Number);const probe=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate(),h,m));
+ const off=new Intl.DateTimeFormat("en-US",{timeZone:"Europe/Vienna",timeZoneName:"longOffset"}).formatToParts(probe).find(x=>x.type==="timeZoneName").value.replace("GMT","")||"+00:00";
+ const p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${t}:00${off}`}
+async function taken(d){try{const a=vienna(d,"00:00"),n=new Date(d);n.setDate(n.getDate()+1);
+ const r=await fetch(SB+"/rest/v1/rpc/taken_slots",{method:"POST",headers:H,body:JSON.stringify({from_ts:a,to_ts:vienna(n,"00:00")})});
+ return r.ok?(await r.json()).map(x=>new Date(x).getTime()):[]}catch{return[]}}
 const B={};let step=1;
 const $=i=>document.getElementById(i);
 const eur=n=>"€"+n;
@@ -140,17 +148,26 @@ function drawDays(){const out=[],d=new Date();d.setHours(0,0,0,0);
  while(out.length<10){d.setDate(d.getDate()+1);if(d.getDay()!==0)out.push(new Date(d))}
  $("days").innerHTML=out.map((x,i)=>`<button class="day" aria-pressed="false" data-i="${i}" data-d="${x.toISOString()}"><small>${x.toLocaleDateString("en-GB",{weekday:"short"})}</small>${x.getDate()} <small>${x.toLocaleDateString("en-GB",{month:"short"})}</small></button>`).join("");
  $("slots").innerHTML='<p class="sub" style="grid-column:1/-1;margin:0">Pick a day to see free times.</p>';B.when=null;$("n2").disabled=true}
-$("days").onclick=e=>{const b=e.target.closest(".day");if(!b)return;
+$("days").onclick=async e=>{const b=e.target.closest(".day");if(!b)return;
  document.querySelectorAll(".day").forEach(x=>x.setAttribute("aria-pressed",x===b));
  const d=new Date(b.dataset.d),sat=d.getDay()===6,times=sat?["09:00","10:00","11:00"]:["08:00","09:00","12:30","17:00","18:00","19:00"];
- $("slots").innerHTML=times.map((t,i)=>`<button class="slot" aria-pressed="false" ${(d.getDate()+i)%4===0?"disabled":""} data-t="${t}">${t}</button>`).join("");
- B.day=d;B.when=null;$("n2").disabled=true};
+ B.day=d;B.when=null;$("n2").disabled=true;$("slots").innerHTML='<p class="sub" style="grid-column:1/-1;margin:0">Checking free times…</p>';
+ const busy=await taken(d);
+ $("slots").innerHTML=times.map(t=>`<button class="slot" aria-pressed="false" ${busy.includes(new Date(vienna(d,t)).getTime())?"disabled":""} data-t="${t}">${t}</button>`).join("")};
 $("slots").onclick=e=>{const b=e.target.closest(".slot");if(!b||b.disabled)return;
  document.querySelectorAll(".slot").forEach(x=>x.setAttribute("aria-pressed",x===b));
- B.when=B.day.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})+" at "+b.dataset.t;$("n2").disabled=false};
+ B.time=b.dataset.t;B.when=B.day.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})+" at "+b.dataset.t;$("n2").disabled=false};
 $("n2").onclick=()=>go(3);
 document.querySelectorAll("[data-back]").forEach(b=>b.onclick=()=>go(+b.dataset.back));
-$("f").onsubmit=e=>{e.preventDefault();$("sum4").textContent=`${B.svc.t} on ${B.when} for ${$("nm").value}. Confirmation would go to ${$("em").value}.`;go(4)};
+$("f").onsubmit=async e=>{e.preventDefault();const btn=$("pay");btn.disabled=true;btn.textContent="Booking…";
+ const row={service_id:B.svc.id,start_at:vienna(B.day,B.time),duration_min:B.svc.min,name:$("nm").value.trim(),email:$("em").value.trim(),goal:$("goal").value.trim().slice(0,500)||null,consent_healthy:true,consent_gdpr:true};
+ try{const r=await fetch(SB+"/rest/v1/bookings",{method:"POST",headers:{...H,Prefer:"return=minimal"},body:JSON.stringify(row)});
+  if(r.status===409){alertBox("That time was just booked by someone else. Please pick another.");go(2);return}
+  if(!r.ok)throw new Error(await r.text());
+  $("sum4").textContent=`${B.svc.t} on ${B.when} for ${row.name}. We'll confirm by email at ${row.email}.`;go(4)}
+ catch(err){alertBox("The booking couldn't be saved. Check your connection and try again.")}
+ finally{btn.disabled=false;btn.textContent="Confirm and pay"}};
+function alertBox(m){let el=$("err");if(!el){el=document.createElement("p");el.id="err";el.setAttribute("role","alert");el.style.cssText="color:var(--warm);font-weight:600;margin:8px 0 0";$("book").querySelector(".steps").after(el)}el.textContent=m;setTimeout(()=>el.textContent="",6000)}
 $("again").onclick=()=>{$("f").reset();B.svc=null;document.querySelectorAll(".s").forEach(x=>x.setAttribute("aria-pressed",false));$("n1").disabled=true;go(1)};
 </script>
 </body></html>

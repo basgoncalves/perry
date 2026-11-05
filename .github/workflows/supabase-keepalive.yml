@@ -1,0 +1,14 @@
+name: Supabase keep-alive
+on:
+  schedule:
+    - cron: "17 6 * * 1"   # every Monday ~07:17 Vienna time
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping bgb-health
+        run: |
+          curl -fsS -X POST "https://gfzqvaumziuiwfrwhhes.supabase.co/rest/v1/rpc/ping" \
+            -H "apikey: sb_publishable_NxmiKUulD7hNH6CkUsEwIA_ki8EDWyC" \
+            -H "Content-Type: application/json" -d '{}'
