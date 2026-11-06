@@ -26,6 +26,10 @@ class BuildTests(unittest.TestCase):
         # older than 2y is weekly
         gaps = pd.Series(pd.to_datetime([p[0] for p in d["total"]])).diff().dt.days
         self.assertGreaterEqual(gaps.iloc[1], 5)
+        files = build.stock_files(closes, d)
+        self.assertEqual(set(files), {"NVDA", "MSFT"})
+        self.assertEqual(files["NVDA"]["px"][-1], ["2026-11-05", 200.0])
+        self.assertEqual(files["NVDA"]["n"], "Nvidia")
 
 
 if __name__ == "__main__":

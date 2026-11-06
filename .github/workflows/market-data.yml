@@ -22,6 +22,6 @@ jobs:
         run: |
           git config user.name "perry-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add market/data.json
+          git add market/data.json market/stocks
           git diff --cached --quiet || git commit -m "Market data $(date -u +'%Y-%m-%d %H:%M') UTC"
           git pull --rebase -q && git push

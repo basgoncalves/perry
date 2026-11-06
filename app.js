@@ -59,7 +59,7 @@ function show(t){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
   document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+t));
   render();
-  if(t==='market')window.renderMarket?.();
+  window.renderMarket?.();
 }
 
 /* ---------- CSV import ---------- */

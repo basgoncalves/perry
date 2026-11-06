@@ -60,3 +60,6 @@ label{display:block;color:var(--mut);font-size:12px}label input{margin-top:4px}
 .m-range button{flex:1;min-width:40px;background:#060c17;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:6px 0;font:inherit;font-size:12px;cursor:pointer}
 .m-range button.on{color:#000;background:var(--cyan);border-color:var(--cyan)}
 .tabs button{min-width:0}
+.s-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:12px 0 10px}
+.s-head h2{margin:0 0 2px;font-size:16px;letter-spacing:.08em}.s-head .hint{margin:0}
+.s-px{text-align:right}.s-px b{display:block;font-size:24px}.s-px span{font-size:14px;font-weight:600}

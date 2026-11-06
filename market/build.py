@@ -52,7 +52,9 @@ UNIVERSE = {
     "LIN": ("Linde", "Energy & Industry"), "NEE": ("NextEra", "Energy & Industry"),
 }
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.json")
+HERE = os.path.dirname(os.path.abspath(__file__))
+OUT = os.path.join(HERE, "data.json")
+STOCK_DIR = os.path.join(HERE, "stocks")
 
 
 def pick_shares(reported, market_cap, price):
@@ -111,6 +113,20 @@ def build(closes: pd.DataFrame, info: dict) -> dict:
     }
 
 
+def stock_files(closes: pd.DataFrame, data: dict) -> dict:
+    """One small file per company for its own page: daily for 2 years,
+    weekly before that, prices rounded to cents."""
+    out = {}
+    for t in data["tiles"]:
+        s = closes[t["s"]].dropna()
+        if len(s) < 2:
+            continue
+        s.index = pd.to_datetime(s.index)
+        out[t["s"]] = {**t, "asof": data["asof"],
+                       "px": [[str(d.date()), round(float(v), 2)] for d, v in thin(s).items()]}
+    return out
+
+
 def fetch():
     import yfinance as yf
     syms = list(UNIVERSE)
@@ -137,6 +153,10 @@ def main() -> int:
         return 1
     with open(OUT, "w") as f:
         json.dump(data, f, separators=(",", ":"))
+    os.makedirs(STOCK_DIR, exist_ok=True)
+    for sym, d in stock_files(closes, data).items():
+        with open(os.path.join(STOCK_DIR, f"{sym}.json"), "w") as f:
+            json.dump(d, f, separators=(",", ":"))
     print(f"{len(data['tiles'])} tiles, {len(data['total'])} points -> {OUT}")
     return 0
 

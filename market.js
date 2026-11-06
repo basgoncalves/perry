@@ -56,7 +56,7 @@ function drawMap(){
       const fs=Math.max(8,Math.min(22,Math.sqrt(r.w*r.h)/5.5));
       if(big>22)d.innerHTML=`<b style="font-size:${fs}px">${r.s}</b>`+(big>34?`<span style="font-size:${Math.max(8,fs*.72)}px">${P(r.chg)}</span>`:'');
       d.title=`${r.n} (${r.s}) · ${T(r.cap)} · ${P(r.chg)} today`;
-      d.onclick=()=>{el('m-pick').innerHTML=`<b>${r.n}</b> ${r.s} · ${T(r.cap)} · <span class="${r.chg<0?'neg':'pos'}">${P(r.chg)}</span> today`};
+      d.onclick=()=>{location.hash='stock='+r.s};
       g.appendChild(d);
     }
     box.appendChild(g);
@@ -70,7 +70,7 @@ function drawKpis(){
    `<div><b>${T(t.reduce((s,x)=>s+x.cap,0))}</b><span>Combined</span></div>`+
    `<div><b class="${avg<0?'neg':'pos'}">${P(avg)}</b><span>Today</span></div>`+
    `<div><b><span class="pos">${up}</span> / <span class="neg">${dn}</span></b><span>Up / down</span></div>`;
-  el('m-pick').innerHTML=`Best <b class="pos">${b.s} ${P(b.chg,1)}</b> · worst <b class="neg">${w.s} ${P(w.chg,1)}</b> · tap a tile for details`;
+  el('m-pick').innerHTML=`Best <b class="pos">${b.s} ${P(b.chg,1)}</b> · worst <b class="neg">${w.s} ${P(w.chg,1)}</b> · tap a company for its chart`;
   el('m-asof').textContent=`Prices as of ${D.asof} close (or latest), updated ${new Date(D.updated).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}.`;
 }
 
@@ -101,6 +101,88 @@ function drawTimeline(){
         y:{ticks:{color:'#7d97ab',callback:x=>'$'+x.toFixed(0)+'T'},grid:{color:'#16314a55'}}}}});
 }
 
+/* ---------- one company's page ---------- */
+let SD=null, sRange='1Y', sChart=null;
+const RANGES={'1M':31,'3M':92,'6M':183,'1Y':365,'2Y':730,'5Y':1830};
+function since(pts,r){const end=new Date(pts[pts.length-1][0]);let st=new Date(end);
+  if(r==='YTD')st=new Date(end.getFullYear(),0,1);else st.setDate(st.getDate()-RANGES[r]);
+  return pts.filter(p=>new Date(p[0])>=st)}
+
+async function openStock(sym){
+  el('m-main').hidden=true; el('m-stock').hidden=false; scrollTo(0,0);
+  el('s-name').textContent=sym; el('s-meta').textContent='Loading…';
+  try{SD=await (await fetch(`market/stocks/${encodeURIComponent(sym)}.json`,{cache:'no-cache'})).json()}
+  catch(e){SD=null;el('s-meta').textContent='No history for this company yet.';return}
+  await load();
+  const rank=D?[...D.tiles].sort((a,b)=>b.cap-a.cap).findIndex(t=>t.s===sym)+1:0;
+  const share=D?SD.cap/D.tiles.reduce((s,x)=>s+x.cap,0)*100:null;
+  el('s-name').textContent=SD.n;
+  el('s-meta').textContent=`${SD.s} · ${SD.sec}`+(rank?` · #${rank} by size`:'');
+  const last=SD.px[SD.px.length-1][1];
+  el('s-price').textContent='$'+last.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  el('s-chg').innerHTML=`<span class="${SD.chg<0?'neg':'pos'}">${P(SD.chg)} today</span>`;
+  const y=since(SD.px,'1Y').map(p=>p[1]), hi=Math.max(...y), lo=Math.min(...y);
+  el('s-facts').innerHTML=[
+    ['Market value',T(SD.cap)],
+    ['Share of the map',share!=null?share.toFixed(1)+'%':'–'],
+    ['52-week high','$'+hi.toFixed(2)],
+    ['52-week low','$'+lo.toFixed(2)],
+    ['Below 52-week high',`<span class="${last<hi?'neg':''}">${P((last/hi-1)*100,1)}</span>`],
+    ['Prices as of',SD.asof],
+  ].map(([k,v])=>`<div class="item"><span>${k}</span><b>${v}</b></div>`).join('');
+  drawStock();
+}
+
+function drawStock(){
+  if(!SD)return;
+  const v=since(SD.px,sRange); if(v.length<2)return;
+  const a=v[0][1], z=v[v.length-1][1], pk=Math.max(...v.map(p=>p[1]));
+  const pct=(z/a-1)*100, cls=pct<0?'neg':'pos';
+  let mkt=null;
+  if(D){const tot=since(D.total,sRange);mkt=(tot[tot.length-1][1]/tot[0][1]-1)*100}
+  el('s-kpis').innerHTML=
+   `<div><b class="${cls}">${P(pct,1)}</b><span>${sRange}</span></div>`+
+   `<div><b class="${mkt<0?'neg':'pos'}">${P(mkt,1)}</b><span>Market ${sRange}</span></div>`+
+   `<div><b class="${z<pk?'neg':''}">${P((z/pk-1)*100,1)}</b><span>From peak</span></div>`;
+  if(!window.Chart)return;
+  const vs=el('s-vs').checked&&D, col=pct<0?'#ff5a6a':'#3ee59a';
+  const ctx=el('s-line').getContext('2d'), grad=ctx.createLinearGradient(0,0,0,260);
+  grad.addColorStop(0,col+'55');grad.addColorStop(1,col+'00');
+  const sets=[{label:SD.s,data:v.map(p=>vs?p[1]/a*100:p[1]),borderColor:col,backgroundColor:vs?'transparent':grad,
+    fill:!vs,pointRadius:0,borderWidth:2,tension:.15}];
+  if(vs){const m=new Map(D.total.map(p=>[p[0],p[1]]));let base=null,lastV=null;
+    const mv=v.map(p=>{const x=m.get(p[0]);if(x!=null)lastV=x;if(base==null&&lastV!=null)base=lastV;return lastV!=null?lastV/base*100:null});
+    sets.push({label:'Market',data:mv,borderColor:'#7d97ab',borderDash:[4,4],pointRadius:0,borderWidth:1.5,fill:false,tension:.15,spanGaps:true})}
+  sChart?.destroy();
+  sChart=new Chart(ctx,{type:'line',data:{labels:v.map(p=>p[0]),datasets:sets},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:!!vs,labels:{color:'#d8ecf7',boxWidth:12}},
+        tooltip:{callbacks:{label:c=>` ${c.dataset.label}: `+(vs?c.parsed.y.toFixed(1):'$'+c.parsed.y.toFixed(2)),
+          title:i=>new Date(i[0].label).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}}},
+      scales:{x:{ticks:{color:'#7d97ab',maxTicksLimit:5,maxRotation:0,
+          callback(val){const d=new Date(this.getLabelForValue(val));const sh=RANGES[sRange]&&RANGES[sRange]<=183||sRange==='YTD';
+            return d.toLocaleDateString('en-GB',sh?{day:'numeric',month:'short'}:{month:'short',year:'2-digit'})}},grid:{display:false}},
+        y:{ticks:{color:'#7d97ab',callback:x=>vs?x.toFixed(0):'$'+x.toFixed(0)},grid:{color:'#16314a55'}}}}});
+}
+
+function closeStock(){el('m-stock').hidden=true;el('m-main').hidden=false;SD=null;sChart?.destroy();sChart=null;
+  if(D){drawMap();drawTimeline()}}
+
+function route(){
+  const m=location.hash.match(/^#stock=([A-Z.\-]+)$/i);
+  if(m){if(!el('tab-market').classList.contains('active'))document.querySelector('.tabs button[data-tab=market]')?.click();
+    openStock(m[1].toUpperCase())}
+  else if(!el('m-stock').hidden)closeStock();
+}
+addEventListener('hashchange',route);
+addEventListener('load',()=>{if(location.hash.startsWith('#stock='))route()});
+document.addEventListener('click',e=>{
+  if(e.target.id==='s-back'){history.length>1&&location.hash?history.back():(location.hash='')}
+  const b=e.target.closest('#s-range button');if(b){sRange=b.dataset.r;
+    document.querySelectorAll('#s-range button').forEach(x=>x.classList.toggle('on',x===b));drawStock()}
+});
+document.addEventListener('change',e=>{if(e.target.id==='s-vs')drawStock()});
+
 async function load(){
   if(D)return true;
   try{const r=await fetch('market/data.json',{cache:'no-cache'});D=await r.json();return true}
@@ -108,7 +190,8 @@ async function load(){
 }
 
 window.renderMarket=async()=>{
-  if(!el('tab-market').classList.contains('active'))return;
+  if(!el('tab-market').classList.contains('active')){if(location.hash.startsWith('#stock='))history.replaceState(null,'',location.pathname);closeStock();return}
+  if(!el('m-stock').hidden)return;
   if(!await load())return;
   drawKpis(); drawMap(); drawTimeline();
 };
