@@ -63,3 +63,37 @@ label{display:block;color:var(--mut);font-size:12px}label input{margin-top:4px}
 .s-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:12px 0 10px}
 .s-head h2{margin:0 0 2px;font-size:16px;letter-spacing:.08em}.s-head .hint{margin:0}
 .s-px{text-align:right}.s-px b{display:block;font-size:24px}.s-px span{font-size:14px;font-weight:600}
+
+/* ---------- desktop layout ---------- */
+@media (min-width:1000px){
+ body{padding:0 0 0 220px;font-size:16px}
+ .tabs{top:0;bottom:0;right:auto;width:220px;flex-direction:column;justify-content:flex-start;gap:4px;padding:120px 14px 20px;border-top:0;border-right:1px solid var(--line);background:#060a13f2}
+ .tabs button{flex:none;display:flex;align-items:center;gap:12px;text-align:left;padding:11px 14px;border-radius:10px;font-size:18px}
+ .tabs button span{display:inline;font-size:14px;letter-spacing:.04em}
+ .tabs button:hover{background:#0d1a2b;color:var(--text)}
+ .tabs button.on{background:#0d2034;color:var(--cyan);box-shadow:inset 3px 0 0 var(--cyan)}
+ .top{position:fixed;left:0;top:0;width:220px;z-index:5;flex-direction:column;align-items:flex-start;gap:8px;padding:20px 22px 0}
+ .top .sub{display:none}
+ .core{width:64px;height:64px}
+ h1{font-size:22px}
+ main{max-width:1100px;padding:36px 48px 40px}
+ #tab-perry.active{display:flex;flex-direction:column;min-height:calc(100vh - 76px);max-width:820px;margin:0 auto}
+ .log{flex:1;min-height:0;justify-content:flex-end;padding-top:20px}
+ .msg{max-width:72%;font-size:15px;padding:12px 16px}
+ .ask{bottom:20px}
+ .ask input{padding:14px 16px;font-size:15px}
+ .mic,.send{width:52px;height:52px}
+ .chips button{font-size:13px;padding:7px 13px}
+ .card{padding:20px;border-radius:16px}
+ h2{font-size:15px}
+ .kpis b{font-size:22px}
+ .tab.active.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+ .tab.active.cols>.card{margin:0}
+ #tab-biz iframe{height:calc(100vh - 80px)!important}
+}
+@media (min-width:1500px){main{max-width:1280px}}
+@media (min-width:1000px){
+ .tabs{padding-top:160px}
+ #tab-perry.active::before{content:"";display:block;width:200px;height:200px;margin:4vh auto 0;border-radius:50%;background:url(perry-head.png) center/cover;box-shadow:0 0 60px #3fd8ff55,0 0 0 1px #3fd8ff44;opacity:.95}
+ #tab-perry.active::after{content:"How can I help, sir?";order:-1;display:none}
+}
