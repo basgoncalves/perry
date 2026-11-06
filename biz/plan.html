@@ -37,10 +37,20 @@ td:first-child,th:first-child{text-align:left}
 .note{font-size:.82rem;color:var(--muted);max-width:75ch;margin-top:20px}
 .legend{display:flex;gap:16px;font-size:.8rem;color:var(--muted);margin-bottom:6px}
 .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.scen{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 6px}
+@media(max-width:560px){.scen{grid-template-columns:repeat(2,1fr)}}
+.scen button{font:600 .9rem var(--body);padding:10px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.scen button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:#fff}
+.scen button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.scen-note{font-size:.85rem;color:var(--muted);margin:0 0 18px;min-height:1.3em}
 </style>
 <div class="wrap">
 <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h1>Coaching Practice Finances</h1><a href="https://basgoncalves.github.io/bgb-health/site/" target="_top" style="background:var(--accent);color:#fff;text-decoration:none;padding:9px 16px;border-radius:999px;font-weight:600;font-size:.9rem">Open BGB Health site →</a><a href="https://basgoncalves.github.io/bgb-health/bookings/" target="_top" style="border:1.5px solid var(--accent);color:var(--accent);text-decoration:none;padding:8px 16px;border-radius:999px;font-weight:600;font-size:.9rem">Bookings</a></div>
 <p class="lede">A 24-month projection for an online training and nutrition practice run by two people from Austria. Every number is an example assumption you can change. Results update as you type.</p>
+<div class="scen" id="scen" role="group" aria-label="Scenarios">
+<button data-s="worst">Worst case</button><button data-s="pess" aria-pressed="true">Pessimistic</button><button data-s="real">Realistic</button><button data-s="opt">Optimistic</button>
+</div>
+<p class="scen-note" id="scenNote"></p>
 <div class="grid">
 <div class="panel inputs">
 <fieldset><h2>Prices (€)</h2>
@@ -107,6 +117,16 @@ function run(){
  chart.innerHTML=s;
 }
 ids.forEach(i=>document.getElementById(i).addEventListener("input",run));run();
+
+const SC={worst:{v:{pInit:90,pMonth:120,newPm:1,growth:0,conv:40,churn:25,cAds:200},n:"Worst case: 1 new client a month, low prices, a quarter of coaching clients leave every month."},
+pess:{v:{pInit:120,pMonth:150,newPm:3,growth:1,conv:60,churn:15,cAds:150},n:"Pessimistic: slow start, modest prices, clients stay about 6 to 7 months."},
+real:{v:{pInit:140,pMonth:190,newPm:5,growth:1,conv:65,churn:10,cAds:200},n:"Realistic: steady referrals and content, fair prices for PhD-level coaching, clients stay about 10 months."},
+opt:{v:{pInit:160,pMonth:220,newPm:6,growth:1,conv:70,churn:8,cAds:300},n:"Optimistic: strong word of mouth and partnerships, premium prices, clients stay about a year. Around 60 active clients by month 24, close to what two people can coach."}};
+function pick(k){const c=SC[k];for(const [i,x] of Object.entries(c.v))document.getElementById(i).value=x;
+ document.querySelectorAll("#scen button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.s===k));document.getElementById("scenNote").textContent=c.n;run()}
+document.getElementById("scen").onclick=e=>{const b=e.target.closest("button");if(b)pick(b.dataset.s)};
+ids.forEach(i=>document.getElementById(i).addEventListener("input",()=>{document.querySelectorAll("#scen button").forEach(b=>b.setAttribute("aria-pressed","false"));document.getElementById("scenNote").textContent="Custom: you've changed the inputs."}));
+pick("pess");
 </script>
 
 </html>
