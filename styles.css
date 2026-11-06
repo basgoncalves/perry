@@ -5,9 +5,11 @@ body{padding-bottom:calc(70px + env(safe-area-inset-bottom));background:radial-g
 .top{display:flex;align-items:center;gap:14px;padding:calc(14px + env(safe-area-inset-top)) 16px 10px}
 h1{margin:0;font-size:20px;letter-spacing:.35em;color:var(--cyan);text-shadow:0 0 12px #3fd8ff88}
 .sub{margin:0;color:var(--mut);font-size:12px}
-.core{width:48px;height:48px;border-radius:50%;border:2px solid var(--cyan);display:grid;place-items:center;box-shadow:0 0 18px #3fd8ff66,inset 0 0 14px #3fd8ff55;cursor:pointer;flex:none}
+.core{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;box-shadow:0 0 18px #3fd8ff66;cursor:pointer;flex:none}
+.core img{width:100%;height:100%;display:block;border-radius:50%}
 .core span{width:18px;height:18px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px var(--cyan)}
-.core.listen{animation:pulse 1s infinite}.core.talk span{animation:pulse .5s infinite}
+.core.listen{animation:pulse 1s infinite}.core.talk img{animation:glow .5s infinite}
+@keyframes glow{50%{filter:brightness(1.5) drop-shadow(0 0 8px #3fd8ff)}}
 @keyframes pulse{50%{transform:scale(.82);opacity:.7}}
 main{padding:0 16px;max-width:720px;margin:0 auto}
 .tab{display:none}.tab.active{display:block}
