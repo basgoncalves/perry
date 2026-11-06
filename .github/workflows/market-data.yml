@@ -1,0 +1,27 @@
+name: Market data
+on:
+  schedule:
+    # Every hour while US markets are open (14:00–21:00 UTC, Mon–Fri),
+    # plus one run after the close so the day's final numbers land.
+    - cron: "35 14-20 * * 1-5"
+    - cron: "20 21 * * 1-5"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: { group: market-data, cancel-in-progress: true }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip, cache-dependency-path: market/requirements.txt }
+      - run: pip install -r market/requirements.txt
+      - run: python market/build.py
+      - name: Commit if changed
+        run: |
+          git config user.name "perry-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add market/data.json
+          git diff --cached --quiet || git commit -m "Market data $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git pull --rebase -q && git push

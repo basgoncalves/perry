@@ -59,6 +59,7 @@ function show(t){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
   document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+t));
   render();
+  if(t==='market')window.renderMarket?.();
 }
 
 /* ---------- CSV import ---------- */
@@ -260,6 +261,7 @@ function answer(raw){
     if(!tx.length)return `No transactions for ${m} yet. Import a bank CSV in the Spend tab.`;
     return `In ${m}: spent ${eur(out)}, income ${eur(inc)}, net ${eur(inc-out)}${inc?` (saving ${Math.round((inc-out)/inc*100)}%)`:''}.`}
   if(/business|biz|coaching|practice/.test(q)){show('biz');return 'Opening the business plan, sir.';}
+  if(/market|heat ?map|so over|is it over/.test(q)){show('market');return window.marketSummary?window.marketSummary():'Opening the market map, sir.'}
   if(/portfolio|stock|holding|shares|etf/.test(q)){if(!S.holdings.length)return "No holdings yet. Add them in the Portfolio tab.";
     const {v,c,g}=portTotals(),best=[...S.holdings].sort((a,b)=>((b.price||b.cost)/b.cost)-((a.price||a.cost)/a.cost))[0];
     return `Portfolio is worth ${eur(v)}, ${g>=0?'up':'down'} ${eur(Math.abs(g))} (${(g/c*100).toFixed(1)}%). Best performer: ${best.sym}.`}
@@ -271,9 +273,9 @@ function answer(raw){
   if(/time|date/.test(q))return new Date().toLocaleString('en-GB',{weekday:'long',hour:'2-digit',minute:'2-digit',day:'numeric',month:'long'});
   return "I didn't catch that, sir. Say 'help' to see what I can do.";
 }
-function ask(t){if(!t.trim())return;add(t,'u');setTimeout(()=>say(answer(t)),250)}
+function ask(t){if(!t.trim())return;add(t,'u');setTimeout(()=>Promise.resolve(answer(t)).then(say),250)}
 $('#ask').onsubmit=e=>{e.preventDefault();ask($('#q').value);$('#q').value=''};
-const CHIPS=['Spending this month','Am I over budget?','How\'s my portfolio?','How are my goals?','200 a month for 20 years','Compare investment options'];
+const CHIPS=['Spending this month','Am I over budget?','How\'s my portfolio?','How\'s the market?','How are my goals?','200 a month for 20 years','Compare investment options'];
 $('#chips').innerHTML=CHIPS.map(c=>`<button>${c}</button>`).join('');
 $('#chips').onclick=e=>{if(e.target.tagName=='BUTTON')ask(e.target.textContent)};
 

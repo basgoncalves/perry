@@ -7,6 +7,7 @@ Jarvis-style personal finance assistant that runs in your phone's browser.
 - **Perry chat** — type or speak ("How much did I spend on groceries last month?")
 - **Spend** — import bank CSVs, auto-categorise, monthly budgets
 - **Portfolio** — holdings, gains, optional live prices (free Finnhub key)
+- **Market** — heatmap of the ~60 biggest US companies (size = value, colour = today's move) and the total market value over time. Data refreshed hourly by a GitHub Action (`market/build.py`).
 - **Goals** — savings targets with projected finish dates
 - **Invest** — growth calculator and comparison of investment options (education, not advice)
 
