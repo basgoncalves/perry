@@ -3,14 +3,17 @@
    Data: market/data.json, refreshed by .github/workflows/market-data.yml. */
 (()=>{
 const CLIP=3;               // colour saturates at ±3%
-let D=null, range='1Y', mChart=null;
+let D=null, range='1D', mChart=null;
+const CLIPS={'1D':3,'1M':10,'3M':15,'6M':22,'YTD':30,'1Y':35,'2Y':50,'5Y':100};
+const LBL={'1D':'today','1M':'past month','3M':'past 3 months','6M':'past 6 months','YTD':'this year','1Y':'past year','2Y':'past 2 years','5Y':'past 5 years'};
+const mv=x=>range==='1D'?x.chg:(x.r?x.r[range]:null);
 const el=id=>document.getElementById(id);
 const T=v=>{const a=Math.abs(v),s=v<0?'−':'';return a>=1e12?`${s}$${(a/1e12).toFixed(2)}T`:`${s}$${(a/1e9).toFixed(0)}B`};
 const P=(v,d=2)=>v==null||isNaN(v)?'–':(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(d)+'%';
 
 function colour(c){
   if(c==null||isNaN(c))return '#1b2733';
-  const t=Math.max(-1,Math.min(1,c/CLIP)), a=Math.abs(t);
+  const t=Math.max(-1,Math.min(1,c/(CLIPS[range]||CLIP))), a=Math.abs(t);
   const base=[27,39,51], end=t<0?[200,30,45]:[18,160,90];
   const mix=base.map((b,i)=>Math.round(b+(end[i]-b)*Math.pow(a,.7)));
   return `rgb(${mix})`;
@@ -34,8 +37,8 @@ function squarify(items,x,y,w,h){
   return out;
 }
 
-function weighted(ts){const t=ts.filter(x=>x.chg!=null),c=t.reduce((s,x)=>s+x.cap,0);
-  return c?t.reduce((s,x)=>s+x.chg*x.cap,0)/c:null}
+function weighted(ts,f=mv){const t=ts.filter(x=>f(x)!=null),c=t.reduce((s,x)=>s+x.cap,0);
+  return c?t.reduce((s,x)=>s+f(x)*x.cap,0)/c:null}
 
 function drawMap(){
   const box=el('m-map'); if(!D||!box.offsetWidth)return;
@@ -51,11 +54,11 @@ function drawMap(){
       l.textContent=`${s.k} ${P(weighted(s.ts),1)}`;g.appendChild(l)}
     for(const r of squarify(s.ts.map(t=>({...t,v:t.cap})),1,hd+1,s.w-2,s.h-hd-2)){
       const d=document.createElement('button'); d.className='m-tile';
-      Object.assign(d.style,{left:r.x+'px',top:r.y+'px',width:Math.max(r.w-2,0)+'px',height:Math.max(r.h-2,0)+'px',background:colour(r.chg)});
+      Object.assign(d.style,{left:r.x+'px',top:r.y+'px',width:Math.max(r.w-2,0)+'px',height:Math.max(r.h-2,0)+'px',background:colour(mv(r))});
       const big=Math.min(r.w,r.h);
       const fs=Math.max(8,Math.min(22,Math.sqrt(r.w*r.h)/5.5));
-      if(big>22)d.innerHTML=`<b style="font-size:${fs}px">${r.s}</b>`+(big>34?`<span style="font-size:${Math.max(8,fs*.72)}px">${P(r.chg)}</span>`:'');
-      d.title=`${r.n} (${r.s}) · ${T(r.cap)} · ${P(r.chg)} today`;
+      if(big>22)d.innerHTML=`<b style="font-size:${fs}px">${r.s}</b>`+(big>34?`<span style="font-size:${Math.max(8,fs*.72)}px">${P(mv(r),Math.abs(mv(r))>=100?0:range==='1D'?2:1)}</span>`:'');
+      d.title=`${r.n} (${r.s}) · ${T(r.cap)} · ${P(mv(r))} ${LBL[range]}`;
       d.onclick=()=>{location.hash='stock='+r.s};
       g.appendChild(d);
     }
@@ -64,26 +67,28 @@ function drawMap(){
 }
 
 function drawKpis(){
-  const t=D.tiles, avg=weighted(t), up=t.filter(x=>x.chg>0).length, dn=t.filter(x=>x.chg<0).length;
-  const srt=[...t].sort((a,b)=>a.chg-b.chg), w=srt[0], b=srt[srt.length-1];
+  const t=D.tiles, avg=weighted(t), up=t.filter(x=>mv(x)>0).length, dn=t.filter(x=>mv(x)<0).length;
+  const srt=t.filter(x=>mv(x)!=null).sort((a,b)=>mv(a)-mv(b)), w=srt[0], b=srt[srt.length-1];
+  el('m-title').textContent=range==='1D'?'Market today':'Market · '+LBL[range];
   el('m-kpis').innerHTML=
    `<div><b>${T(t.reduce((s,x)=>s+x.cap,0))}</b><span>Combined</span></div>`+
-   `<div><b class="${avg<0?'neg':'pos'}">${P(avg)}</b><span>Today</span></div>`+
+   `<div><b class="${avg<0?'neg':'pos'}">${P(avg)}</b><span>${range==='1D'?'Today':'Avg. move '+range}</span></div>`+
    `<div><b><span class="pos">${up}</span> / <span class="neg">${dn}</span></b><span>Up / down</span></div>`;
-  el('m-pick').innerHTML=`Best <b class="pos">${b.s} ${P(b.chg,1)}</b> · worst <b class="neg">${w.s} ${P(w.chg,1)}</b> · tap a company for its chart`;
+  el('m-pick').innerHTML=`Best <b class="pos">${b.s} ${P(mv(b),1)}</b> · worst <b class="neg">${w.s} ${P(mv(w),1)}</b> · tap a company for its chart`;
   el('m-asof').textContent=`Prices as of ${D.asof} close (or latest), updated ${new Date(D.updated).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}.`;
 }
 
 function drawTimeline(){
   const pts=D.total; if(!pts.length)return;
   const end=new Date(pts[pts.length-1][0]); let start=new Date(end);
-  const days={'1M':31,'3M':92,'6M':183,'1Y':365,'2Y':730,'5Y':1830}[range];
-  if(range==='YTD')start=new Date(end.getFullYear(),0,1);else start.setDate(start.getDate()-days);
+  const tr=range==='1D'?'1M':range;
+  const days={'1M':31,'3M':92,'6M':183,'1Y':365,'2Y':730,'5Y':1830}[tr];
+  if(tr==='YTD')start=new Date(end.getFullYear(),0,1);else start.setDate(start.getDate()-days);
   const v=pts.filter(p=>new Date(p[0])>=start);
   const a=v[0][1]*1e9, z=v[v.length-1][1]*1e9, pk=Math.max(...v.map(p=>p[1]))*1e9;
   const pct=(z/a-1)*100, fromPk=(z/pk-1)*100, cls=pct<0?'neg':'pos';
   el('m-tk').innerHTML=
-   `<div><b class="${cls}">${T(z-a)}</b><span>Change ${range}</span></div>`+
+   `<div><b class="${cls}">${T(z-a)}</b><span>Change ${tr}</span></div>`+
    `<div><b class="${cls}">${P(pct,1)}</b><span>%</span></div>`+
    `<div><b class="${fromPk<-0.05?'neg':''}">${P(fromPk,1)}</b><span>From peak</span></div>`;
   const col=pct<0?'#ff5a6a':'#3ee59a';
@@ -197,11 +202,11 @@ window.renderMarket=async()=>{
 };
 window.marketSummary=async()=>{
   if(!await load())return "I can't reach the market data right now, sir.";
-  const t=D.tiles, avg=weighted(t), srt=[...t].sort((a,b)=>a.chg-b.chg);
+  const t=D.tiles, avg=weighted(t,x=>x.chg), srt=[...t].sort((a,b)=>a.chg-b.chg);
   const mood=avg<=-2?"It's a rough day, sir.":avg<=-0.5?"Markets are down, sir.":avg<0.5?"A quiet day, sir.":"Markets are up, sir.";
   return `${mood} The ${t.length} biggest US companies are ${P(avg)} today, worth ${T(t.reduce((s,x)=>s+x.cap,0))} combined. Best: ${srt[srt.length-1].s} ${P(srt[srt.length-1].chg,1)}. Worst: ${srt[0].s} ${P(srt[0].chg,1)}.`;
 };
 document.addEventListener('click',e=>{const b=e.target.closest('#m-range button');if(!b)return;
-  range=b.dataset.r;document.querySelectorAll('#m-range button').forEach(x=>x.classList.toggle('on',x===b));drawTimeline()});
+  range=b.dataset.r;document.querySelectorAll('#m-range button').forEach(x=>x.classList.toggle('on',x===b));if(D){drawKpis();drawMap();drawTimeline()}});
 let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(D)drawMap()},200)});
 })();

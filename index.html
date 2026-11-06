@@ -161,8 +161,11 @@
       </div>
     </div>
     <div id="m-main">
+    <div class="m-range m-top" id="m-range" role="group" aria-label="Time range">
+        <button data-r="1D" class="on">1D</button><button data-r="1M">1M</button><button data-r="3M">3M</button><button data-r="6M">6M</button><button data-r="YTD">YTD</button><button data-r="1Y">1Y</button><button data-r="2Y">2Y</button><button data-r="5Y">5Y</button>
+      </div>
     <div class="card">
-      <h2>Market today</h2>
+      <h2 id="m-title">Market today</h2>
       <div class="kpis" id="m-kpis"></div>
       <div id="m-map" class="m-map"></div>
       <p class="hint" id="m-pick">Loading the market…</p>
@@ -170,9 +173,6 @@
     </div>
     <div class="card">
       <h2>Total market value</h2>
-      <div class="m-range" id="m-range">
-        <button data-r="1M">1M</button><button data-r="3M">3M</button><button data-r="6M">6M</button><button data-r="YTD">YTD</button><button data-r="1Y" class="on">1Y</button><button data-r="2Y">2Y</button><button data-r="5Y">5Y</button>
-      </div>
       <div class="kpis" id="m-tk"></div>
       <div style="height:260px"><canvas id="m-line"></canvas></div>
       <p class="hint">Combined market cap of the ~60 largest US companies (about two-thirds of the S&amp;P 500): daily close × today's share count, in US dollars. Ignores buybacks and new shares, so it's close over months and rougher over years. Not financial advice.</p>

@@ -83,6 +83,24 @@ def thin(series: pd.Series) -> pd.Series:
     return pd.concat([old, series[series.index >= cut]])
 
 
+RANGE_DAYS = {"1M": 31, "3M": 92, "6M": 183, "1Y": 365, "2Y": 730, "5Y": 1830}
+
+
+def range_returns(s: pd.Series) -> dict:
+    """% change from the first close on/after each range start to the last close."""
+    s = s.dropna()
+    s.index = pd.to_datetime(s.index)
+    end = s.index[-1]
+    starts = {k: end - pd.Timedelta(days=d) for k, d in RANGE_DAYS.items()}
+    starts["YTD"] = pd.Timestamp(year=end.year, month=1, day=1)
+    out = {}
+    for k, st in starts.items():
+        w = s[s.index >= st]
+        if len(w) >= 2 and (w.index[0] - st).days < 15:
+            out[k] = round((float(w.iloc[-1]) / float(w.iloc[0]) - 1) * 100, 2)
+    return out
+
+
 def build(closes: pd.DataFrame, info: dict) -> dict:
     """closes: daily closes, one column per symbol. info: symbol -> dict with
     marketCap / sharesOutstanding. Pure, so it can be tested offline."""
@@ -101,7 +119,8 @@ def build(closes: pd.DataFrame, info: dict) -> dict:
             continue
         shares[sym] = n
         tiles.append({"s": sym, "n": name, "sec": sector,
-                      "cap": round(n * price), "chg": round((price / prev - 1) * 100, 2)})
+                      "cap": round(n * price), "chg": round((price / prev - 1) * 100, 2),
+                      "r": range_returns(s)})
     tiles.sort(key=lambda t: -t["cap"])
     total = thin(total_series(closes, shares))
     return {

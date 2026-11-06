@@ -97,3 +97,5 @@ label{display:block;color:var(--mut);font-size:12px}label input{margin-top:4px}
  #tab-perry.active::before{content:"";display:block;width:200px;height:200px;margin:4vh auto 0;border-radius:50%;background:url(perry-head.png) center/cover;box-shadow:0 0 60px #3fd8ff55,0 0 0 1px #3fd8ff44;opacity:.95}
  #tab-perry.active::after{content:"How can I help, sir?";order:-1;display:none}
 }
+.m-top{position:sticky;top:0;z-index:4;background:var(--bg);padding:8px 0;margin:0 0 10px}
+.m-top button{padding:8px 0;font-size:13px}
