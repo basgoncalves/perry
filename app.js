@@ -309,7 +309,7 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
   let ev=null;
   addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e});
   addEventListener('appinstalled',()=>dl.remove());
-  dl.removeAttribute('download');dl.href='#';dl.title='Install Perry on this phone';lab.textContent=' Get app';
+  dl.removeAttribute('download');dl.href='#';dl.title='Install Perry on this phone';lab.textContent='Install Perry app';document.getElementById('dl-s').textContent='free · on your phone';
   const how=document.getElementById('dl-how');
   document.getElementById('dl-ok').onclick=()=>sheet.hidden=true;
   sheet.onclick=e=>{if(e.target===sheet)sheet.hidden=true};
