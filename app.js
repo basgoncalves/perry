@@ -293,3 +293,6 @@ render();
 const h=new Date().getHours();
 say(`Good ${h<12?'morning':h<18?'afternoon':'evening'}, sir. Perry online.`+(S.tx.length?'':' No data yet — load demo data in Settings or import a bank CSV.'),true);
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+/* deep links: #spend, #port, #market... (used by desktop Perry) */
+(()=>{const go=()=>{const t=location.hash.slice(1);if(t&&document.getElementById('tab-'+t))show(t)};window.addEventListener('hashchange',go);go();})();
