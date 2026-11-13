@@ -296,3 +296,29 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
 
 /* deep links: #spend, #port, #market... (used by desktop Perry) */
 (()=>{const go=()=>{const t=location.hash.slice(1);if(t&&document.getElementById('tab-'+t))show(t)};window.addEventListener('hashchange',go);go();})();
+
+/* get-the-app button: phone → install Perry (PWA); computer → desktop zip */
+(()=>{
+  const dl=document.getElementById('dl'), lab=document.getElementById('dl-l'), sheet=document.getElementById('dl-sheet');
+  if(!dl)return;
+  const ua=navigator.userAgent, ios=/iPhone|iPad|iPod/.test(ua), android=/Android/.test(ua);
+  const phone=ios||android||matchMedia('(pointer:coarse) and (max-width:900px)').matches;
+  const installed=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  if(!phone)return;                       // desktop keeps the .zip download
+  if(installed){dl.remove();return}       // already running as the app
+  let ev=null;
+  addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e});
+  addEventListener('appinstalled',()=>dl.remove());
+  dl.removeAttribute('download');dl.href='#';dl.title='Install Perry on this phone';lab.textContent=' Get app';
+  const how=document.getElementById('dl-how');
+  document.getElementById('dl-ok').onclick=()=>sheet.hidden=true;
+  sheet.onclick=e=>{if(e.target===sheet)sheet.hidden=true};
+  dl.onclick=async e=>{
+    e.preventDefault();
+    if(ev){ev.prompt();const r=await ev.userChoice;ev=null;if(r.outcome==='accepted')dl.remove();return}
+    how.innerHTML=ios
+      ?'Tap the <b>Share</b> button (□↑) in Safari, then <b>Add to Home Screen</b>. Perry opens full-screen like a normal app.'
+      :'Open the browser menu <b>⋮</b> and tap <b>Install app</b> (or <b>Add to Home screen</b>). Perry gets his own icon and opens full-screen.';
+    sheet.hidden=false;
+  };
+})();

@@ -103,5 +103,10 @@ label{display:block;color:var(--mut);font-size:12px}label input{margin-top:4px}
 /* desktop download */
 .dl{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #22d3ee55;border-radius:999px;color:#22d3ee;text-decoration:none;font-size:13px;white-space:nowrap;background:#22d3ee10}
 .dl:hover{background:#22d3ee22}
-@media (max-width:420px){.dl span{display:none}}
+@media (max-width:420px){.dl span{font-size:12px}.dl{padding:7px 10px}}
 @media (min-width:900px){.dl{margin-left:0;margin-top:6px}.tabs{padding-top:176px!important}}
+.dl-sheet{position:fixed;inset:0;z-index:50;background:#000a;display:flex;align-items:flex-end;justify-content:center;padding:16px}
+.dl-sheet[hidden]{display:none}
+.dl-card{background:#0b1422;border:1px solid #22d3ee44;border-radius:16px;padding:18px;max-width:420px;width:100%;display:flex;flex-direction:column;gap:10px;color:#cfefff}
+.dl-card b{color:#22d3ee;letter-spacing:.08em}.dl-card p{margin:0;line-height:1.5}
+.dl-alt{color:#5b7a86;font-size:13px}
