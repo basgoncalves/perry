@@ -1,3 +1,4 @@
+import * as brain from './brain.js';
 /* Perry Online — personal finance assistant. All data stays in this browser (localStorage). */
 'use strict';
 const $ = s => document.querySelector(s);
@@ -244,36 +245,39 @@ function answer(raw){
   const q=raw.toLowerCase().replace(/^(hey |ok )?perry[, ]*/,'').trim();const m=monthFrom(q);
   if(/daddy'?s home/.test(q))return "Welcome home, sir. Session restore runs on the desktop Perry — open it on your PC with Ctrl+Alt+P. Here, all financial systems are online.";
   if(!q||/^(hi|hello|hey|yo)\b/.test(q))return "At your service, sir. Ask me about spending, budgets, your portfolio or goals.";
-  if(/help|what can you/.test(q))return "Try:\n• How much did I spend this month?\n• Spending on groceries last month\n• Am I over budget?\n• How's my portfolio?\n• How are my goals?\n• If I invest 200 a month for 20 years?\n• Compare investment options";
+  if(/^help$|what can you do/.test(q))return "Try:\n• How much did I spend this month?\n• Spending on groceries last month\n• Am I over budget?\n• How's my portfolio?\n• How are my goals?\n• If I invest 200 a month for 20 years?\n• Compare investment options";
   const inv=q.match(/(\d[\d.,]*)\D+(?:a |per |each )?month\D+(\d+)\s*year/);
   if(inv){const mo=num(inv[1]),y=+inv[2];return `Investing ${eur(mo)} a month for ${y} years (${eur(mo*12*y)} paid in) could grow to roughly:\n`+
     [...INVEST].map(o=>({o,f:project(0,mo,y,rateOf(o)>0?rateOf(o)*0.72:rateOf(o)).at(-1)})).sort((a,b)=>b.f-a.f).slice(0,5).map(({o,f})=>`• ${o.n}: ${eur(f)}`).join('\n')+'\n(after 28% tax, using current rates)'+"\nIllustrative only — not a forecast."}
   const cat=CATS.find(c=>q.includes(c.toLowerCase())||(c=='Eating out'&&/restaurant|food out|eat/.test(q))||(c=='Groceries'&&/food|supermarket/.test(q)));
-  if(/spen|cost|paid|expens/.test(q)&&cat){const v=catTotals(m)[cat]||0,b=S.budgets[cat];
+  if(/\bspen|\bcost|\bpaid\b|expens/.test(q)&&cat){const v=catTotals(m)[cat]||0,b=S.budgets[cat];
     return `You spent ${eur2(v)} on ${cat.toLowerCase()} in ${m}.`+(b?` That's ${Math.round(v/b*100)}% of your ${eur(b)} budget.`:'')}
-  if(/budget|over/.test(q)){const ct=catTotals(m),over=Object.entries(S.budgets).filter(([c,b])=>(ct[c]||0)>b);
+  if(/\bbudget/.test(q)){const ct=catTotals(m),over=Object.entries(S.budgets).filter(([c,b])=>(ct[c]||0)>b);
     if(!Object.keys(S.budgets).length)return "You haven't set any budgets yet, sir. Add some in the Spend tab.";
     return over.length?`Over budget in ${over.map(([c,b])=>`${c} (${eur(ct[c])} of ${eur(b)})`).join(', ')}.`:`All budgets on track for ${m}. Well done, sir.`}
-  if(/biggest|top|most/.test(q)){const ct=catTotals(m),top=Object.entries(ct).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  if(/(biggest|top|most)\b.*(spen|expens|categor|cost)/.test(q)){const ct=catTotals(m),top=Object.entries(ct).sort((a,b)=>b[1]-a[1]).slice(0,3);
     return top.length?`Top spending in ${m}: `+top.map(([c,v])=>`${c} ${eur(v)}`).join(', ')+'.':'No spending recorded for that month.'}
-  if(/spen|income|earn|net|save|month/.test(q)&&!/goal|invest/.test(q)){const tx=monthTx(m).filter(t=>t.cat!=='Transfers');
+  if(/\bspen|\bincome\b|\bearn(ed|ing)?\b|\bnet\b|\bsav(e|ed|ing)\b|this month|last month/.test(q)&&!/goal|invest/.test(q)){const tx=monthTx(m).filter(t=>t.cat!=='Transfers');
     const out=-tx.filter(t=>t.amt<0).reduce((a,t)=>a+t.amt,0),inc=tx.filter(t=>t.amt>0).reduce((a,t)=>a+t.amt,0);
     if(!tx.length)return `No transactions for ${m} yet. Import a bank CSV in the Spend tab.`;
     return `In ${m}: spent ${eur(out)}, income ${eur(inc)}, net ${eur(inc-out)}${inc?` (saving ${Math.round((inc-out)/inc*100)}%)`:''}.`}
-  if(/business|biz|coaching|practice/.test(q)){show('biz');return 'Opening the business plan, sir.';}
-  if(/market|heat ?map|so over|is it over/.test(q)){show('market');return window.marketSummary?window.marketSummary():'Opening the market map, sir.'}
-  if(/portfolio|stock|holding|shares|etf/.test(q)){if(!S.holdings.length)return "No holdings yet. Add them in the Portfolio tab.";
+  if(/\b(my business|biz|coaching|business plan)\b/.test(q)){show('biz');return 'Opening the business plan, sir.';}
+  if(/\b(the market|stock market|markets?\b.*today|heat ?map|is it over)\b|how'?s the market/.test(q)){show('market');return window.marketSummary?window.marketSummary():'Opening the market map, sir.'}
+  if(/\b(portfolio|my stocks|holdings?|my shares|etfs?)\b/.test(q)){if(!S.holdings.length)return "No holdings yet. Add them in the Portfolio tab.";
     const {v,c,g}=portTotals(),best=[...S.holdings].sort((a,b)=>((b.price||b.cost)/b.cost)-((a.price||a.cost)/a.cost))[0];
     return `Portfolio is worth ${eur(v)}, ${g>=0?'up':'down'} ${eur(Math.abs(g))} (${(g/c*100).toFixed(1)}%). Best performer: ${best.sym}.`}
-  if(/goal|target/.test(q)){if(!S.goals.length)return "No savings goals yet. Add one in the Goals tab.";
+  if(/\b(goals?|savings target)\b/.test(q)){if(!S.goals.length)return "No savings goals yet. Add one in the Goals tab.";
     return S.goals.map(g=>`${g.name}: ${Math.round(g.saved/g.target*100)}% — ${goalETA(g)}`).join('\n')}
   if(/best (rate|deposit)|deposit|bond|aforro|bundesschatz|festgeld/.test(q)){const t=[...INVEST].filter(o=>o.g!=='MK').sort((a,b)=>rateOf(b)-rateOf(a)).slice(0,4);show('invest');return 'Top safe rates right now:\n'+t.map(o=>`• ${FLAG[o.g]} ${o.n}: ${rateOf(o)}%`).join('\n')+'\nCheck conditions — the highest are often promos for new clients.'}
-  if(/invest|option|where.*money|compare/.test(q)){show('invest');return "Here are the main options with risk, access and typical long-run returns. It's general information, not advice for your situation — a licensed advisor can tailor it to you."}
-  if(/buy|sell|should i/.test(q))return "I can't tell you what to buy or sell, sir — I'm not a licensed advisor. I can show your numbers, compare options and project growth so you can decide.";
-  if(/time|date/.test(q))return new Date().toLocaleString('en-GB',{weekday:'long',hour:'2-digit',minute:'2-digit',day:'numeric',month:'long'});
-  return "I didn't catch that, sir. Say 'help' to see what I can do.";
+  if(/\binvest|where.*(put|park).*money|compare (investment|option)/.test(q)){show('invest');return "Here are the main options with risk, access and typical long-run returns. It's general information, not advice for your situation — a licensed advisor can tailor it to you."}
+  if(/\b(buy|sell)\b.*\b(stock|share|etf|crypto|bitcoin|fund)/.test(q)||/should i (buy|sell|invest)/.test(q))return "I can't tell you what to buy or sell, sir — I'm not a licensed advisor. I can show your numbers, compare options and project growth so you can decide.";
+  if(/\b(what time|the time|what'?s the date|today'?s date|what day)\b/.test(q))return new Date().toLocaleString('en-GB',{weekday:'long',hour:'2-digit',minute:'2-digit',day:'numeric',month:'long'});
+  return brain.think(raw.replace(/^(hey |ok )?perry[, ]*/i,'').trim(), financeContext());
 }
-function ask(t){if(!t.trim())return;add(t,'u');setTimeout(()=>Promise.resolve(answer(t)).then(say),250)}
+function financeContext(){try{const m=thisMonth(),tx=monthTx(m).filter(t=>t.cat!=='Transfers');
+  const out=-tx.filter(t=>t.amt<0).reduce((a,t)=>a+t.amt,0);const {v}=portTotals();
+  return `this month spent ${eur(out)} over ${tx.length} transactions; portfolio ${eur(v)}; ${S.goals.length} savings goals.`}catch{return ''}}
+function ask(t){if(!t.trim())return;add(t,'u');$('#core').classList.add('think');setTimeout(()=>Promise.resolve(answer(t)).then(say).finally(()=>$('#core').classList.remove('think')),250)}
 $('#ask').onsubmit=e=>{e.preventDefault();ask($('#q').value);$('#q').value=''};
 const CHIPS=['Spending this month','Am I over budget?','How\'s my portfolio?','How\'s the market?','How are my goals?','200 a month for 20 years','Compare investment options'];
 $('#chips').innerHTML=CHIPS.map(c=>`<button>${c}</button>`).join('');
@@ -321,4 +325,15 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
       :'Open the browser menu <b>⋮</b> and tap <b>Install app</b> (or <b>Add to Home screen</b>). Perry gets his own icon and opens full-screen.';
     sheet.hidden=false;
   };
+})();
+
+/* ---------- Smart Perry (on-device AI) ---------- */
+(()=>{const box=$('#s-smart'),st=$('#s-smart-st');if(!box)return;
+  if(!brain.smartSupported()){box.disabled=true;st.textContent="Not available in this browser (needs WebGPU — recent Chrome on Android/desktop).";return}
+  const go=()=>{st.textContent='Loading model… 0%';brain.loadSmart((p,t)=>st.textContent=`Loading model… ${p}%`)
+    .then(()=>{st.textContent='Smart Perry is ready — running on this device.';say('Smart mode online, sir.',true)})
+    .catch(e=>{st.textContent='Could not load: '+e.message;box.checked=false;S.settings.smart=false;save()})};
+  box.checked=!!S.settings.smart;
+  box.onchange=()=>{S.settings.smart=box.checked;save();if(box.checked)go();else st.textContent='Off. Reload the page to free the memory.'};
+  if(S.settings.smart)go();
 })();

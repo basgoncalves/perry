@@ -194,6 +194,8 @@
       <label>Finnhub API key (optional, for live prices — free at finnhub.io)
         <input id="s-key" placeholder="Stored only on this device"></label>
       <label class="check"><input type="checkbox" id="s-voice" checked> Perry speaks replies</label>
+      <label class="check"><input type="checkbox" id="s-smart"> Smart Perry — small AI model on this device (~400 MB download once, works offline)</label>
+      <p class="hint" id="s-smart-st">Off. Without it, general questions are answered from Wikipedia.</p>
       <div class="row">
         <button id="export" class="btn small">Export backup</button>
         <label class="btn small">Import backup<input type="file" id="import" accept=".json" hidden></label>
@@ -217,6 +219,6 @@
 </nav>
 
 <script src="market.js"></script>
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
