@@ -51,7 +51,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.6.0',BUILT='15 Nov 2026 10:45';
+const VERSION='0.6.1',BUILT='15 Nov 2026 12:10';
 document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -346,7 +346,9 @@ function move(dir){if(S.scene!=='town'||S.busy||S.mv||panel.className)return;
   const nx=S.px+d[0],ny=S.py+d[1];
   const npc=(M.npcs||[]).find(n=>n.x===nx&&n.y===ny);if(npc){talk(npc);return}
   const sg=M.signs&&M.signs[nx+','+ny];if(sg){S.busy=true;say('📜 '+sg).then(goTown);return}
-  const b=M.bld.find(b=>b.door[0]===nx&&b.door[1]===ny);if(b){enterMap(...b.to);return}
+  const b=M.bld.find(b=>b.door[0]===nx&&b.door[1]===ny);if(b){enterMap(...b.to);
+    if(['lab','inn'].includes(b.to[0])&&S.party.some(m=>m.hp<m.maxhp)){S.busy=true;(async()=>{await wait(300);await say(b.to[0]==='lab'?'PROF. ALDER: Welcome back! Let me patch up your team.':'Innkeeper Lia: Rest up, traveller!');await healAll();save();goTown()})()}
+    return}
   if(blocked(nx,ny))return;
   S.mv={fx:S.px,fy:S.py,t:performance.now(),done:()=>afterStep()};S.px=nx;S.py=ny}
 async function afterStep(){const c=M.rows[S.py][S.px],w=M.warps&&M.warps[S.px+','+S.py];
