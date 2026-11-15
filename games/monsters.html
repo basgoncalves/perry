@@ -17,16 +17,21 @@ canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
 #menu button:hover,#menu button:focus{background:#cde;outline:none}
 #menu button .t{font-size:.8em;opacity:.7}
 input{font:inherit;padding:4px;border:2px solid #446;width:100%}
+#dpad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,40px);justify-content:center;margin-top:10px;visibility:hidden}
+#dpad button{font-size:18px;background:#2b2b3a;color:#ddd;border:0;border-radius:8px;touch-action:manipulation}
+#dpad [data-d=u]{grid-area:1/2}#dpad [data-d=l]{grid-area:2/1}#dpad [data-d=r]{grid-area:2/3}#dpad [data-d=d]{grid-area:3/2}
 .label{color:#e8e8e8;text-align:center;font-weight:bold;margin-top:10px;letter-spacing:2px;font-size:13px}
 </style>
 </head>
 <body>
 <div id="gba">
   <div id="screen"><canvas id="c" width="240" height="160"></canvas><div id="box"></div></div>
+  <div id="dpad"><button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button></div>
   <div class="label">WILDLINGS · DEMO</div>
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
+const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
 g.imageSmoothingEnabled=false;
 
@@ -35,7 +40,7 @@ const EFF={flame:{leaf:2,tide:.5,flame:.5},tide:{flame:2,leaf:.5,tide:.5},leaf:{
 const MOVES={
   Scratch:{type:'plain',pow:40,acc:100},Tackle:{type:'plain',pow:40,acc:100},
   Cinder:{type:'flame',pow:45,acc:100},Splash:{type:'tide',pow:45,acc:100},Thornshot:{type:'leaf',pow:45,acc:100},
-  Growl:{type:'plain',pow:0,acc:100,debuff:'atk'},Nibble:{type:'plain',pow:35,acc:100},Gust:{type:'plain',pow:40,acc:95}
+  Growl:{type:'plain',pow:0,acc:100,debuff:'atk'},Nibble:{type:'plain',pow:35,acc:100},Gust:{type:'plain',pow:40,acc:95},Harden:{type:'plain',pow:0,acc:100,buff:'def'},Dustcloud:{type:'plain',pow:0,acc:90,debuff:'atk'}
 };
 // ---- Species: pixel art from palette strings (12x12) ----
 const SP={
@@ -50,7 +55,22 @@ const SP={
     art:[".....ee.....","....ebbe....",".....ee.....","...aaaaaa...","..aaaaaaaa..","..acaaaaca..","..aaaaaaaa..","...aabbaa...","..aaaaaaaa..",".aaaaaaaaaa.",".aa......aa.","............"]},
   Pibbit:{type:'plain',hp:35,atk:40,def:35,spd:56,moves:['Nibble','Gust'],
     col:{a:'#b08a5a',b:'#f2dcb4',c:'#222'},
-    art:["..a......a..","..aa....aa..","..aa....aa..","...aaaaaa...","..aaaaaaaa..","..acaaaaca..","..aaabbaaa..","...abbbba...","..aaaaaaaa..","..aabbbbaa..","...a....a...","............"]}
+    art:["..a......a..","..aa....aa..","..aa....aa..","...aaaaaa...","..aaaaaaaa..","..acaaaaca..","..aaabbaaa..","...abbbba...","..aaaaaaaa..","..aabbbbaa..","...a....a...","............"]},
+  Pebblor:{type:'plain',hp:40,atk:45,def:70,spd:25,moves:['Tackle','Harden'],
+    col:{a:'#8d8d8d',b:'#bdbdbd',c:'#222'},
+    art:["............","............","....aaaa....","..aabaaaaa..",".aabbaaaaaa.",".aaaaaaaaaa.",".acaaaaaaca.",".aaaaaaaaaa.","aaaaaaaaaaaa","aaaaaaaaaaaa",".aaaaaaaaaa.","............"]},
+  Mothwisp:{type:'leaf',hp:38,atk:42,def:38,spd:62,moves:['Gust','Thornshot','Dustcloud'],
+    col:{a:'#9b7fd1',b:'#e7dcff',c:'#222',e:'#5e4b8b'},
+    art:["...e....e...","....e..e....","bb..aaaa..bb","bbb.aaaa.bbb","bbbbacca.bbb","bbbbaaaabbbb",".bbbaaaabbb.","..bbaaaabb..","...baaaab...","....aaaa....",".....aa.....","............"]},
+  Coralisk:{type:'tide',hp:42,atk:55,def:58,spd:35,moves:['Nibble','Splash','Harden'],
+    col:{a:'#ff7f6e',b:'#ffd2c8',c:'#222',e:'#c94a3c'},
+    art:["e..........e","ee........ee",".ee......ee.","..eaaaaaae..","..aacaacaa..",".aaaaaaaaaa.","aaabbbbbbaaa","aaabbbbbbaaa",".aaaaaaaaaa.","a.a.a..a.a.a","............","............"]},
+  Hootle:{type:'plain',hp:45,atk:44,def:40,spd:50,moves:['Gust','Nibble','Growl'],
+    col:{a:'#7b5b3b',b:'#e9cf9f',c:'#222',e:'#f2b134'},
+    art:["..a......a..","..aa....aa..","..aaaaaaaa..",".abbbaabbba.",".abcbaabcba.",".abbbeebbba.",".aaaaeeaaaa.",".aabbbbbbaa.",".aabbbbbbaa.","..aaaaaaaa..","...e....e...","............"]},
+  Fumepot:{type:'flame',hp:36,atk:58,def:45,spd:40,moves:['Cinder','Tackle','Dustcloud'],
+    col:{a:'#3d4a5c',b:'#ff9f43',c:'#fff',e:'#ccc'},
+    art:[".....e......","....e.e.....","....bbb.....","...aaaaa....","..aaaaaaa...","aaacaaacaa..","a.aaaaaaaaaa","a.aaaaaaaa.a",".aaaaaaaaa.a","..aaaaaaa...","...aaaaa....","............"]}
 };
 function mk(name,lv){const s=SP[name],st=k=>Math.floor(s[k]*lv/50)+5;
   const m={name,lv,type:s.type,maxhp:Math.floor(s.hp*lv/50)+lv+10,atk:st('atk'),def:st('def'),spd:st('spd'),moves:s.moves.slice(),atkMod:1};
@@ -73,6 +93,7 @@ function render(){S.anim++;g.clearRect(0,0,240,160);
   else if(S.scene==='lab'){g.fillStyle='#e9dcc0';g.fillRect(0,0,240,160);g.fillStyle='#c9b48a';for(let i=0;i<240;i+=16)g.fillRect(i,0,1,160);
     g.fillStyle='#7a5a3a';g.fillRect(20,62,200,14);['Embrix','Ripplet','Sprigle'].forEach((n,i)=>{const sel=S.pick===i;
       drawMon(n,32+i*66,24+(sel?Math.sin(S.anim/5)*2:0),3);if(sel){g.strokeStyle='#e33';g.strokeRect(28+i*66,20,44,44)}})}
+  else if(S.scene==='town'){MAP.forEach((r,y)=>[...r].forEach((c,x)=>tile(c,x,y)));drawPlayer()}
   else if(S.scene==='battle'){g.fillStyle='#dff3d0';g.fillRect(0,0,240,160);g.fillStyle='#b5d99c';
     g.beginPath();g.ellipse(170,62,40,9,0,0,7);g.fill();g.beginPath();g.ellipse(64,112,46,10,0,0,7);g.fill();
     const w=S.wild,me=S.party[0];
@@ -84,6 +105,54 @@ function render(){S.anim++;g.clearRect(0,0,240,160);
     if(S.flash>0){g.fillStyle='#fff8';g.fillRect(0,0,240,160);S.flash--}if(S.shake>0)S.shake--}
   requestAnimationFrame(render)}
 render();
+
+
+// ---- Town ----
+const MAP=[
+"TTTTTTTTTTTTTTT",
+"T..GGGGG..WWWWT",
+"T..GGGGG..WWWWT",
+"T..GGGGG...WWWT",
+"T.....=.......T",
+"T.HH..=...LLL.T",
+"T.HD..=...LDL.T",
+"T=====+=======T",
+"T.GG.....f.GG.T",
+"TTTTTTTTTTTTTTT"];
+const solid=c=>'TWHLf'.includes(c);
+function tile(c,x,y){const X=x*16,Y=y*16;
+  g.fillStyle='#8ccf6a';g.fillRect(X,Y,16,16);
+  if(c==='='||c==='+'||c==='D'&&0){g.fillStyle='#d9c08a';g.fillRect(X,Y,16,16)}
+  if(c==='='||c==='+'){g.fillStyle='#d9c08a';g.fillRect(X,Y,16,16)}
+  if(c==='G'){g.fillStyle='#3f9a3a';for(let i=0;i<4;i++){g.fillRect(X+i*4,Y+6+(i%2)*2,2,8);g.fillRect(X+i*4+2,Y+4+(i%2)*3,1,9)}}
+  if(c==='T'){g.fillStyle='#6b4a2b';g.fillRect(X+6,Y+10,4,6);g.fillStyle='#2f7d32';g.beginPath();g.arc(X+8,Y+7,7,0,7);g.fill()}
+  if(c==='W'){g.fillStyle='#4a9be0';g.fillRect(X,Y,16,16);g.fillStyle='#bfe6ff';g.fillRect(X+2+(S.anim>>4)%6,Y+5,5,1);g.fillRect(X+8-(S.anim>>4)%5,Y+11,4,1)}
+  if(c==='H'||c==='D'&&MAP[y][x-1]==='H'){g.fillStyle='#e9e2d0';g.fillRect(X,Y,16,16);g.fillStyle='#c0504d';if(MAP[y-1]&&MAP[y-1][x]!=='H'&&MAP[y-1][x]!=='D')g.fillRect(X,Y,16,7)}
+  if(c==='L'||c==='D'&&MAP[y][x-1]==='L'){g.fillStyle='#eef2f7';g.fillRect(X,Y,16,16);g.fillStyle='#4a6fa5';if(MAP[y-1]&&!'LD'.includes(MAP[y-1][x]))g.fillRect(X,Y,16,7)}
+  if(c==='D'){g.fillStyle='#6b4a2b';g.fillRect(X+4,Y+4,8,12)}
+  if(c==='f'){g.fillStyle='#d9c08a';g.fillRect(X,Y,16,16);g.fillStyle='#7a5a3a';g.fillRect(X+7,Y+8,2,8);g.fillStyle='#c9a46a';g.fillRect(X+2,Y+3,12,6)}}
+function drawPlayer(){const X=S.px*16,Y=S.py*16,b=S.step%2;
+  g.fillStyle='#0003';g.fillRect(X+3,Y+13,10,3);
+  g.fillStyle='#d33';g.fillRect(X+4,Y+1,8,4);g.fillStyle='#f1c27d';g.fillRect(X+5,Y+4,6,4);
+  g.fillStyle='#222';if(S.face!=='u'){g.fillRect(X+6+(S.face==='r'?1:S.face==='l'?-1:0),Y+5,1,1);g.fillRect(X+9+(S.face==='r'?1:S.face==='l'?-1:0),Y+5,1,1)}
+  g.fillStyle='#3060c0';g.fillRect(X+4,Y+8,8,4);g.fillStyle='#333';g.fillRect(X+5,Y+12,2,3-b);g.fillRect(X+9,Y+12,2,2+b)}
+let townResolve=null;
+function goTown(){S.scene='town';box.className='hide';S.busy=false;dpad.style.visibility='visible'}
+async function move(dir){if(S.scene!=='town'||S.busy)return;
+  const d={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]}[dir];S.face=dir;
+  const nx=S.px+d[0],ny=S.py+d[1],c=MAP[ny][nx];
+  if(c==='D'){S.busy=true;
+    if(MAP[ny][nx-1]==='L'){S.party.forEach(m=>{m.hp=m.maxhp;m.atkMod=1});S.orbs=Math.max(S.orbs,5);
+      await say(`PROF. ALDER: Your team is fully healed! Orbs topped up to ${S.orbs}.`);
+      await say(`Team: ${S.party.map(m=>m.name+' Lv'+m.lv).join(', ')}`)}
+    else await say("It's your house. Mom says: don't forget to come home for dinner!");
+    goTown();return}
+  if(c==='f'){S.busy=true;await say('SIGN: Maplewick Town. Tall grass ahead — wild Wildlings live there!');goTown();return}
+  if(solid(c))return;
+  S.px=nx;S.py=ny;S.step++;
+  if(c==='G'&&Math.random()<.18){S.busy=true;dpad.style.visibility='hidden';
+    S.flash=8;await wait(400);battleLoop()}}
+addEventListener('keydown',e=>{const k={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',w:'u',s:'d',a:'l',d:'r'}[e.key];if(k){e.preventDefault();move(k)}});
 
 // ---- Dialog helpers ----
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -107,8 +176,8 @@ async function start(){
     if(await say(`${n} — ${info[n]} Take it?`,[{label:'Yes',v:1},{label:'No',v:0}]))choice=n;else S.pick=-1}
   S.party=[mk(choice,5)];
   await say(`${S.player} received ${choice}! Here are 5 CATCH ORBS too. Weaken a wild Wildling, then throw one!`);
-  await say('Let me show you — there\'s something rustling in the tall grass...');
-  battleLoop()}
+  await say('Explore Maplewick Town! Walk in the tall grass to meet wild Wildlings, and come back to the LAB door to heal.');
+  S.px=11;S.py=7;S.face='d';S.step=0;goTown()}
 
 function dmg(a,d,mv){const m=MOVES[mv];if(!m.pow)return{d:0,e:1};
   const e=(EFF[m.type]||{})[d.type]||1,stab=m.type===a.type?1.5:1,crit=Math.random()<.0625?1.5:1;
@@ -117,19 +186,20 @@ function dmg(a,d,mv){const m=MOVES[mv];if(!m.pow)return{d:0,e:1};
 async function useMove(a,d,mv,mine){const who=mine?a.name:'Wild '+a.name;
   await say(`${who} used ${mv}!`);
   if(Math.random()*100>MOVES[mv].acc){await say('But it missed!');return}
+  if(MOVES[mv].buff){a.def=Math.ceil(a.def*1.25);await say(`${who}'s defense rose!`);return}
   if(MOVES[mv].debuff){d.atkMod=Math.max(.5,d.atkMod*.8);await say(`${mine?'Wild '+d.name:d.name}'s attack fell!`);return}
   const r=dmg(a,d,mv);S.shake=12;S.flash=3;d.hp=Math.max(0,d.hp-r.d);await wait(300);
   if(r.crit)await say('A critical hit!');if(r.e>1)await say("It's super effective!");else if(r.e<1)await say("It's not very effective...")}
 
 async function battleLoop(){
-  const pool=['Pibbit','Pibbit','Embrix','Ripplet','Sprigle'];
+  const pool=['Pibbit','Pibbit','Pebblor','Mothwisp','Coralisk','Hootle','Hootle','Fumepot','Embrix','Ripplet','Sprigle'];
   S.wild=mk(pool[Math.floor(Math.random()*pool.length)],3+Math.floor(Math.random()*3));S.inOrb=false;
   S.scene='battle';const w=S.wild,me=S.party[0];me.atkMod=1;
   await say(`A wild ${w.name} appeared!`);await say(`Go, ${me.name}!`);
   while(true){
-    const act=await say(`What will ${me.name} do?`,[{label:'FIGHT',v:'f'},{label:`ORB ×${S.orbs}`,v:'o',disabled:!S.orbs},{label:'HEAL',v:'h'},{label:'RUN',v:'r'}]);
+    const act=await say(`What will ${me.name} do?`,[{label:'FIGHT',v:'f'},{label:`ORB ×${S.orbs}`,v:'o',disabled:!S.orbs},{label:'TEAM',v:'h'},{label:'RUN',v:'r'}]);
     if(act==='r'){await say('Got away safely!');break}
-    if(act==='h'){me.hp=me.maxhp;await say(`${me.name} rested and recovered!`)}
+    if(act==='h'){await say(S.party.map(m=>`${m.name} Lv${m.lv} ${m.hp}/${m.maxhp}`).join('<br>'));continue}
     if(act==='f'){const mv=await say('Choose a move:',me.moves.map(m=>({label:`${m} <span class="t">${MOVES[m].type.toUpperCase()}</span>`,v:m})).concat([{label:'BACK',v:null}]));
       if(!mv)continue;
       const first=me.spd>=w.spd;
@@ -145,12 +215,10 @@ async function battleLoop(){
       await useMove(w,me,pick(w),false)}
     if(w.hp<=0){await say(`Wild ${w.name} fainted!`);const xp=w.lv*8;await say(`${me.name} gained ${xp} XP.`);
       if(Math.random()<.5){me.lv++;me.maxhp+=3;me.hp=Math.min(me.maxhp,me.hp+3);me.atk++;me.def++;await say(`${me.name} grew to Lv ${me.lv}!`)}break}
-    if(me.hp<=0){await say(`${me.name} fainted! ${S.player} hurried back to the lab...`);me.hp=me.maxhp;break}}
-  S.wild=null;
-  const again=await say(`Team: ${S.party.map(m=>m.name+' Lv'+m.lv).join(', ')}. Orbs left: ${S.orbs}.`,[{label:'Walk in tall grass',v:1},{label:'Restart demo',v:0}]);
-  if(!S.orbs&&again){S.orbs=5;await say('PROF. ALDER restocked your orbs!')}
-  if(again)battleLoop();else{S={scene:'title',player:'',party:[],orbs:5,wild:null,anim:0,shake:0,flash:0};start()}}
+    if(me.hp<=0){await say(`${me.name} fainted! ${S.player} hurried back to the lab...`);S.party.forEach(m=>m.hp=m.maxhp);S.px=11;S.py=7;break}}
+  S.wild=null;S.inOrb=false;goTown()}
 function pick(m){return m.moves[Math.floor(Math.random()*m.moves.length)]}
+dpad.querySelectorAll('button').forEach(b=>{let t;const go=()=>move(b.dataset.d);b.onpointerdown=e=>{e.preventDefault();go();t=setInterval(go,180)};b.onpointerup=b.onpointerleave=()=>clearInterval(t)});
 start();
 </script>
 </body>
