@@ -36,23 +36,28 @@ const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElem
 g.imageSmoothingEnabled=false;
 
 // ---- Types & moves ----
-const EFF={flame:{leaf:2,tide:.5,flame:.5},tide:{flame:2,leaf:.5,tide:.5},leaf:{tide:2,flame:.5,leaf:.5},plain:{}};
+const EFF={flame:{leaf:2,tide:.5,flame:.5,ground:.5},tide:{flame:2,ground:2,leaf:.5,tide:.5},leaf:{tide:2,ground:2,flame:.5,leaf:.5,poison:.5},
+  ground:{flame:2,poison:2,leaf:.5},psychic:{poison:2,psychic:.5},poison:{leaf:2,poison:.5,ground:.5},plain:{}};
+const TY=t=>[].concat(t);
 const MOVES={
   Scratch:{type:'plain',pow:40,acc:100},Tackle:{type:'plain',pow:40,acc:100},
   Cinder:{type:'flame',pow:45,acc:100},Splash:{type:'tide',pow:45,acc:100},Thornshot:{type:'leaf',pow:45,acc:100},
-  Growl:{type:'plain',pow:0,acc:100,debuff:'atk'},Nibble:{type:'plain',pow:35,acc:100},Gust:{type:'plain',pow:40,acc:95},Harden:{type:'plain',pow:0,acc:100,buff:'def'},Dustcloud:{type:'plain',pow:0,acc:90,debuff:'atk'}
+  Growl:{type:'plain',pow:0,acc:100,debuff:'atk'},Nibble:{type:'plain',pow:35,acc:100},Gust:{type:'plain',pow:40,acc:95},Mudslap:{type:'ground',pow:40,acc:100},Mindwave:{type:'psychic',pow:45,acc:100},Peck:{type:'plain',pow:35,acc:100},Venomsting:{type:'poison',pow:40,acc:100},Harden:{type:'plain',pow:0,acc:100,buff:'def'},Dustcloud:{type:'plain',pow:0,acc:90,debuff:'atk'}
 };
 // ---- Species: pixel art from palette strings (12x12) ----
 const SP={
-  Embrix:{type:'flame',hp:39,atk:52,def:43,spd:65,moves:['Scratch','Growl','Cinder'],
-    col:{a:'#e8572a',b:'#ffb347',c:'#222',d:'#fff3'},
-    art:["....b..b....","...bab.bab..","...aaaaaa...","..aaaaaaaa..","..acaaaaca..","..aaaaaaaa..","...aabbaa...","..aaabbaaa..",".aaaabbaaaa.",".aa.aaaa.aa.","....aa.aa...","...aa...aa.."]},
-  Ripplet:{type:'tide',hp:44,atk:48,def:65,spd:43,moves:['Tackle','Growl','Splash'],
-    col:{a:'#3a8ee6',b:'#bfe6ff',c:'#222'},
-    art:["............","....aaaa....","..aaaaaaaa..",".aaaaaaaaaa.",".acaaaaaaca.",".aaaabbaaaa.",".aaabbbbaaa.","aaaabbbbaaaa","aaaaabbaaaaa",".aa.aaaa.aa.","..a......a..","............"]},
-  Sprigle:{type:'leaf',hp:45,atk:49,def:49,spd:45,moves:['Tackle','Growl','Thornshot'],
-    col:{a:'#4caf50',b:'#a5e36b',c:'#222',e:'#2e7d32'},
-    art:[".....ee.....","....ebbe....",".....ee.....","...aaaaaa...","..aaaaaaaa..","..acaaaaca..","..aaaaaaaa..","...aabbaa...","..aaaaaaaa..",".aaaaaaaaaa.",".aa......aa.","............"]},
+  Lincendo:{type:['flame','ground'],hp:41,atk:56,def:42,spd:66,moves:['Scratch','Cinder','Mudslap'],
+    col:{a:'#c9773a',b:'#f3d9a4',c:'#222',e:'#4a2c17'},
+    art:["..e......e..","..ae....ea..","..aaaaaaaa..",".aaaaaaaaaa.",".aacaaaacaa.","eaaaabbaaaae","ebaabbbbaabe","..aaaaaaaa..","..aeaaaaea..","..aaaaaaaa..","..aa....aa..","............"]},
+  Platymind:{type:['tide','psychic'],hp:46,atk:46,def:60,spd:45,moves:['Splash','Mindwave','Growl'],
+    col:{a:'#3f7fbf',b:'#5a3d22',c:'#fff',e:'#e070d0'},
+    art:["............","....e.......","...aaaaa....","..aaaaaaa...","..acaaaaa...","bbbaaaaaaaa.","bbbaaaaaaaaa","...aaaaaaaaa","...aaaaaaaaa","....a..a.aaa","..........aa","............"]},
+  Venibri:{type:['leaf','poison'],hp:40,atk:50,def:40,spd:72,moves:['Peck','Thornshot','Venomsting'],
+    col:{a:'#3cb371',b:'#8e5cc7',c:'#222',e:'#333',f:'#c2185b'},
+    art:["............","......aaa...",".....aacaa..","eeeeeaaaaa..",".....fffa...","..bb.aaaa...",".bbbbaaaab..","bbbbbaaabbb.","..bbbaaaa...","......aa....",".....aa.....","............"]},
+
+
+
   Pibbit:{type:'plain',hp:35,atk:40,def:35,spd:56,moves:['Nibble','Gust'],
     col:{a:'#b08a5a',b:'#f2dcb4',c:'#222'},
     art:["..a......a..","..aa....aa..","..aa....aa..","...aaaaaa...","..aaaaaaaa..","..acaaaaca..","..aaabbaaa..","...abbbba...","..aaaaaaaa..","..aabbbbaa..","...a....a...","............"]},
@@ -89,9 +94,9 @@ function bar(x,y,m,showNum){g.fillStyle='#fff';g.fillRect(x,y,96,26);g.strokeSty
 function render(){S.anim++;g.clearRect(0,0,240,160);
   if(S.scene==='title'){g.fillStyle='#8fd3ff';g.fillRect(0,0,240,160);g.fillStyle='#5bbf5b';g.fillRect(0,100,240,60);
     g.fillStyle='#222';g.font='bold 22px monospace';g.fillText('WILDLINGS',62,40);g.font='9px monospace';g.fillText('a tiny monster-catching demo',42,56);
-    const b=Math.sin(S.anim/10)*2;drawMon('Embrix',40,70+b,3);drawMon('Ripplet',102,70-b,3);drawMon('Sprigle',164,70+b,3)}
+    const b=Math.sin(S.anim/10)*2;drawMon('Lincendo',40,70+b,3);drawMon('Platymind',102,70-b,3);drawMon('Venibri',164,70+b,3)}
   else if(S.scene==='lab'){g.fillStyle='#e9dcc0';g.fillRect(0,0,240,160);g.fillStyle='#c9b48a';for(let i=0;i<240;i+=16)g.fillRect(i,0,1,160);
-    g.fillStyle='#7a5a3a';g.fillRect(20,62,200,14);['Embrix','Ripplet','Sprigle'].forEach((n,i)=>{const sel=S.pick===i;
+    g.fillStyle='#7a5a3a';g.fillRect(20,62,200,14);['Lincendo','Platymind','Venibri'].forEach((n,i)=>{const sel=S.pick===i;
       drawMon(n,32+i*66,24+(sel?Math.sin(S.anim/5)*2:0),3);if(sel){g.strokeStyle='#e33';g.strokeRect(28+i*66,20,44,44)}})}
   else if(S.scene==='town'){MAP.forEach((r,y)=>[...r].forEach((c,x)=>tile(c,x,y)));drawPlayer()}
   else if(S.scene==='battle'){g.fillStyle='#dff3d0';g.fillRect(0,0,240,160);g.fillStyle='#b5d99c';
@@ -169,10 +174,10 @@ async function start(){
   await say('PROF. ALDER: Welcome to the world of WILDLINGS — creatures living in every meadow, river and ember-field.');
   S.player=await ask("First, what's your name?");
   await say(`${S.player}! What a fine name. Before you head out, you'll need a partner.`);
-  const info={Embrix:'a FLAME-type ember fox. Strong attacks!',Ripplet:'a TIDE-type river pup. Tough and steady.',Sprigle:'a LEAF-type sprout critter. Well balanced.'};
+  const info={Lincendo:'a FLAME/GROUND Iberian lynx with a smouldering beard. Fast and fierce!',Platymind:'a TIDE/PSYCHIC platypus that senses thoughts through its bill. Tough!',Venibri:'a LEAF/POISON hummingbird with a venomous beak. The fastest of the three!'};
   let choice;
-  while(!choice){const i=await say('Choose your first Wildling:',['Embrix','Ripplet','Sprigle'].map((n,k)=>({label:n,v:k})));
-    S.pick=i;const n=['Embrix','Ripplet','Sprigle'][i];
+  while(!choice){const i=await say('Choose your first Wildling:',['Lincendo','Platymind','Venibri'].map((n,k)=>({label:n,v:k})));
+    S.pick=i;const n=['Lincendo','Platymind','Venibri'][i];
     if(await say(`${n} — ${info[n]} Take it?`,[{label:'Yes',v:1},{label:'No',v:0}]))choice=n;else S.pick=-1}
   S.party=[mk(choice,5)];
   await say(`${S.player} received ${choice}! Here are 5 CATCH ORBS too. Weaken a wild Wildling, then throw one!`);
@@ -180,7 +185,7 @@ async function start(){
   S.px=11;S.py=7;S.face='d';S.step=0;goTown()}
 
 function dmg(a,d,mv){const m=MOVES[mv];if(!m.pow)return{d:0,e:1};
-  const e=(EFF[m.type]||{})[d.type]||1,stab=m.type===a.type?1.5:1,crit=Math.random()<.0625?1.5:1;
+  const e=TY(d.type).reduce((x,t)=>x*((EFF[m.type]||{})[t]||1),1),stab=TY(a.type).includes(m.type)?1.5:1,crit=Math.random()<.0625?1.5:1;
   const base=((2*a.lv/5+2)*m.pow*(a.atk*a.atkMod)/d.def)/50+2;
   return{d:Math.max(1,Math.floor(base*e*stab*crit*(.85+Math.random()*.15))),e,crit:crit>1}}
 async function useMove(a,d,mv,mine){const who=mine?a.name:'Wild '+a.name;
@@ -192,7 +197,7 @@ async function useMove(a,d,mv,mine){const who=mine?a.name:'Wild '+a.name;
   if(r.crit)await say('A critical hit!');if(r.e>1)await say("It's super effective!");else if(r.e<1)await say("It's not very effective...")}
 
 async function battleLoop(){
-  const pool=['Pibbit','Pibbit','Pebblor','Mothwisp','Coralisk','Hootle','Hootle','Fumepot','Embrix','Ripplet','Sprigle'];
+  const pool=['Pibbit','Pibbit','Pebblor','Mothwisp','Coralisk','Hootle','Hootle','Fumepot','Lincendo','Platymind','Venibri'];
   S.wild=mk(pool[Math.floor(Math.random()*pool.length)],3+Math.floor(Math.random()*3));S.inOrb=false;
   S.scene='battle';const w=S.wild,me=S.party[0];me.atkMod=1;
   await say(`A wild ${w.name} appeared!`);await say(`Go, ${me.name}!`);
