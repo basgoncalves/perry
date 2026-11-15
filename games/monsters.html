@@ -47,10 +47,12 @@ input:focus{border-color:#5b4fd8}
 <div id="gba">
   <div id="screen"><canvas id="c" width="720" height="480"></canvas><div id="box"></div><div id="panel"></div></div>
   <div id="dpad"><button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button><button id="mbtn">MENU</button></div>
-  <div class="label">WILDLINGS · DEMO</div>
+  <div class="label" id="ver">WILDLINGS</div>
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
+const VERSION='0.4.0',BUILT='15 Nov 2026 10:20';
+document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
 g.setTransform(3,0,0,3,0,0);const panel=document.getElementById('panel');
@@ -124,7 +126,7 @@ function render(){S.anim++;g.clearRect(0,0,240,160);g.imageSmoothingEnabled=true
   if(S.scene==='title'){let gr=g.createLinearGradient(0,0,0,160);gr.addColorStop(0,'#8ec5ff');gr.addColorStop(1,'#e0f0ff');g.fillStyle=gr;g.fillRect(0,0,240,160);
     g.fillStyle='#fff9';[[40,30],[180,22],[120,45]].forEach(([cx,cy],k)=>{const o=(S.anim/8+k*60)%280-20;g.beginPath();g.ellipse(o,cy,16,6,0,0,7);g.fill()});
     g.fillStyle='#6fcf6f';g.beginPath();g.ellipse(120,150,170,55,0,0,7);g.fill();
-    g.textAlign='center';g.fillStyle='#2b2f5c';g.font='800 24px system-ui,sans-serif';g.fillText('WILDLINGS',120,40);g.font='500 8px system-ui,sans-serif';g.fillStyle='#4b5080';g.fillText('a tiny monster-catching adventure',120,53);g.textAlign='left';
+    g.textAlign='center';g.fillStyle='#2b2f5c';g.font='800 24px system-ui,sans-serif';g.fillText('WILDLINGS',120,40);g.font='500 8px system-ui,sans-serif';g.fillStyle='#4b5080';g.fillText('a tiny monster-catching adventure',120,53);g.font='600 7px system-ui,sans-serif';g.fillStyle='#4b508099';g.fillText('v'+VERSION,120,63);g.textAlign='left';
     const b=Math.sin(S.anim/10)*2;drawMon('Lincendo',40,70+b,3);drawMon('Platymind',102,70-b,3);drawMon('Venibri',164,70+b,3)}
   else if(S.scene==='lab'){g.fillStyle='#e9dcc0';g.fillRect(0,0,240,160);g.fillStyle='#c9b48a';for(let i=0;i<240;i+=16)g.fillRect(i,0,1,160);
     g.fillStyle='#7a5a3a';g.fillRect(20,62,200,14);['Lincendo','Platymind','Venibri'].forEach((n,i)=>{const sel=S.pick===i;
@@ -205,7 +207,7 @@ function save(){try{localStorage.setItem(SAVE,JSON.stringify({player:S.player,pa
 function load(){try{return JSON.parse(localStorage.getItem(SAVE))}catch{return null}}
 function closePanel(){panel.className='';panel.innerHTML='';S.busy=false}
 function openMenu(){if(S.scene!=='town'||S.busy)return;S.busy=true;panel.className='on';
-  panel.innerHTML=`<h3>${S.player}<button class="x">✕</button></h3><div class="s" style="color:#667">Orbs: ${S.orbs} · Caught: ${S.caught.length}/${Object.keys(SP).length}</div>
+  panel.innerHTML=`<h3>${S.player}<button class="x">✕</button></h3><div class="s" style="color:#667">Orbs: ${S.orbs} · Caught: ${S.caught.length}/${Object.keys(SP).length} · v${VERSION}</div>
   <div class="main"><button data-a="team">🐾 Team</button><button data-a="dex">📖 Wildlingdex</button><button data-a="save">💾 Save</button><button data-a="close">↩ Back to game</button></div>`;
   panel.querySelector('.x').onclick=closePanel;
   panel.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>({team:showTeam,dex:showDex,close:closePanel,
