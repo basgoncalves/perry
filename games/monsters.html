@@ -6,34 +6,55 @@
 <title>Wildlings — demo</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#1b1d2a;color:#222;font-family:"Courier New",monospace;display:flex;justify-content:center;align-items:center;min-height:100vh}
-#gba{width:min(100vw,480px);background:#5b4fa8;border-radius:22px;padding:14px;box-shadow:0 8px 30px #0008}
-#screen{background:#f8f8e8;border:6px solid #222;border-radius:6px;aspect-ratio:3/2;position:relative;overflow:hidden;image-rendering:pixelated}
-canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
-#box{position:absolute;left:4px;right:4px;bottom:4px;min-height:30%;background:#fff;border:3px solid #333;border-radius:6px;padding:6px 8px;font-size:clamp(11px,3.4vw,15px);line-height:1.35}
+body{margin:0;background:radial-gradient(circle at 30% 20%,#2c2f4a,#12131c);color:#1d2233;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh}
+#gba{width:min(100vw,480px);background:linear-gradient(160deg,#7b6cf0,#4b3fb0);border-radius:28px;padding:14px;box-shadow:0 20px 50px #0009,inset 0 1px 0 #fff4}
+#screen{border-radius:16px;aspect-ratio:3/2;position:relative;overflow:hidden;box-shadow:inset 0 0 0 3px #0003,0 4px 14px #0005;background:#000}
+canvas{width:100%;height:100%;display:block}
+#box{position:absolute;left:8px;right:8px;bottom:8px;min-height:28%;background:#ffffffe8;backdrop-filter:blur(6px);border-radius:14px;padding:9px 12px;font-size:clamp(12px,3.5vw,15px);line-height:1.4;box-shadow:0 6px 18px #0004;animation:pop .18s ease-out}
 #box.hide{display:none}
-#menu{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px}
-#menu button{font:inherit;background:#eef;border:2px solid #446;border-radius:4px;padding:4px;cursor:pointer;text-align:left}
-#menu button:hover,#menu button:focus{background:#cde;outline:none}
-#menu button .t{font-size:.8em;opacity:.7}
-input{font:inherit;padding:4px;border:2px solid #446;width:100%}
-#dpad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,40px);justify-content:center;margin-top:10px;visibility:hidden}
-#dpad button{font-size:18px;background:#2b2b3a;color:#ddd;border:0;border-radius:8px;touch-action:manipulation}
+@keyframes pop{from{transform:translateY(8px);opacity:0}}
+#menu{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+#menu button{font:inherit;font-weight:600;background:#eef0ff;border:0;border-radius:10px;padding:6px 10px;cursor:pointer;text-align:left;color:#2b2f5c;transition:.12s}
+#menu button:hover,#menu button:focus{background:#5b4fd8;color:#fff;outline:none;transform:translateY(-1px)}
+#menu button:disabled{opacity:.4}
+#menu button .t{font-size:.75em;opacity:.7;font-weight:500}
+input{font:inherit;padding:6px 10px;border:2px solid #c9cdf5;border-radius:10px;width:100%;outline:none;margin-top:4px}
+input:focus{border-color:#5b4fd8}
+#dpad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,44px);gap:4px;justify-content:center;margin-top:12px;visibility:hidden}
+#dpad button{font-size:17px;background:#ffffff22;color:#fff;border:0;border-radius:14px;touch-action:manipulation;box-shadow:inset 0 1px 0 #fff3,0 2px 6px #0003}
+#dpad button:active{background:#ffffff44;transform:scale(.95)}
 #dpad [data-d=u]{grid-area:1/2}#dpad [data-d=l]{grid-area:2/1}#dpad [data-d=r]{grid-area:2/3}#dpad [data-d=d]{grid-area:3/2}
-.label{color:#e8e8e8;text-align:center;font-weight:bold;margin-top:10px;letter-spacing:2px;font-size:13px}
+#dpad #mbtn{grid-area:2/2;font-size:11px;font-weight:700;letter-spacing:1px;background:#ffd166;color:#4b3fb0}
+.label{color:#ffffffb0;text-align:center;font-weight:700;margin-top:10px;letter-spacing:3px;font-size:11px}
+#panel{position:absolute;inset:0;background:linear-gradient(160deg,#f6f7ff,#e3e6ff);padding:10px;overflow:auto;display:none;font-size:13px}
+#panel.on{display:block;animation:pop .18s ease-out}
+#panel h3{margin:0 0 8px;display:flex;justify-content:space-between;align-items:center;color:#2b2f5c}
+#panel .x{border:0;background:#5b4fd8;color:#fff;border-radius:999px;padding:4px 12px;font-weight:700;cursor:pointer}
+.card{display:flex;gap:10px;align-items:center;background:#fff;border-radius:14px;padding:8px;margin-bottom:6px;box-shadow:0 2px 8px #2b2f5c18}
+.card img{width:48px;height:48px;background:#f0f2ff;border-radius:12px;padding:4px}
+.card .n{font-weight:700}.card .s{font-size:11px;color:#667}
+.hp{height:6px;background:#e6e8f5;border-radius:9px;overflow:hidden;margin:4px 0}.hp i{display:block;height:100%;border-radius:9px}
+.pill{display:inline-block;font-size:9px;font-weight:700;color:#fff;border-radius:999px;padding:1px 7px;margin-right:3px;text-transform:uppercase}
+.lead{font-size:10px;border:0;border-radius:999px;padding:3px 9px;background:#eef0ff;color:#5b4fd8;font-weight:700;cursor:pointer;margin-left:auto}
+.dex{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.dex div{background:#fff;border-radius:12px;padding:6px;text-align:center;font-size:10px;box-shadow:0 2px 8px #2b2f5c14}
+.dex img{width:40px;height:40px}.dex .unk img{filter:brightness(0) opacity(.25)}
+.main{display:grid;gap:8px;margin-top:20px}.main button{font:inherit;font-size:15px;font-weight:700;padding:12px;border:0;border-radius:14px;background:#fff;color:#2b2f5c;box-shadow:0 2px 8px #2b2f5c18;cursor:pointer;text-align:left}
+.main button:hover{background:#5b4fd8;color:#fff}
 </style>
 </head>
 <body>
 <div id="gba">
-  <div id="screen"><canvas id="c" width="240" height="160"></canvas><div id="box"></div></div>
-  <div id="dpad"><button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button></div>
+  <div id="screen"><canvas id="c" width="720" height="480"></canvas><div id="box"></div><div id="panel"></div></div>
+  <div id="dpad"><button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button><button id="mbtn">MENU</button></div>
   <div class="label">WILDLINGS · DEMO</div>
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
-g.imageSmoothingEnabled=false;
+g.setTransform(3,0,0,3,0,0);const panel=document.getElementById('panel');
+const TC={flame:'#f0643c',tide:'#3f8fe0',leaf:'#3fae5a',ground:'#b98a4a',psychic:'#e05aa8',poison:'#9b59c9',plain:'#9a9aa8'};
 
 // ---- Types & moves ----
 const EFF={flame:{leaf:2,tide:.5,flame:.5,ground:.5},tide:{flame:2,ground:2,leaf:.5,tide:.5},leaf:{tide:2,ground:2,flame:.5,leaf:.5,poison:.5},
@@ -82,24 +103,34 @@ function mk(name,lv){const s=SP[name],st=k=>Math.floor(s[k]*lv/50)+5;
   m.hp=m.maxhp;return m}
 
 // ---- State ----
-let S={scene:'title',player:'',party:[],orbs:5,wild:null,anim:0,shake:0,flash:0};
-function drawMon(name,x,y,scale,flip){const s=SP[name];s.art.forEach((row,j)=>[...row].forEach((ch,i)=>{
-  if(ch==='.')return;g.fillStyle=s.col[ch];const xi=flip?11-i:i;g.fillRect(x+xi*scale,y+j*scale,scale,scale)}))}
-function bar(x,y,m,showNum){g.fillStyle='#fff';g.fillRect(x,y,96,26);g.strokeStyle='#333';g.strokeRect(x+.5,y+.5,96,26);
-  g.fillStyle='#222';g.font='8px monospace';g.fillText(m.name+'  Lv'+m.lv,x+4,y+10);
-  const p=Math.max(0,m.hp/m.maxhp);g.fillStyle='#555';g.fillRect(x+4,y+14,88,5);
-  g.fillStyle=p>.5?'#3c3':p>.2?'#ec3':'#e33';g.fillRect(x+4,y+14,88*p,5);
-  if(showNum){g.fillStyle='#222';g.fillText(m.hp+'/'+m.maxhp,x+52,y+25)}}
+let S={scene:'title',player:'',party:[],orbs:5,wild:null,anim:0,shake:0,flash:0,seen:[],caught:[]};
+const mark=(k,n)=>{if(!S[k].includes(n))S[k].push(n)};
+function drawMon(name,x,y,scale,flip,ctx=g){const s=SP[name],r=scale*.38;
+  ctx.fillStyle='#0002';ctx.beginPath();ctx.ellipse(x+6*scale,y+12*scale,4.5*scale,scale*.9,0,0,7);ctx.fill();
+  s.art.forEach((row,j)=>[...row].forEach((ch,i)=>{if(ch==='.')return;ctx.fillStyle=s.col[ch];const xi=flip?11-i:i;
+    ctx.beginPath();ctx.roundRect(x+xi*scale-.15,y+j*scale-.15,scale+.3,scale+.3,r);ctx.fill()}))}
+const spriteCache={};function sprite(n){if(spriteCache[n])return spriteCache[n];const c=document.createElement('canvas');c.width=c.height=96;
+  const x=c.getContext('2d');drawMon(n,0,-6,8,false,x);return spriteCache[n]=c.toDataURL()}
+const pills=t=>TY(t).map(k=>`<span class="pill" style="background:${TC[k]}">${k}</span>`).join('');
+function bar(x,y,m,showNum){g.save();g.shadowColor='#0003';g.shadowBlur=6;g.shadowOffsetY=2;g.fillStyle='#ffffffee';g.beginPath();g.roundRect(x,y,98,showNum?30:24,8);g.fill();g.restore();
+  g.fillStyle='#1d2233';g.font='600 8px system-ui,sans-serif';g.fillText(m.name,x+7,y+10);g.font='7px system-ui,sans-serif';g.fillStyle='#667';g.fillText('Lv'+m.lv,x+76,y+10);
+  TY(m.type).forEach((t,k)=>{g.fillStyle=TC[t];g.beginPath();g.arc(x+64-k*6,y+7.5,2.4,0,7);g.fill()});
+  const p=Math.max(0,m.hp/m.maxhp);g.fillStyle='#e6e8f5';g.beginPath();g.roundRect(x+7,y+14,84,4,2);g.fill();
+  const gr=g.createLinearGradient(x+7,0,x+91,0);const c=p>.5?['#3ddc84','#26b56a']:p>.2?['#ffd166','#f4a92a']:['#ff6b6b','#e03e3e'];gr.addColorStop(0,c[0]);gr.addColorStop(1,c[1]);
+  g.fillStyle=gr;if(p>0){g.beginPath();g.roundRect(x+7,y+14,Math.max(4,84*p),4,2);g.fill()}
+  if(showNum){g.fillStyle='#667';g.font='7px system-ui,sans-serif';g.fillText(m.hp+' / '+m.maxhp,x+60,y+26)}}
 
-function render(){S.anim++;g.clearRect(0,0,240,160);
-  if(S.scene==='title'){g.fillStyle='#8fd3ff';g.fillRect(0,0,240,160);g.fillStyle='#5bbf5b';g.fillRect(0,100,240,60);
-    g.fillStyle='#222';g.font='bold 22px monospace';g.fillText('WILDLINGS',62,40);g.font='9px monospace';g.fillText('a tiny monster-catching demo',42,56);
+function render(){S.anim++;g.clearRect(0,0,240,160);g.imageSmoothingEnabled=true;
+  if(S.scene==='title'){let gr=g.createLinearGradient(0,0,0,160);gr.addColorStop(0,'#8ec5ff');gr.addColorStop(1,'#e0f0ff');g.fillStyle=gr;g.fillRect(0,0,240,160);
+    g.fillStyle='#fff9';[[40,30],[180,22],[120,45]].forEach(([cx,cy],k)=>{const o=(S.anim/8+k*60)%280-20;g.beginPath();g.ellipse(o,cy,16,6,0,0,7);g.fill()});
+    g.fillStyle='#6fcf6f';g.beginPath();g.ellipse(120,150,170,55,0,0,7);g.fill();
+    g.textAlign='center';g.fillStyle='#2b2f5c';g.font='800 24px system-ui,sans-serif';g.fillText('WILDLINGS',120,40);g.font='500 8px system-ui,sans-serif';g.fillStyle='#4b5080';g.fillText('a tiny monster-catching adventure',120,53);g.textAlign='left';
     const b=Math.sin(S.anim/10)*2;drawMon('Lincendo',40,70+b,3);drawMon('Platymind',102,70-b,3);drawMon('Venibri',164,70+b,3)}
   else if(S.scene==='lab'){g.fillStyle='#e9dcc0';g.fillRect(0,0,240,160);g.fillStyle='#c9b48a';for(let i=0;i<240;i+=16)g.fillRect(i,0,1,160);
     g.fillStyle='#7a5a3a';g.fillRect(20,62,200,14);['Lincendo','Platymind','Venibri'].forEach((n,i)=>{const sel=S.pick===i;
-      drawMon(n,32+i*66,24+(sel?Math.sin(S.anim/5)*2:0),3);if(sel){g.strokeStyle='#e33';g.strokeRect(28+i*66,20,44,44)}})}
+      drawMon(n,32+i*66,24+(sel?Math.sin(S.anim/5)*2:0),3);if(sel){g.strokeStyle='#5b4fd8';g.lineWidth=2;g.beginPath();g.roundRect(28+i*66,20,44,44,10);g.stroke();g.lineWidth=1}})}
   else if(S.scene==='town'){MAP.forEach((r,y)=>[...r].forEach((c,x)=>tile(c,x,y)));drawPlayer()}
-  else if(S.scene==='battle'){g.fillStyle='#dff3d0';g.fillRect(0,0,240,160);g.fillStyle='#b5d99c';
+  else if(S.scene==='battle'){let bg=g.createLinearGradient(0,0,0,160);bg.addColorStop(0,'#cfeaff');bg.addColorStop(.55,'#e8f7d8');bg.addColorStop(1,'#bfe3a0');g.fillStyle=bg;g.fillRect(0,0,240,160);g.fillStyle='#9fd27e';
     g.beginPath();g.ellipse(170,62,40,9,0,0,7);g.fill();g.beginPath();g.ellipse(64,112,46,10,0,0,7);g.fill();
     const w=S.wild,me=S.party[0];
     if(w&&!w.caught){const sx=S.shake?Math.sin(S.anim)*3:0;if(S.inOrb){g.fillStyle='#d33';g.beginPath();g.arc(170+Math.sin(S.anim/2)*(S.wobble?3:0),52,7,Math.PI,0);g.fill();
@@ -167,9 +198,37 @@ function say(t,opts){return new Promise(res=>{box.className='';box.innerHTML='<d
 function ask(t){return new Promise(res=>{box.className='';box.innerHTML='<div>'+t+'</div><input id="nm" maxlength="10" autocomplete="off"><div id="menu"><button id="ok">OK</button></div>';
   const i=document.getElementById('nm');i.focus();const go=()=>{const v=i.value.trim();if(v)res(v)};document.getElementById('ok').onclick=go;i.onkeydown=e=>{if(e.key==='Enter')go()}})}
 
+
+// ---- Start menu, team, dex, save ----
+const SAVE='wildlings-save';
+function save(){try{localStorage.setItem(SAVE,JSON.stringify({player:S.player,party:S.party,orbs:S.orbs,px:S.px,py:S.py,seen:S.seen,caught:S.caught}));return true}catch{return false}}
+function load(){try{return JSON.parse(localStorage.getItem(SAVE))}catch{return null}}
+function closePanel(){panel.className='';panel.innerHTML='';S.busy=false}
+function openMenu(){if(S.scene!=='town'||S.busy)return;S.busy=true;panel.className='on';
+  panel.innerHTML=`<h3>${S.player}<button class="x">✕</button></h3><div class="s" style="color:#667">Orbs: ${S.orbs} · Caught: ${S.caught.length}/${Object.keys(SP).length}</div>
+  <div class="main"><button data-a="team">🐾 Team</button><button data-a="dex">📖 Wildlingdex</button><button data-a="save">💾 Save</button><button data-a="close">↩ Back to game</button></div>`;
+  panel.querySelector('.x').onclick=closePanel;
+  panel.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>({team:showTeam,dex:showDex,close:closePanel,
+    save:()=>{b.textContent=save()?'✅ Saved!':'⚠ Could not save';setTimeout(()=>b.textContent='💾 Save',1200)}})[b.dataset.a]())}
+function showTeam(){panel.innerHTML=`<h3>Team<button class="x">‹ Menu</button></h3>`+S.party.map((m,i)=>{const p=m.hp/m.maxhp,c=p>.5?'#3ddc84':p>.2?'#ffd166':'#ff6b6b';
+  return `<div class="card"><img src="${sprite(m.name)}"><div style="flex:1"><div class="n">${m.name} <span class="s">Lv${m.lv}</span> ${i===0?'<span class="pill" style="background:#5b4fd8">lead</span>':''}</div>
+  <div>${pills(m.type)}</div><div class="hp"><i style="width:${p*100}%;background:${c}"></i></div>
+  <div class="s">HP ${m.hp}/${m.maxhp} · ATK ${m.atk} · DEF ${m.def} · SPD ${m.spd}<br>${m.moves.join(' · ')}</div></div>
+  ${i?`<button class="lead" data-i="${i}">Make lead</button>`:''}</div>`}).join('');
+  panel.querySelector('.x').onclick=()=>{S.busy=false;openMenu()};
+  panel.querySelectorAll('.lead').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;[S.party[0],S.party[i]]=[S.party[i],S.party[0]];showTeam()})}
+function showDex(){panel.innerHTML=`<h3>Wildlingdex<button class="x">‹ Menu</button></h3><div class="dex">`+Object.keys(SP).map((n,i)=>{const c=S.caught.includes(n),sn=S.seen.includes(n);
+  return `<div class="${sn?'':'unk'}"><img src="${sprite(n)}"><div><b>#${String(i+1).padStart(2,'0')}</b> ${sn?n:'???'}</div><div>${sn?pills(SP[n].type):''}</div><div class="s">${c?'● caught':sn?'○ seen':''}</div></div>`}).join('')+'</div>';
+  panel.querySelector('.x').onclick=()=>{S.busy=false;openMenu()}}
+document.getElementById('mbtn').onclick=e=>{e.preventDefault();panel.className?closePanel():openMenu()};
+addEventListener('keydown',e=>{if(['Escape','m','M'].includes(e.key)||(e.key==='Enter'&&S.scene==='town'&&!S.busy)){if(panel.className)closePanel();else openMenu()}});
+
 // ---- Story ----
 async function start(){
-  S.scene='title';await say('Press to start ▶');
+  S.scene='title';const sv=load();
+  const pickT=await say('Welcome, trainer!',[{label:'▶ New game',v:'n'},{label:'⟳ Continue',v:'c',disabled:!sv}]);
+  if(pickT==='c'){Object.assign(S,{player:sv.player,party:sv.party,orbs:sv.orbs,px:sv.px,py:sv.py,seen:sv.seen||[],caught:sv.caught||[],face:'d',step:0});
+    await say(`Welcome back, ${S.player}!`);goTown();return}
   S.scene='lab';S.pick=-1;
   await say('PROF. ALDER: Welcome to the world of WILDLINGS — creatures living in every meadow, river and ember-field.');
   S.player=await ask("First, what's your name?");
@@ -179,7 +238,7 @@ async function start(){
   while(!choice){const i=await say('Choose your first Wildling:',['Lincendo','Platymind','Venibri'].map((n,k)=>({label:n,v:k})));
     S.pick=i;const n=['Lincendo','Platymind','Venibri'][i];
     if(await say(`${n} — ${info[n]} Take it?`,[{label:'Yes',v:1},{label:'No',v:0}]))choice=n;else S.pick=-1}
-  S.party=[mk(choice,5)];
+  S.party=[mk(choice,5)];mark('seen',choice);mark('caught',choice);
   await say(`${S.player} received ${choice}! Here are 5 CATCH ORBS too. Weaken a wild Wildling, then throw one!`);
   await say('Explore Maplewick Town! Walk in the tall grass to meet wild Wildlings, and come back to the LAB door to heal.');
   S.px=11;S.py=7;S.face='d';S.step=0;goTown()}
@@ -200,7 +259,7 @@ async function battleLoop(){
   const pool=['Pibbit','Pibbit','Pebblor','Mothwisp','Coralisk','Hootle','Hootle','Fumepot','Lincendo','Platymind','Venibri'];
   S.wild=mk(pool[Math.floor(Math.random()*pool.length)],3+Math.floor(Math.random()*3));S.inOrb=false;
   S.scene='battle';const w=S.wild,me=S.party[0];me.atkMod=1;
-  await say(`A wild ${w.name} appeared!`);await say(`Go, ${me.name}!`);
+  mark('seen',w.name);await say(`A wild ${w.name} appeared!`);await say(`Go, ${me.name}!`);
   while(true){
     const act=await say(`What will ${me.name} do?`,[{label:'FIGHT',v:'f'},{label:`ORB ×${S.orbs}`,v:'o',disabled:!S.orbs},{label:'TEAM',v:'h'},{label:'RUN',v:'r'}]);
     if(act==='r'){await say('Got away safely!');break}
@@ -214,16 +273,16 @@ async function battleLoop(){
       const rate=(3*w.maxhp-2*w.hp)/(3*w.maxhp);let shakes=0;S.wobble=true;
       for(let i=0;i<3;i++){await wait(650);if(Math.random()<Math.pow(rate,.6)*0.9+.05)shakes++;else break}
       S.wobble=false;
-      if(shakes===3){w.caught=true;S.party.push(w);await say(`Gotcha! ${w.name} was caught!`);
+      if(shakes===3){w.caught=true;S.party.push(w);mark('caught',w.name);await say(`Gotcha! ${w.name} was caught!`);
         await say(`${w.name} joined ${S.player}'s team. Team size: ${S.party.length}.`);break}
       S.inOrb=false;await say(['Oh no! It broke free!','Argh! Almost had it!','Shoot! So close!'][Math.min(shakes,2)]);
       await useMove(w,me,pick(w),false)}
     if(w.hp<=0){await say(`Wild ${w.name} fainted!`);const xp=w.lv*8;await say(`${me.name} gained ${xp} XP.`);
       if(Math.random()<.5){me.lv++;me.maxhp+=3;me.hp=Math.min(me.maxhp,me.hp+3);me.atk++;me.def++;await say(`${me.name} grew to Lv ${me.lv}!`)}break}
     if(me.hp<=0){await say(`${me.name} fainted! ${S.player} hurried back to the lab...`);S.party.forEach(m=>m.hp=m.maxhp);S.px=11;S.py=7;break}}
-  S.wild=null;S.inOrb=false;goTown()}
+  S.wild=null;S.inOrb=false;save();goTown()}
 function pick(m){return m.moves[Math.floor(Math.random()*m.moves.length)]}
-dpad.querySelectorAll('button').forEach(b=>{let t;const go=()=>move(b.dataset.d);b.onpointerdown=e=>{e.preventDefault();go();t=setInterval(go,180)};b.onpointerup=b.onpointerleave=()=>clearInterval(t)});
+dpad.querySelectorAll('button[data-d]').forEach(b=>{let t;const go=()=>move(b.dataset.d);b.onpointerdown=e=>{e.preventDefault();go();t=setInterval(go,180)};b.onpointerup=b.onpointerleave=()=>clearInterval(t)});
 start();
 </script>
 </body>
