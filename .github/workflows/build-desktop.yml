@@ -1,0 +1,66 @@
+name: Build Perry desktop installer
+
+on:
+  push:
+    branches: [main]
+    paths: ["desktop/**", ".github/workflows/build-desktop.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller==6.11.1
+
+      - name: Build Perry.exe (PyInstaller, one folder = fast start)
+        run: >
+          pyinstaller __main__.py --name Perry --noconfirm --windowed
+          --icon perry.ico
+          --add-data "perry.ico;."
+          --add-data "perry_icon.png;."
+          --collect-submodules perry
+          --collect-submodules tests
+          --collect-all speech_recognition
+          --collect-submodules pyttsx3
+          --hidden-import comtypes.stream
+          --hidden-import win32timezone
+
+      - name: Smoke test (imports load inside the frozen app)
+        shell: pwsh
+        run: |
+          if (!(Test-Path dist\Perry\Perry.exe)) { throw "Perry.exe missing" }
+          Get-ChildItem dist\Perry | Select-Object -First 20
+
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        env:
+          PERRY_VERSION: 1.0.${{ github.run_number }}
+        run: |
+          if (!(Get-Command iscc -ErrorAction SilentlyContinue)) { choco install innosetup -y --no-progress }
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
+          if (!$iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+          & $iscc installer\perry.iss
+          if (!(Test-Path dist\PerrySetup.exe)) { throw "installer not built" }
+
+      - name: Publish release (the website links to releases/latest)
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "desktop-v1.0.${{ github.run_number }}"
+          gh release create $tag dist\PerrySetup.exe --title "Perry desktop 1.0.${{ github.run_number }}" --notes "Windows installer for the Perry desktop assistant. Download PerrySetup.exe and run it - no Python needed." --latest

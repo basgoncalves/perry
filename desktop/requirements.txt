@@ -1,0 +1,18 @@
+# Perry - Jarvis-style desktop assistant (Windows)
+keyboard==0.13.5
+SpeechRecognition==3.10.4
+pyttsx3==2.98
+psutil==6.0.0
+pygetwindow==0.0.9
+# Microphone backend for SpeechRecognition and for the clap detector's
+# shared audio hub. On Windows, if 'pip install pyaudio' fails, use:
+#   pip install pipwin && pipwin install pyaudio
+PyAudio==0.2.14
+# Fast RMS/peak maths on every 32 ms audio chunk (clap onset detection).
+numpy>=1.26
+# For converting your image into the app icon (make_icon.py).
+Pillow==10.4.0
+# Win32 API: used to capture only the apps that own a visible window
+# (so restore relaunches your apps, not Windows system services), and to
+# initialize COM for text-to-speech on background threads.
+pywin32==306

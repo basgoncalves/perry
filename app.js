@@ -308,7 +308,7 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
   const ua=navigator.userAgent, ios=/iPhone|iPad|iPod/.test(ua), android=/Android/.test(ua);
   const phone=ios||android||matchMedia('(pointer:coarse) and (max-width:900px)').matches;
   const installed=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
-  if(!phone)return;                       // desktop keeps the .zip download
+  if(!phone)return;                       // desktop keeps the Windows installer download
   if(installed){dl.remove();return}       // already running as the app
   let ev=null;
   addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e});

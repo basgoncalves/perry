@@ -1,0 +1,21 @@
+PERRY DESKTOP — install
+=======================
+Needs: Windows 10/11 and Python 3.10+ (python.org, tick "Add to PATH").
+
+1. Unzip this folder anywhere (e.g. Desktop\Perry).
+2. Double-click  "Start Perry (first run).bat"  — it builds a private
+   environment and installs everything (a few minutes the first time).
+3. Optional: "Setup Perry Shortcut.bat" for a desktop icon, and
+   "Enable Perry Autostart.bat" so Perry starts hidden at login.
+
+Using Perry
+- Ctrl + Alt + P summons him (bottom-right corner).
+- Click Perry for the ring of options: restore session, VS Code, scripts,
+  hand mouse, Task Manager, tests... and  ◎ Perry Online  — the web app's
+  chat, Spending, Portfolio, Market, Goals, Invest and Biz pages in their
+  own app windows.
+- ♪ SFX Lab (test tool): pick a video, "Auto from cuts" puts a whoosh on
+  every cut (or type cues like "1.2 whoosh"), Render -> <name>_sfx.mp4.
+  Needs ffmpeg:  winget install ffmpeg
+- Voice: "Perry, Daddy's home" restores your last session;
+  "Perry, open portfolio / spending / market / goals / invest".
