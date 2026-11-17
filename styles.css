@@ -116,3 +116,14 @@ label{display:block;color:var(--mut);font-size:12px}label input{margin-top:4px}
 .dl-card b{color:#22d3ee;letter-spacing:.08em}.dl-card p{margin:0;line-height:1.5}
 .dl-alt{color:#5b7a86;font-size:13px}
 .core.think{animation:pulse 1s ease-in-out infinite}
+/* Office tab */
+.office-room h2{display:flex;align-items:center;gap:8px}.office-n{margin-left:auto;font-size:11px;color:var(--mut);letter-spacing:0}
+.office-room.hot{border-color:var(--amber);box-shadow:0 0 0 1px #ffc24a55}
+.office-agent{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 6px;border-top:1px solid var(--line);cursor:pointer}
+.office-agent:hover{background:#ffffff08}
+.office-dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#05080f;background:var(--c)}
+.office-dot.working{animation:officePulse 1s infinite alternate}.office-dot.idle{background:#1b2a3a;color:var(--mut)}
+.office-mid{display:flex;flex-direction:column;min-width:0}.office-mid b{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.office-mid small,.office-right small{color:var(--mut);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.office-right{display:flex;flex-direction:column;align-items:flex-end}.office-st{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--c)}
+@keyframes officePulse{to{box-shadow:0 0 12px var(--c)}}
