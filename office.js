@@ -8,7 +8,7 @@
   const $ = id => document.getElementById(id);
   const el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
   const fmt = s => s < 60 ? Math.floor(s) + 's' : s < 3600 ? Math.floor(s / 60) + 'm' : s < 86400 ? Math.floor(s / 3600) + 'h' : Math.floor(s / 86400) + 'd';
-  let url = 'http://localhost:8765', hideIdle = false, timer = null, prev = {}, first = true;
+  let url = 'http://localhost:8765', hideIdle = false, timer = null, prev = {}, first = true, lastOk = 0;
   try { url = localStorage.getItem(KEY) || url; hideIdle = localStorage.getItem(KEY + '.hide') === '1'; } catch (e) {}
 
   function setUrl(u) { url = (u || '').trim().replace(/\/+$/, '') || 'http://localhost:8765'; try { localStorage.setItem(KEY, url); } catch (e) {} }
@@ -60,12 +60,16 @@
     clearTimeout(timer);
     if (!$('tab-office').classList.contains('active')) { timer = setTimeout(poll, 5000); return; }
     try {
-      const r = await fetch(url + '/rooms.json', {cache: 'no-store'});
-      if (!r.ok) throw new Error(r.status);
-      render(await r.json());
+      const ctl = new AbortController(); const kill = setTimeout(() => ctl.abort(), 20000);
+      const r = await fetch(url + '/rooms.json', {cache: 'no-store', signal: ctl.signal});
+      clearTimeout(kill);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      render(await r.json()); lastOk = Date.now();
       $('office-help').hidden = true; status('● Live · ' + url.replace(/^https?:\/\//, ''), true);
     } catch (e) {
-      $('office-help').hidden = false; status('○ Office not reachable at ' + url, false);
+      if (Date.now() - lastOk < 30000) { timer = setTimeout(poll, 3000); return; } // one slow or missed check: keep showing Live
+      $('office-help').hidden = false;
+      status('○ Office not reachable at ' + url + (lastOk ? ' (last seen ' + new Date(lastOk).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) + ')' : '') + ' · ' + (e.name === 'AbortError' ? 'timed out' : e.message), false);
     }
     timer = setTimeout(poll, 3000);
   }
