@@ -297,6 +297,17 @@ render();
 const h=new Date().getHours();
 say(`Good ${h<12?'morning':h<18?'afternoon':'evening'}, sir. Perry online.`+(S.tx.length?'':' No data yet — load demo data in Settings or import a bank CSV.'),true);
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+// Version label: click to fetch the newest Perry Online and reload.
+(()=>{const v=document.getElementById('ver');if(!v)return;const cur=v.textContent;
+ v.onclick=async()=>{v.textContent='Checking…';
+  try{const t=await (await fetch('index.html?'+Date.now(),{cache:'no-store'})).text();
+   const m=t.match(/id="ver"[^>]*>([^<]+)</);const latest=m?m[1]:cur;
+   if(latest===cur){v.textContent=cur+' ✓ latest';setTimeout(()=>v.textContent=cur,2500);return}
+   v.textContent='Updating to '+latest.split(' ')[0]+'…';
+   if('caches' in window)for(const k of await caches.keys())await caches.delete(k);
+   const r=await navigator.serviceWorker?.getRegistration();if(r)await r.update();
+   location.reload();
+  }catch(e){v.textContent=cur+' (offline)';setTimeout(()=>v.textContent=cur,2500)}}})();
 
 /* deep links: #spend, #port, #market... (used by desktop Perry) */
 (()=>{const go=()=>{const t=location.hash.slice(1);if(t&&document.getElementById('tab-'+t))show(t)};window.addEventListener('hashchange',go);go();})();
