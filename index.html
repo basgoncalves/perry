@@ -187,6 +187,27 @@
     <iframe src="biz/plan.html" title="Coaching practice finances" style="width:100%;height:calc(100vh - 180px);border:0;border-radius:12px;background:#fff"></iframe>
   </section>
 
+  <!-- OFFICE -->
+  <section id="tab-office" class="tab">
+    <div class="card">
+      <h2>Virtual office</h2>
+      <p class="sub" id="office-status">Connecting…</p>
+      <div class="kpis" id="office-kpis" style="margin-top:10px;grid-template-columns:repeat(4,1fr)"></div>
+      <div class="row">
+        <label class="check" style="margin:0"><input type="checkbox" id="office-hide"> Hide idle</label>
+        <button class="btn small ghost" id="office-notify">🔔 Alerts</button>
+        <button class="btn small ghost" id="office-full">Full office ↗</button>
+      </div>
+    </div>
+    <div class="card" id="office-help" hidden>
+      <h2>Start the office</h2>
+      <p class="sub">This tab reads the office running on your PC, so nothing goes online. On the PC, say <b>"Perry, open virtual office"</b> or run <code>python office</code> in <code>Desktop\perry</code>, then come back here.</p>
+      <p class="sub">On your phone, Perry Online can't reach the PC directly (browsers block it). Run <code>python office --lan</code> on the PC and use <b>Full office ↗</b> with the address it prints.</p>
+      <div class="row"><input id="office-url" placeholder="http://localhost:8765"><button class="btn small" id="office-save">Save</button></div>
+    </div>
+    <div id="office-rooms"></div>
+  </section>
+
   <!-- GAMES -->
   <section id="tab-games" class="tab">
     <iframe src="games/monsters.html?v=0.7.0" title="Wildlings demo" style="width:100%;height:calc(100vh - 180px);border:0;border-radius:12px;background:#1b1d2a"></iframe>
@@ -220,11 +241,13 @@
   <button data-tab="goals">◆<span>Goals</span></button>
   <button data-tab="invest">%<span>Invest</span></button>
   <button data-tab="biz">✚<span>Biz</span></button>
+  <button data-tab="office">⌂<span>Office</span></button>
   <button data-tab="games">♣<span>Games</span></button>
   <button data-tab="set">⚙<span>Settings</span></button>
 </nav>
 
 <script src="market.js"></script>
+<script src="office.js"></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>
