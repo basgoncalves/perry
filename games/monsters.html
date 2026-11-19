@@ -129,7 +129,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.19.0',BUILT='19 Nov 2026 23:55';
+const VERSION='0.20.0',BUILT='20 Nov 2026 00:15';
 document.getElementById('ver').textContent=`v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -326,6 +326,45 @@ EVO('Pangolite','Pangolord',18,{'#a1805a':'#6d5a4a','#8d6e4a':'#4e3f33','#c9a77c
 EVO('Chamelure','Chromaleon',18,{'#66bb6a':'#ab47bc','#43a047':'#7b1fa2','#aed581':'#ffd54f','#c5e1a5':'#f8bbd0','#8e44ad':'#00e5ff'},null,d=>{X.horn(d,4.8,4.3,1,'#ffd54f');X.star(d,9,4.4,'#80deea');X.star(d,7.2,3.2,'#f48fb1')});
 EVO('Capybask','Capylord',18,{'#a9825a':'#8a6a4a','#b8926a':'#a07a55'},null,d=>{X.crown(d,3.6,2.9);d.line('M5.6 6.6 Q7.4 5.6 10 6.6','#4fc3f7',.5)});
 EVO('Emberyx','Pandaflare',18,{'#c0502a':'#9c2f1a'},d=>X.aura(d,'#ff6b35'),d=>{X.flame(d,10.9,6.2,1.4);X.flame(d,3.5,2.7,.6);X.flame(d,8.5,2.7,.6)});
+// ---- v0.20: taxonomy, hybrids & breeding ----
+const CLS={Lincendo:['Mammals','Cats (lynx)'],Pibbit:['Mammals','Rabbits'],Dunemole:['Mammals','Moles'],Frostkit:['Mammals','Foxes'],Pangolite:['Mammals','Pangolins'],Capybask:['Mammals','Rodents (capybara)'],Emberyx:['Mammals','Red pandas'],Platymind:['Mammals','Monotremes (platypus)'],
+  Venibri:['Birds','Hummingbirds'],Hootle:['Birds','Owls'],Gullwing:['Birds','Gulls'],Chamelure:['Reptiles','Chameleons'],Voltfin:['Amphibians','Salamanders (axolotl)'],Mothwisp:['Insects','Moths'],
+  Coralisk:['Sea life','Crabs'],Glimstar:['Sea life','Sea stars'],Kelpling:['Sea life','Kelp dwellers'],Pebblor:['Elementals','Living stone'],Fumepot:['Elementals','Hearth spirits']};
+const lineBase=n=>{while(SP[n].from)n=SP[n].from;return n};
+const clsOf=n=>{const b=lineBase(n);return SP[b].parents?['Hybrids',SP[b].parents.join(' × ')]:CLS[b]||['Unknown','—']};
+const BREED=[];
+function HYB(name,art,map,post,type,pa,pb,moves,learn){const A=SP[pa],B=SP[pb],av=k=>Math.round((A[k]+B[k])/2*1.06);SP[name]={type,hp:av('hp'),atk:av('atk'),def:av('def'),spd:av('spd'),moves,learn,col:{},art:[],parents:[pa,pb],artBase:art};BREED.push([pa,pb,name]);
+  ART[name]=(d,ctx)=>{ART[art](painter(ctx,map),ctx);post&&post(d)}}
+function HEVO(base,name,lv,map,pre,post){EVO(base,name,lv,null,null,null);const art=SP[base].artBase;ART[name]=(d,ctx)=>{pre&&pre(d);ART[art](painter(ctx,map),ctx);post&&post(d)}}
+HYB('Vulpynx','Lincendo',{'#d4843f':'#dfeaf5','#c27535':'#9fc4e8','#f6dfb0':'#ffffff','#6b3a1c':'#7fb2e0'},d=>X.gem(d,4.5,3.3,'#4fc3f7',.4),['flame','frost'],'Lincendo','Frostkit',['Cinder','Frostbite','Scratch'],{12:'Flamewheel',18:'Blizzard',26:'Inferno'});
+HEVO('Vulpynx','Glaciflare',22,{'#d4843f':'#b9d4f0','#c27535':'#6fa8dc','#f6dfb0':'#ffffff','#6b3a1c':'#4fc3f7'},d=>X.aura(d,'#81d4fa'),d=>{X.flame(d,8.8,6.4,1.2);X.gem(d,4.5,3.2,'#4fc3f7',.5);X.gem(d,3.2,2.2,'#b3e5fc',.3);X.gem(d,5.9,2.2,'#b3e5fc',.3)});
+HYB('Axoplat','Platymind',{'#3f7fbf':'#f2c230','#9cc8ee':'#fff3c4','#6b4a2b':'#2f6fb0','#ff7ad9':'#00e5ff'},d=>{[[5.8,4.8],[6.2,5.9]].forEach(([x,y])=>d.p(`M${x} ${y} L${x+1.5} ${y-.6} L${x+1.1} ${y} L${x+1.6} ${y+.5} Z`,'#29b6f6'))},['tide','spark'],'Platymind','Voltfin',['Splash','Spark','Growl'],{12:'Aquajet',18:'Thunderclap',26:'Tidalwave'});
+HEVO('Axoplat','Voltypus',22,{'#3f7fbf':'#f59e0b','#9cc8ee':'#ffe9a8','#6b4a2b':'#1e4f8a','#ff7ad9':'#00e5ff'},d=>X.aura(d,'#00e5ff'),d=>{[[5.8,4.8],[6.2,5.9]].forEach(([x,y])=>d.p(`M${x} ${y} L${x+1.8} ${y-.8} L${x+1.2} ${y} L${x+1.9} ${y+.6} Z`,'#00e5ff'));X.bolt(d,10.4,1.4,.8)});
+HYB('Stormbri','Venibri',{'#3cb371':'#f5f5f5','#2e8b57':'#b0bec5','#7a48b8':'#607d8b','#b48ae6':'#cfd8dc','#d81b60':'#ffca28'},null,['leaf','plain'],'Venibri','Gullwing',['Peck','Gust','Thornshot'],{12:'Leafblade',18:'Slam',26:'Hyperrush'});
+HEVO('Stormbri','Tempestbri',22,{'#3cb371':'#e3f2fd','#2e8b57':'#78909c','#7a48b8':'#37474f','#b48ae6':'#90a4ae','#d81b60':'#29b6f6'},null,d=>{d.p('M4 3.8 Q3.4 2 4.6 1 Q4.9 2.6 5.3 3.7 Z','#29b6f6');d.line('M8.6 1.6 Q10.4 1.2 11.4 2 M1 9.4 Q2.4 9 3.4 9.6','#81d4fa',.22)});
+HYB('Embun','Pibbit',{'#b08a5a':'#c0502a','#9a7448':'#3e2723','#f2dcb4':'#fff3e0'},d=>X.flame(d,8.7,9.4,.7),['plain','flame'],'Pibbit','Emberyx',['Nibble','Cinder','Growl'],{12:'Flamewheel',18:'Slam',26:'Inferno'});
+HEVO('Embun','Blazehare',22,{'#b08a5a':'#9c2f1a','#9a7448':'#3e2723','#f2dcb4':'#ffe0b2'},d=>X.aura(d,'#ff6b35'),d=>{X.flame(d,8.8,9.4,1);X.flame(d,4.2,1.2,.5);X.flame(d,6.8,1.2,.5)});
+HYB('Pangomole','Pangolite',{'#a1805a':'#c8a46a','#8d6e4a':'#e0a890','#c9a77c':'#efd9b0'},d=>d.line('M4.2 11 L3.9 11.6 M4.7 11.1 L4.7 11.7 M7.6 11 L7.3 11.6 M8.1 11.1 L8.1 11.7','#fff',.16),'ground','Pangolite','Dunemole',['Mudslap','Scratch','Harden'],{12:'Quake',18:'Slam'});
+HEVO('Pangomole','Terradrill',22,{'#a1805a':'#8a6a4a','#8d6e4a':'#b0bec5','#c9a77c':'#d9c4a0'},null,d=>{d.p('M1.4 7.6 L-.4 8.3 L1.4 8.6 Z','#cfd8dc');[4.8,6.1,7.4,8.7].forEach(x=>d.p(`M${x-.45} 6.1 L${x} 4.6 L${x+.45} 6.1 Z`,'#cfd8dc'))});
+HYB('Mothleon','Chamelure',{'#66bb6a':'#b39ddb','#43a047':'#7e57c2','#aed581':'#e7dcff','#c5e1a5':'#ede7f6','#8e44ad':'#5e35b1'},d=>{d.el(7.4,5.8,1.7,1.1,'#e7dcff',-.5);d.el(7.4,5.8,.6,.45,'#9b7fd1',-.5,false);d.line('M4 4.4 Q3.4 2.6 2.6 2.2 M4.8 4.3 Q4.9 2.6 5.6 2','#5e4b8b',.16)},['poison','psychic'],'Chamelure','Mothwisp',['Venomsting','Mindwave','Dustcloud'],{12:'Toxicfang',18:'Psyblast'});
+HEVO('Mothleon','Prismoth',22,{'#66bb6a':'#f48fb1','#43a047':'#ab47bc','#aed581':'#fff59d','#c5e1a5':'#fce4ec','#8e44ad':'#00e5ff'},d=>X.aura(d,'#ce93d8'),d=>{d.el(7.4,5.4,2.1,1.4,'#b3e5fc',-.5);d.el(7.4,5.4,.8,.55,'#f48fb1',-.5,false);X.star(d,10,3.6);X.star(d,2,2.4,'#80deea')});
+HYB('Starclaw','Coralisk',{'#ff7f6e':'#f48fb1','#ff9f8f':'#ce93d8','#ffd2c8':'#fff59d','#c94a3c':'#ab47bc'},d=>X.star(d,6,7,'#fff59d'),['tide','psychic'],'Coralisk','Glimstar',['Splash','Mindwave','Harden'],{12:'Aquajet',18:'Psyblast',26:'Tidalwave'});
+HEVO('Starclaw','Cosmoclaw',22,{'#ff7f6e':'#7e57c2','#ff9f8f':'#ffd54f','#ffd2c8':'#fff59d','#c94a3c':'#4527a0'},d=>X.aura(d,'#ffd54f'),d=>{X.star(d,6,7,'#fff59d');X.star(d,1.4,2.6);X.star(d,10.6,2.6);X.star(d,6,1)});
+HYB('Mossrock','Pebblor',{'#9a9aa5':'#7f8f6a','#8a8a95':'#6b7a58','#7cb36b':'#43a047'},d=>{d.p('M4.6 4.2 Q4 2.2 4.8 .9 Q5.5 2.4 5.5 4 Z','#43a047');d.p('M6.6 3.9 Q6.6 2 7.6 1.1 Q7.9 2.8 7.5 4.2 Z','#2e7d32')},['leaf','ground'],'Pebblor','Kelpling',['Tackle','Thornshot','Harden'],{12:'Leafblade',18:'Quake'});
+HEVO('Mossrock','Groveback',22,{'#9a9aa5':'#5f6e52','#8a8a95':'#4e5c44','#7cb36b':'#2e7d32'},null,d=>{d.p('M5.7 4.2 L5.7 2.2 L6.3 2.2 L6.3 4.2 Z','#5b3d24');d.el(6,1.5,1.5,1.2,'#2e7d32');d.el(5.2,1.9,.9,.75,'#43a047');d.el(6.9,1.9,.9,.75,'#388e3c');X.horn(d,3.2,5.2,-1,'#efe6d0');X.horn(d,8.8,5.2,1,'#efe6d0')});
+function breedResult(a,b){const A=lineBase(a.name),B=lineBase(b.name);if(A===B)return A;const r=BREED.find(([x,y])=>(x===A&&y===B)||(x===B&&y===A));return r?r[2]:null}
+function showBreed(sel=[],msg=''){const two=sel.length===2,a=two&&S.party[sel[0]],b=two&&S.party[sel[1]],res=two?breedResult(a,b):null,ready=two&&[a,b].every(m=>m.lv>=10&&bond(m).f>=30);
+  panel.innerHTML=`<h3>🧬 Breeding<button class="x">‹ Menu</button></h3><div class="card"><div class="s">Pick two of your Wildlings. Related species can pair up, and some different animals produce a <b>hybrid</b> that can't be found in the wild. Both parents need to be Lv 10+ with ❤️ Friendship 30+ (pet and play with them).</div></div>`+
+   S.party.map((m,i)=>`<div class="card" data-i="${i}" style="${sel.includes(i)?'outline:3px solid #5b4fd8':''}"><img src="${sprite(m.name)}"><div style="flex:1"><div class="n">${m.name} <span class="s">Lv${m.lv}</span></div><div class="s">${clsOf(m.name).join(' · ')} · ❤️ ${bond(m).f}</div></div></div>`).join('')+
+   `<div class="card"><div style="flex:1" class="s">${msg||(!two?'Select two Wildlings.':res?(ready?`Compatible! Offspring: <b>${S.seen.includes(res)?res:'a new kind of Wildling…'}</b>`:'Compatible — but both need Lv 10+ and ❤️ 30+ first.'):'These two are not compatible. Try animals that could plausibly mix — the Wildlingdex tree gives hints.')}</div>${two&&res&&ready?'<button class="lead" id="doBreed">Breed</button>':''}</div>`;
+  panel.querySelector('.x').onclick=()=>{S.busy=false;openMenu()};
+  panel.querySelectorAll('[data-i]').forEach(c=>c.onclick=()=>{const i=+c.dataset.i;let s2=sel.includes(i)?sel.filter(x=>x!==i):[...sel,i].slice(-2);showBreed(s2)});
+  const bb=panel.querySelector('#doBreed');if(bb)bb.onclick=()=>{const kid=mk(res,5);[a,b].forEach(m=>bond(m).f=Math.max(0,bond(m).f-15));bond(kid).f=40;S.party.push(kid);mark('seen',kid.name);mark('caught',kid.name);save();S.flash=10;
+    showBreed([],`🥚 An egg hatched… <b>${kid.name}</b> (Lv 5) joined your team!<br><img src="${sprite(kid.name)}" style="width:72px;height:72px">`)}}
+function dexTree(){const el=document.getElementById('dex'),sh=el.firstChild,groups={};DEXN.filter(n=>!SP[n].from).forEach(n=>{const[c,f]=clsOf(n);(groups[c]=groups[c]||[]).push([f,n])});
+  const chainOf=n=>{const o=[];let c=n;while(c){o.push(c);c=SP[c].evo&&SP[c].evo[0]}return o};
+  sh.innerHTML=`<h3>🌳 Tree of life<button id="dexB">‹ List</button></h3>`+['Mammals','Birds','Reptiles','Amphibians','Insects','Sea life','Elementals','Hybrids'].filter(c=>groups[c]).map(c=>`<div class="dd"><div class="row"><b>${c}</b>${groups[c].map(([f,n])=>`<div style="border-left:3px solid #c9cdf5;padding:2px 0 2px 8px;margin:4px 0"><div style="font-size:10.5px;color:#667">${c==='Hybrids'?'🧬 '+f:f}</div><div class="evo">${chainOf(n).map((k,i,arr)=>`${i?`<span>→ Lv ${SP[arr[i-1]].evo[1]} →</span>`:''}<button data-n="${k}">${S.caught.includes(k)?'<i class="cb" style="position:static;display:inline-block"></i>':''}<img src="${sprite(k)}">${k}</button>`).join('')}</div></div>`).join('')}</div></div>`).join('');
+  sh.scrollTop=0;sh.querySelector('#dexB').onclick=dexList;sh.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>dexShow(b.dataset.n))}
 const need=m=>10+m.lv*10;
 function restat(m){const s=SP[m.name],st=k=>Math.floor(s[k]*m.lv/50)+5,old=m.maxhp;m.maxhp=Math.floor(s.hp*m.lv/50)+m.lv+10;m.atk=st('atk');m.def=st('def');m.spd=st('spd');m.type=s.type;m.hp=Math.min(m.maxhp,m.hp+Math.max(0,m.maxhp-old))}
 async function learn(m,mv){const M0=MOVES[mv];if(m.moves.length<4){m.moves.push(mv);await say(`${m.name} learned ${mv}!`);return}
@@ -742,12 +781,23 @@ function init3d(THREE){
     return g}
   function label(text,sc=1){const c=document.createElement('canvas');c.width=256;c.height=64;const x=c.getContext('2d');x.font='800 40px system-ui,sans-serif';x.textAlign='center';x.fillStyle='#fff';x.strokeStyle='#0008';x.lineWidth=7;x.strokeText(text,128,46);x.fillText(text,128,46);
     const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));s.scale.set(1.6*sc,.4*sc,1);s.renderOrder=10;return s}
-  function person(col,hair){const g=new THREE.Group();
-    const body=sh(new THREE.Mesh(new THREE.CapsuleGeometry(.15,.3,6,14),mat(col)));body.position.y=.46;g.add(body);
-    g.add(cyl(.05,.045,.26,'#2f3346',-.07,.13,0,8),cyl(.05,.045,.26,'#2f3346',.07,.13,0,8));
-    const aL=cyl(.04,.035,.3,col,-.2,.5,0,8),aR=cyl(.04,.035,.3,col,.2,.5,0,8);aL.rotation.z=.15;aR.rotation.z=-.15;g.add(aL,aR);g.userData.arms=[aL,aR];
-    g.add(ball(.17,'#eec39a',0,.86,0));const h=sh(new THREE.Mesh(new THREE.SphereGeometry(.18,18,10,0,Math.PI*2,0,Math.PI/2),mat(hair)));h.position.set(0,.88,-.01);h.rotation.x=-.22;g.add(h);
-    g.add(ball(.025,'#1c1a24',-.06,.87,.155),ball(.025,'#1c1a24',.06,.87,.155));
+  function person(col,hair,o={}){const g=new THREE.Group(),h0=[...col].reduce((a,c)=>a*31+c.charCodeAt(0),7)>>>0;
+    const skin=o.skin||['#f1c9a5','#e3b088','#c68b5e','#8d5a3b'][h0%4],pants=o.pants||['#2f3346','#4a3b2a','#3b4a5c','#5a4a6a','#274b3a'][(h0>>3)%5];hair=hair||['#3a2a20','#1f1a17','#7a4a22','#c9a25a','#8a8a8a','#a8432a'][(h0>>5)%6];
+    const limb=(x,y,len,r,c,foot)=>{const p=new THREE.Group();p.position.set(x,y,0);const m=sh(new THREE.Mesh(new THREE.CapsuleGeometry(r,len,4,10),mat(c)));m.position.y=-len/2-r*.4;p.add(m);
+      p.add(foot?ball(r*1.2,'#3a2a20',0,-len-r*1.5,.035,1,.7,1.6):ball(r*1.02,skin,0,-len-r*1.3,0));g.add(p);return p};
+    const legs=[limb(-.075,.37,.2,.052,pants,1),limb(.075,.37,.2,.052,pants,1)];
+    const torso=sh(new THREE.Mesh(new THREE.CylinderGeometry(.145,.118,.3,16),mat(col)));torso.position.y=.5;g.add(torso);g.add(ball(.145,col,0,.65,0,1,.42,1),cyl(.124,.124,.045,'#2a2238',0,.362,0,16));
+    g.add(box(.012,.26,.012,'#ffffff55',0,.52,.142));
+    const arms=[limb(-.19,.66,.19,.042,col,0),limb(.19,.66,.19,.042,col,0)];arms[0].rotation.z=-.1;arms[1].rotation.z=.1;
+    g.add(cyl(.052,.052,.07,skin,0,.71,0,10),ball(.168,skin,0,.875,0,1,1.04,1));
+    const hr=sh(new THREE.Mesh(new THREE.SphereGeometry(.176,20,12,0,Math.PI*2,0,Math.PI*.56),mat(hair)));hr.position.set(0,.885,-.012);hr.rotation.x=-.38;g.add(hr);
+    const style=o.cap?0:(h0>>8)%4;if(style===1)g.add(ball(.13,hair,0,.8,-.09,1.15,1.25,.8));if(style===2)g.add(ball(.07,hair,0,1.06,-.04));if(style===3)g.add(ball(.05,hair,-.1,.98,.08),ball(.05,hair,.1,.98,.08));
+    [-1,1].forEach(sd=>{g.add(ball(.03,'#fff',sd*.062,.885,.148,1,1.15,.6),ball(.017,'#2a2238',sd*.062,.883,.165),box(.05,.01,.01,hair,sd*.062,.93,.158))});
+    g.add(ball(.016,skin,0,.855,.172),box(.045,.009,.01,'#9a4a4a',0,.815,.158));
+    if(o.cap){const cp=sh(new THREE.Mesh(new THREE.SphereGeometry(.182,20,10,0,Math.PI*2,0,Math.PI*.48),mat(o.cap)));cp.position.set(0,.9,0);cp.rotation.x=-.12;g.add(cp);g.add(box(.2,.018,.14,o.cap,0,.93,.19),ball(.022,'#fff',0,1.075,-.02));
+      g.add(box(.2,.24,.1,'#c9773a',0,.54,-.17),box(.16,.08,.03,'#a85f2c',0,.5,-.225),box(.03,.3,.02,'#8a4a22',-.09,.56,.135),box(.03,.3,.02,'#8a4a22',.09,.56,.135))}
+    else if((h0>>11)%3===0)g.add(box(.2,.05,.012,['#e53935','#fbc02d','#26a69a'][(h0>>13)%3],0,.6,.14));
+    g.userData.arms=arms;g.userData.legs=legs;
     const ex=label('!');ex.scale.set(1.2,.3,1);ex.position.y=1.35;ex.visible=false;g.add(ex);g.userData.ex=ex;return g}
   // monster billboards from the vector art
   const texC={};function monTex(n){if(texC[n])return texC[n];const im=new Image();const t=new THREE.Texture(im);t.colorSpace=THREE.SRGBColorSpace;im.onload=()=>t.needsUpdate=true;im.src=sprite(n);return texC[n]=t}
@@ -772,7 +822,7 @@ function init3d(THREE){
     const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t}
   const ROT={d:0,u:Math.PI,l:-Math.PI/2,r:Math.PI/2},DV={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]};
   let world=null,npcs=[],water=[];
-  const player=person('#2f5fb8','#c23030');scene.add(player);
+  const player=person('#2f5fb8','#5a3a22',{cap:'#d63b3b',skin:'#f1c9a5',pants:'#2f3346'});scene.add(player);
   const follower=monster();scene.add(follower);const foe=monster();foe.onTop(true);scene.add(foe);foe.visible=false;
   const orb=new THREE.Group();{const a=new THREE.Mesh(new THREE.SphereGeometry(.12,20,10,0,Math.PI*2,0,Math.PI/2),mat('#26c6da',{roughness:.3}));const b=new THREE.Mesh(new THREE.SphereGeometry(.12,20,10,0,Math.PI*2,Math.PI/2,Math.PI/2),mat('#1565c0',{roughness:.3}));const r=new THREE.Mesh(new THREE.TorusGeometry(.12,.012,6,24),mat('#ffd54f'));r.rotation.x=Math.PI/2;orb.add(a,b,r);orb.traverse(o=>o.castShadow=true)}scene.add(orb);orb.visible=false;
   const waterMat=new THREE.MeshStandardMaterial({color:'#3f8fd2',roughness:.08,metalness:.3}),leafIM=new THREE.MeshStandardMaterial({roughness:.95}),coneG=new THREE.ConeGeometry(1,1,8);
@@ -830,7 +880,7 @@ function init3d(THREE){
         const L=new THREE.PointLight('#ff9a3c',6,5);L.position.set(X,.7,Z);world.add(f,f2,L);fires.push([f,f2,L])}
       else{const t=sh(new THREE.Mesh(new THREE.ConeGeometry(.62,.95,4),mat('#c96f3a')));t.rotation.y=Math.PI/4;t.position.set(X,.47,Z);world.add(t);
         const dr=new THREE.Mesh(new THREE.ConeGeometry(.2,.55,3),mat('#3a2418'));dr.position.set(X,.28,Z+.33);dr.rotation.x=-.5;world.add(dr);world.add(cyl(.015,.015,.25,'#eee',X,1,Z,5))}});
-    (m.npcs||[]).filter(vis).forEach(n=>{const p=person(n.c,'#3a2a20');p.userData.n=n;npcs.push(p);world.add(p)});
+    (m.npcs||[]).filter(vis).forEach(n=>{const p=person(n.c);p.userData.n=n;npcs.push(p);world.add(p)});
     scene.add(world);camPos=null;follower.position.set(S.follow[0]+.5,0,S.follow[1]+.5)}
   let pals=[],fires=[];let camPos=null,stage=null,orbT=0,lastInOrb=false;const tgt=new THREE.Vector3(),look=new THREE.Vector3(),M4=new THREE.Matrix4(),Q=new THREE.Quaternion(),V=new THREE.Vector3(),SC=new THREE.Vector3(),E=new THREE.Euler();
   function draw(){const t=performance.now()/1000,w=cv3.clientWidth,h=cv3.clientHeight;
@@ -838,7 +888,7 @@ function init3d(THREE){
     const battle=S.scene==='battle';
     player.position.set(S.dx+.5,S.mv?Math.abs(Math.sin(t*13))*.04:0,S.dy+.5);
     const want=ROT[S.face]||0;player.rotation.y+=(((want-player.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI)*.3;
-    const sw=S.mv?Math.sin(t*13)*.5:0;player.userData.arms[0].rotation.x=sw;player.userData.arms[1].rotation.x=-sw;
+    const sw=S.mv?Math.sin(t*13)*.5:0;[player,...pals].forEach(q=>{q.userData.arms[0].rotation.x=sw;q.userData.arms[1].rotation.x=-sw;q.userData.legs[0].rotation.x=-sw*.9;q.userData.legs[1].rotation.x=sw*.9});
     npcs.forEach(p=>{const n=p.userData.n;p.position.x+=(n.x+.5-p.position.x)*.2;p.position.z+=(n.y+.5-p.position.z)*.2;p.rotation.y=ROT[n.face||'d'];p.userData.ex.visible=!!n.alert});
     const zm=S.zoom||1,mg=18*Math.max(1,zm);chunkG.forEach(g=>{const c=g.userData.c;g.visible=S.dx>c.ox-mg&&S.dx<c.ox+c.w+mg&&S.dy>c.oy-mg-6&&S.dy<c.oy+c.h+mg});if(scene.fog)scene.fog.far=44*Math.max(1,zm);if(scene.fog)scene.fog.near=22*Math.max(1,zm);
     grassSets.forEach(gs=>{if(!gs.G.visible)return;gs.data.forEach(([x,z,hh,ph],i)=>{E.set(Math.sin(t*1.4+ph+x*.3)*.12,ph,Math.cos(t*1.1+ph)*.08);Q.setFromEuler(E);V.set(x,0,z);SC.set(1,hh,1);M4.compose(V,Q,SC);gs.gi.setMatrixAt(i,M4)});gs.gi.instanceMatrix.needsUpdate=true});
@@ -859,7 +909,7 @@ function init3d(THREE){
     if(!battle)stage=null;
     if(stage){stage.pm.lerp(V.set(stage.me[0],0,stage.me[1]),.12);player.position.copy(stage.pm);player.rotation.y=ROT[S.face]||0;
       if(stage.trN){const p=npcs.find(q=>q.userData.n===stage.trN);if(p){stage.tm.lerp(V.set(stage.tr[0],0,stage.tr[1]),.12);p.position.copy(stage.tm);p.rotation.y=(ROT[S.face]||0)+Math.PI}}}
-    if(pals.map(g=>g.userData.id).join()!==S.partners.map(p=>p.id).join()){pals.forEach(g=>scene.remove(g));pals=S.partners.map(p=>{const g=person(p.c,'#3a2a20');g.userData.id=p.id;scene.add(g);return g})}
+    if(pals.map(g=>g.userData.id).join()!==S.partners.map(p=>p.id).join()){pals.forEach(g=>scene.remove(g));pals=S.partners.map(p=>{const g=person(p.c);g.userData.id=p.id;scene.add(g);return g})}
     pals.forEach((g,i)=>{const tr=(S.trail||[])[i+1]||S.follow;let tx=tr[0]+.5,tz=tr[1]+.5;if(stage){const q=[-stage.d[1],stage.d[0]],sg=i?-1:1;tx=stage.me[0]+q[0]*sg*.9-stage.d[0]*.5;tz=stage.me[1]+q[1]*sg*.9-stage.d[1]*.5}
       const ddx=tx-g.position.x,ddz=tz-g.position.z;if(Math.hypot(ddx,ddz)>5)g.position.set(tx,0,tz);else{g.position.x+=ddx*.15;g.position.z+=ddz*.15}g.rotation.y=ROT[S.face]||0});
     player.visible=!stage;pals.forEach(g=>g.visible=!stage);npcs.forEach(p=>p.visible=!stage&&Math.abs(p.userData.n.x-S.dx)<34&&Math.abs(p.userData.n.y-S.dy)<34);follower.onTop(!!stage);
@@ -961,9 +1011,9 @@ function load(){try{return JSON.parse(localStorage.getItem(SAVE))}catch{return n
 function closePanel(){panel.className='';panel.innerHTML='';S.busy=false}
 function openMenu(){if(S.scene!=='town'||S.busy)return;S.busy=true;panel.className='on';
   panel.innerHTML=`<h3>${S.player}<button class="x">✕</button></h3><div class="s" style="color:#667">Orbs: ${S.orbs} · Coins: ${S.coins} · Badges: ${S.badges.length?S.badges.map(b=>'🏅'+b).join(' '):'none'} · Caught: ${S.caught.length}/${Object.keys(SP).length}${S.beaten.includes('aurelia')?' · 🏆 Champion':''} · v${VERSION}</div>
-  <div class="main"><button data-a="team">🐾 Team</button><button data-a="dex">📖 Wildlingdex</button><button data-a="pals">🤝 Partners</button><button data-a="bag">🎒 Bag &amp; camping</button><button data-a="ctl">🎮 Controls: ${CTL==='arrows'?'Arrows':'Tap & hold'} (tap to switch)</button><button data-a="save">💾 Save</button><button data-a="close">↩ Back to game</button></div>`;
+  <div class="main"><button data-a="team">🐾 Team</button><button data-a="dex">📖 Wildlingdex</button><button data-a="pals">🤝 Partners</button><button data-a="breed">🧬 Breeding</button><button data-a="bag">🎒 Bag &amp; camping</button><button data-a="ctl">🎮 Controls: ${CTL==='arrows'?'Arrows':'Tap & hold'} (tap to switch)</button><button data-a="save">💾 Save</button><button data-a="close">↩ Back to game</button></div>`;
   panel.querySelector('.x').onclick=closePanel;
-  panel.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>({team:showTeam,dex:showDex,pals:showPartners,bag:showBag,close:closePanel,ctl:()=>{setCtl(CTL==='arrows'?'tap':'arrows');b.textContent=`🎮 Controls: ${CTL==='arrows'?'Arrows':'Tap & hold'} (tap to switch)`},
+  panel.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>({team:showTeam,dex:showDex,pals:showPartners,breed:()=>showBreed(),bag:showBag,close:closePanel,ctl:()=>{setCtl(CTL==='arrows'?'tap':'arrows');b.textContent=`🎮 Controls: ${CTL==='arrows'?'Arrows':'Tap & hold'} (tap to switch)`},
     save:()=>{b.textContent=save()?'✅ Saved!':'⚠ Could not save';setTimeout(()=>b.textContent='💾 Save',1200)}})[b.dataset.a]())}
 function showTeam(){panel.innerHTML=`<h3>Team<button class="x">‹ Menu</button></h3>`+S.party.map((m,i)=>{const p=m.hp/m.maxhp,c=p>.5?'#3ddc84':p>.2?'#ffd166':'#ff6b6b';
   return `<div class="card"><img src="${sprite(m.name)}"><div style="flex:1"><div class="n">${m.name} <span class="s">Lv${m.lv}</span> ${i===0?'<span class="pill" style="background:#5b4fd8">lead</span>':''}</div>
@@ -1125,20 +1175,21 @@ const baseOf=n=>{while(SP[n].from)n=SP[n].from;return n};
 function dexWhere(n){const b=baseOf(n),out=[];for(const m of Object.values(MAPS)){if(m.indoor||m.chunks||!m.rows.some(r=>r.includes('G')))continue;
     const pool=m.pool||(m.name==='Route 1'?['Pibbit','Pebblor','Mothwisp','Hootle','Coralisk','Fumepot','Lincendo','Platymind','Venibri']:['Pibbit','Pebblor','Mothwisp','Hootle','Coralisk']);if(pool.includes(b)||pool.includes(n))out.push(m.name)}return out}
 function dexList(){const el=document.getElementById('dex'),sh=el.firstChild;
-  sh.innerHTML=`<h3>📖 Wildlingdex <span style="font-size:11px;color:#667">${S.caught.length}/${DEXN.length} caught</span><button id="dexX">✕</button></h3><div class="dx">`+DEXN.map(n=>`<button data-n="${n}">${S.caught.includes(n)?'<i class="cb"></i>':''}<img src="${sprite(n)}"><span class="no">${dexNo(n)}</span>${n}</button>`).join('')+'</div>';
-  sh.querySelector('#dexX').onclick=()=>el.className='';sh.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>dexShow(b.dataset.n));el.className='on';sh.scrollTop=el._y||0}
+  sh.innerHTML=`<h3>📖 Wildlingdex <span style="font-size:11px;color:#667">${S.caught.length}/${DEXN.length} caught</span><span><button id="dexT" style="margin-right:4px">🌳 Tree</button><button id="dexX">✕</button></span></h3><div class="dx">`+DEXN.map(n=>`<button data-n="${n}">${S.caught.includes(n)?'<i class="cb"></i>':''}<img src="${sprite(n)}"><span class="no">${dexNo(n)}</span>${n}</button>`).join('')+'</div>';
+  sh.querySelector('#dexX').onclick=()=>el.className='';sh.querySelector('#dexT').onclick=dexTree;sh.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>dexShow(b.dataset.n));el.className='on';sh.scrollTop=el._y||0}
 function dexShow(n){const el=document.getElementById('dex'),sh=el.firstChild,s=SP[n];el._y=sh.scrollTop;
   const chain=[];let c=baseOf(n);while(c){chain.push(c);c=SP[c].evo&&SP[c].evo[0]}
   const weak=Object.keys(TC).filter(t=>TY(s.type).reduce((x,d)=>x*((EFF[t]||{})[d]||1),1)>1),res=Object.keys(TC).filter(t=>TY(s.type).reduce((x,d)=>x*((EFF[t]||{})[d]||1),1)<1);
   const pl=a=>a.map(k=>`<span class="pill" style="background:${TC[k]}">${k}</span>`).join('')||'—',wh=dexWhere(n);
   const mvl=m=>`${m} <span style="color:#889">(${MOVES[m].type}${MOVES[m].pow?' · '+MOVES[m].pow:' · status'})</span>`;
   sh.innerHTML=`<h3>${dexNo(n)} ${n}<button id="dexB">‹ All</button></h3><div class="dd"><img src="${sprite(n)}"><div style="text-align:center">${pills(s.type)} ${S.caught.includes(n)?'<span class="pill" style="background:#1565c0">● caught</span>':S.seen.includes(n)?'<span class="pill" style="background:#889">seen</span>':'<span class="pill" style="background:#bbb">not seen yet</span>'}</div>
+   <div class="row"><b>Classification</b>${clsOf(n).join(' · ')}</div>
    <div class="row"><b>Base stats</b>${[['HP','hp'],['ATK','atk'],['DEF','def'],['SPD','spd']].map(([l,k])=>`<div class="sbar">${l}<span style="background:#e6e8f5;border-radius:9px"><i style="width:${Math.min(100,s[k]/95*100)}%"></i></span>${s[k]}</div>`).join('')}</div>
    <div class="row"><b>Evolution</b><div class="evo">${chain.length>1?chain.map((c,i)=>`${i?`<span>→ Lv ${SP[chain[i-1]].evo[1]} →</span>`:''}<button data-n="${c}"><img src="${sprite(c)}">${c}</button>`).join(''):'Does not evolve'}</div></div>
    <div class="row"><b>Starting moves</b>${s.moves.map(mvl).join('<br>')}</div>
    <div class="row"><b>Learns by level</b>${Object.entries(s.learn||{}).map(([l,m])=>`Lv ${l}: ${mvl(m)}`).join('<br>')||'—'}</div>
    <div class="row"><b>Weak to</b>${pl(weak)}<b style="margin-top:6px">Resists</b>${pl(res)}</div>
-   <div class="row"><b>Where to find</b>${wh.length?wh.join(' · '):SP[n].from?'Evolve '+SP[n].from+(dexWhere(SP[n].from).length?'':' (or raise a starter)'):'Starter from Prof. Alder'}</div></div>`;
+   <div class="row"><b>Where to find</b>${wh.length?wh.join(' · '):SP[n].from?'Evolve '+SP[n].from+(dexWhere(SP[n].from).length?'':' (or raise a starter)'):(SP[n].parents?'🧬 Breed '+SP[n].parents.join(' × ')+' (☰ → Breeding)':'Starter from Prof. Alder')}</div></div>`;
   sh.scrollTop=0;sh.querySelector('#dexB').onclick=dexList;sh.querySelectorAll('.evo [data-n]').forEach(b=>b.onclick=()=>dexShow(b.dataset.n))}
 document.getElementById('dexBtn').onclick=()=>{document.getElementById('dex')._y=0;dexList()};
 // ---- Dev mode ----
@@ -1146,7 +1197,7 @@ const DEV=(()=>{try{return JSON.parse(localStorage.getItem('wildlings-dev'))||{}
 function devOpen(){const el=document.getElementById('dev'),sh=el.firstChild,T=[['god','🛡 God mode — my Wildlings take no damage'],['kill','💥 Auto-kill — my attacks always KO'],['catch','◓ Auto-catch — orbs never fail'],['noenc','🌿 No wild encounters'],['notr','🙈 Trainers ignore me']];
   const free=S.scene==='town'&&!S.busy;
   sh.innerHTML=`<h3>🛠 Dev mode <button id="devX" style="border:0;background:#5b4fd8;color:#fff;border-radius:999px;padding:4px 12px;font-weight:700">✕</button></h3>`+T.map(([k,l])=>`<label>${l}<input type="checkbox" data-k="${k}" ${DEV[k]?'checked':''}></label>`).join('')+
-   `<div class="acts"><button data-a="heal">❤️ Restore team</button><button data-a="lv">⬆️ Lead +5 levels</button><button data-a="orbs">◓ +20 orbs</button><button data-a="mats">🪵 +10 materials</button><button data-a="badges">🏅 All badges</button><button data-a="coins">💰 +1000 coins</button></div>
+   `<div class="acts"><button data-a="heal">❤️ Restore team</button><button data-a="lv">⬆️ Lead +5 levels</button><button data-a="orbs">◓ +20 orbs</button><button data-a="mats">🪵 +10 materials</button><button data-a="badges">🏅 All badges</button><button data-a="coins">💰 +1000 coins</button><button data-a="bonds">❤️ Max bonds</button></div>
    <select id="devTp" ${free?'':'disabled'}><option value="">🚀 Teleport to…${free?'':' (not during battle/dialog)'}</option>${Object.entries(MAPS).filter(([k,m])=>!m.indoor&&!m.chunks).map(([k,m])=>`<option value="${k}">${m.name}</option>`).join('')}</select><div id="devMsg" style="margin-top:8px;font-size:12px;color:#667"></div>`;
   const msg=t=>sh.querySelector('#devMsg').textContent=t,upd=()=>{localStorage.setItem('wildlings-dev',JSON.stringify(DEV));document.getElementById('devBtn').classList.toggle('act',Object.values(DEV).some(Boolean))};
   sh.querySelectorAll('[data-k]').forEach(c=>c.onchange=()=>{DEV[c.dataset.k]=c.checked;upd()});
@@ -1157,6 +1208,7 @@ function devOpen(){const el=document.getElementById('dev'),sh=el.firstChild,T=[[
     if(a==='orbs'){S.orbs+=20;msg('Orbs: '+S.orbs)}
     if(a==='mats'){Object.keys(S.bag).forEach(k=>S.bag[k]+=10);msg('Materials added.')}
     if(a==='badges'){S.badges=['River','Mind','Ember','Thorn','Frost','Storm'];msg('All 6 badges granted.')}
+    if(a==='bonds'){S.party.forEach(m=>Object.assign(bond(m),{f:100,l:100,h:100}));msg('All bonds maxed.')}
     if(a==='coins'){S.coins+=1000;msg('Coins: '+S.coins)}
     if(S.player)save()});
   sh.querySelector('#devTp').onchange=e=>{const k=e.target.value;if(!k||!(S.scene==='town'&&!S.busy))return;const m=MAPS[k];enterMap(k,Math.floor(m.rows[0].length/2),4);save();el.className=''};
