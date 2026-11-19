@@ -127,7 +127,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.16.0',BUILT='19 Nov 2026 22:35';
+const VERSION='0.16.1',BUILT='19 Nov 2026 22:40';
 document.getElementById('ver').textContent=`v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -750,7 +750,7 @@ function init3d(THREE){
   const orb=new THREE.Group();{const a=new THREE.Mesh(new THREE.SphereGeometry(.12,20,10,0,Math.PI*2,0,Math.PI/2),mat('#26c6da',{roughness:.3}));const b=new THREE.Mesh(new THREE.SphereGeometry(.12,20,10,0,Math.PI*2,Math.PI/2,Math.PI/2),mat('#1565c0',{roughness:.3}));const r=new THREE.Mesh(new THREE.TorusGeometry(.12,.012,6,24),mat('#ffd54f'));r.rotation.x=Math.PI/2;orb.add(a,b,r);orb.traverse(o=>o.castShadow=true)}scene.add(orb);orb.visible=false;
   function build(id){const m=MAPS[id];if(world){scene.remove(world);world.traverse(o=>{o.geometry&&o.geometry!==blobG[0]&&o.geometry.dispose&&!blobG.includes(o.geometry)&&o.geometry.dispose()})}
     world=new THREE.Group();npcs=[];water=[];grassData=[];const H=m.rows.length,W=m.rows[0].length;
-    scene.background=m.indoor?new THREE.Color('#1c1626'):skyT;scene.fog=m.indoor?null:new THREE.Fog('#c9e0e8',14,30);
+    scene.background=m.indoor?new THREE.Color('#1c1626'):skyT;scene.fog=m.indoor?null:new THREE.Fog('#c9e0e8',22,44);
     hemi.intensity=m.indoor?.7:.9;sun.intensity=m.indoor?1.6:2.6;
     if(!m.indoor){const far=new THREE.Mesh(new THREE.PlaneGeometry(160,160),mat(m.biome==='snow'?'#dfe9f2':m.biome==='ash'?'#6f6258':m.biome==='storm'?'#4f7f6a':'#5d8f3e'));far.rotation.x=-Math.PI/2;far.position.set(W/2,-.02,H/2);far.receiveShadow=true;world.add(far);
       for(let i=0;i<70;i++){const a=i/70*Math.PI*2,r=Math.max(W,H)*.7+3+rnd(i,1,2)*6;world.add(tree(W/2+Math.cos(a)*r,H/2+Math.sin(a)*r,i))}}
@@ -831,7 +831,7 @@ function init3d(THREE){
     // camera
     if(stage){const d=stage.d,pp=[-d[1],d[0]];const f=stage.foe,al=stage.ally;
       const m2=stage.mid;const pt=cam.aspect<1;tgt.set(m2[0]+d[0]*.4,pt?-.9:-.75,m2[1]+d[1]*.4);V.set(stage.ally[0]-d[0]*(pt?3:2.4)+pp[0]*(pt?.8:1.8),pt?2.5:1.6,stage.ally[1]-d[1]*(pt?3:2.4)+pp[1]*(pt?.8:1.8))}
-    else{const pt=cam.aspect<1;tgt.set(S.dx+.5,.5,S.dy+.5-(pt?1.1:0));V.set(S.dx+.5,M.indoor?(pt?8.5:5.2):(pt?6:3.6),S.dy+.5+(M.indoor?(pt?5:4.4):(pt?5.2:4.6)))}
+    else{const pt=cam.aspect<1;tgt.set(S.dx+.5,.5,S.dy+.5-(pt?1.1:0));V.set(S.dx+.5,M.indoor?(pt?8.5:5.2):(pt?10.5:6),S.dy+.5+(M.indoor?(pt?5:4.4):(pt?8:6.6)))}
     if(!camPos){camPos=V.clone();look.copy(tgt)}camPos.lerp(V,stage?.08:.12);look.lerp(tgt,.15);cam.position.copy(camPos);cam.lookAt(look);
     sun.position.set(S.dx-5,12,S.dy+6);sun.target.position.set(S.dx,0,S.dy);
     R.render(scene,cam)}
