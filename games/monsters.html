@@ -80,12 +80,23 @@ input:focus{border-color:#5b4fd8}
 #dev h3{margin:0 0 8px;display:flex;justify-content:space-between}#dev label{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid #eee;font-weight:600}
 #dev input{width:22px;height:22px;margin:0;padding:0}#dev .acts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
 #dev .acts button,#dev select{font:600 13px system-ui;border:0;border-radius:10px;padding:9px;background:#eef0ff;color:#2b2f5c}#dev select{width:100%;margin-top:6px}
+#moves{left:50%!important;right:auto!important;bottom:4px!important;width:min(50%,196px);transform:translateX(-50%);display:block!important}
+#moves svg{width:100%;display:block;filter:drop-shadow(0 4px 10px #0007)}
+.sg{cursor:pointer}.sg path{stroke:#fff8;stroke-width:1.5;transition:.1s}.sg:active path{filter:brightness(1.3)}.sg.dim{opacity:.25;pointer-events:none}
+.sg text,.hub text{text-anchor:middle;fill:#fff;font:800 9.5px system-ui;pointer-events:none;paint-order:stroke;stroke:#0006;stroke-width:2px}.sg text.l2{font:600 6.5px system-ui;text-transform:uppercase;opacity:.9}
+.hub{cursor:pointer}.hub.off{filter:grayscale(1) opacity(.55)}.hub text{stroke:#0005}
+#orbBtn{display:none!important}#hint{bottom:auto!important;top:60px;font-size:10px!important}
+#team img{width:32px!important;height:32px!important}#team{top:84px!important}#runBtn{top:84px!important}
+#side{position:absolute;inset:0;display:none;z-index:9;background:#0005;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#fff;text-shadow:0 2px 6px #000a}
+#side.on{display:flex;animation:pop .12s}#side b{font:800 clamp(14px,4.4vw,19px) system-ui;text-align:center;padding:0 10px}
+#side .sb{display:flex;gap:12px;width:90%}#side button{flex:1;border:0;border-radius:18px;padding:22px 6px;font:800 clamp(15px,4.6vw,20px) system-ui;background:#ffffffee;color:#2b2f5c;box-shadow:0 6px 16px #0006}
+#side button:active{background:#ffd166}#side .bar{width:60%;height:6px;border-radius:9px;background:#fff}
 </style>
 </head>
 <body>
 <div id="gba">
   <div id="screen"><canvas id="c3" style="position:absolute;inset:0;width:100%;height:100%;display:none"></canvas><canvas id="c" width="720" height="480"></canvas><div id="banner"></div><div id="panel"></div><button id="mbtn" title="Menu">☰</button><div id="stick"><i></i></div>
-<div id="hud"><div id="team"></div><button id="runBtn">RUN</button><div id="hint"></div><div id="moves"></div><div id="orbBtn"><span>◓</span><small></small></div></div><div id="toast"></div><div id="dodge"><b></b><span>⟵ swipe to dodge ⟶</span><i class="bar"></i></div></div>
+<div id="hud"><div id="team"></div><button id="runBtn">RUN</button><div id="hint"></div><div id="moves"></div><div id="orbBtn"><span>◓</span><small></small></div></div><div id="toast"></div><div id="side"><b></b><div class="sb"><button data-s="l">◀ LEFT</button><button data-s="r">RIGHT ▶</button></div><i class="bar"></i></div><div id="dodge"><b></b><span>⟵ swipe to dodge ⟶</span><i class="bar"></i></div></div>
   <div id="box" class="hide"></div>
   <div id="dpad"><button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button></div>
   <button id="devBtn">🛠 DEV</button><div id="dev"><div class="sheet"></div></div>
@@ -94,7 +105,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.13.1',BUILT='19 Nov 2026 21:55';
+const VERSION='0.14.0',BUILT='19 Nov 2026 22:20';
 document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -591,9 +602,9 @@ async function tutorial(n){
     await say('☰ MENU: the round button in the corner shows your Team, the Wildlingdex and Save. Your game also saves after every battle.');
     await say('🌿 TALL GRASS hides wild Wildlings. Trainers on the routes challenge you when they spot you. Heal at the Lab, the Inns or with Prof. Alder.')}
   if(c==='all'||c==='dodge'||c==='fight'){
-    await say('⚔️ ATTACKING: swipe an attack card ← LEFT or RIGHT →. The enemy dodges to one side — your hit only lands if you swipe the same way it dodges!');
-    await say('🛡 DEFENDING: when the enemy attacks, "Swipe to dodge" flashes. Swipe anywhere on the screen ← or →. Guess the opposite side of its attack and it misses!');
-    await say('💡 Moves like Growl or Harden need no aim — just tap them. Tap a portrait to switch Wildlings.')}
+    await say('⚔️ THE WHEEL: attacks are on the top half, defense moves on the bottom. Tap your choice FAST — whoever picks quicker strikes first (higher level gives a time bonus). Then choose LEFT or RIGHT: you hit if the enemy dodges to that side.');
+    await say('🛡 DEFENDING: when the enemy strikes, tap LEFT or RIGHT to dodge before the bar runs out. If you get hit, you lose your attack this turn. Defense moves (Guard, Recover, Counter…) always take effect.');
+    await say('💡 The orb in the middle of the wheel catches wild Wildlings. Tap a portrait to switch Wildlings.')}
   if(c==='all')await say('◓ CATCHING: in wild battles, weaken a Wildling, then tap the red-and-white orb. The weaker it is, the easier the catch.');
   if(c==='all'||c==='fight'){const ok=await say('Cousin Dina: Ready for a practice battle? Nothing is lost if you faint.',[{label:"Let's go!",v:1},{label:'Maybe later',v:0}]);
     if(ok){const keep=S.party.map(m=>({hp:m.hp,lv:m.lv,maxhp:m.maxhp,atk:m.atk,def:m.def,spd:m.spd}));dpad.style.visibility='hidden';S.wildFrom=[n.x,n.y];
@@ -714,7 +725,7 @@ function init3d(THREE){
   let world=null,npcs=[],water=[],grassI=null,grassData=[];
   const player=person('#2f5fb8','#c23030');scene.add(player);
   const follower=monster();scene.add(follower);const foe=monster();foe.onTop(true);scene.add(foe);foe.visible=false;
-  const orb=new THREE.Group();{const a=new THREE.Mesh(new THREE.SphereGeometry(.12,20,10,0,Math.PI*2,0,Math.PI/2),mat('#e53935',{roughness:.3}));const b=new THREE.Mesh(new THREE.SphereGeometry(.12,20,10,0,Math.PI*2,Math.PI/2,Math.PI/2),mat('#f5f5f5',{roughness:.3}));const r=new THREE.Mesh(new THREE.TorusGeometry(.12,.012,6,24),mat('#222'));r.rotation.x=Math.PI/2;orb.add(a,b,r);orb.traverse(o=>o.castShadow=true)}scene.add(orb);orb.visible=false;
+  const orb=new THREE.Group();{const a=new THREE.Mesh(new THREE.SphereGeometry(.12,20,10,0,Math.PI*2,0,Math.PI/2),mat('#26c6da',{roughness:.3}));const b=new THREE.Mesh(new THREE.SphereGeometry(.12,20,10,0,Math.PI*2,Math.PI/2,Math.PI/2),mat('#1565c0',{roughness:.3}));const r=new THREE.Mesh(new THREE.TorusGeometry(.12,.012,6,24),mat('#ffd54f'));r.rotation.x=Math.PI/2;orb.add(a,b,r);orb.traverse(o=>o.castShadow=true)}scene.add(orb);orb.visible=false;
   function build(id){const m=MAPS[id];if(world){scene.remove(world);world.traverse(o=>{o.geometry&&o.geometry!==blobG[0]&&o.geometry.dispose&&!blobG.includes(o.geometry)&&o.geometry.dispose()})}
     world=new THREE.Group();npcs=[];water=[];grassData=[];const H=m.rows.length,W=m.rows[0].length;
     scene.background=m.indoor?new THREE.Color('#1c1626'):skyT;scene.fog=m.indoor?null:new THREE.Fog('#c9e0e8',14,30);
@@ -787,6 +798,7 @@ function init3d(THREE){
     if(pals.map(g=>g.userData.id).join()!==S.partners.map(p=>p.id).join()){pals.forEach(g=>scene.remove(g));pals=S.partners.map(p=>{const g=person(p.c,'#3a2a20');g.userData.id=p.id;scene.add(g);return g})}
     pals.forEach((g,i)=>{const tr=(S.trail||[])[i+1]||S.follow;let tx=tr[0]+.5,tz=tr[1]+.5;if(stage){const q=[-stage.d[1],stage.d[0]],sg=i?-1:1;tx=stage.me[0]+q[0]*sg*.9-stage.d[0]*.5;tz=stage.me[1]+q[1]*sg*.9-stage.d[1]*.5}
       const ddx=tx-g.position.x,ddz=tz-g.position.z;if(Math.hypot(ddx,ddz)>5)g.position.set(tx,0,tz);else{g.position.x+=ddx*.15;g.position.z+=ddz*.15}g.rotation.y=ROT[S.face]||0});
+    player.visible=!stage;pals.forEach(g=>g.visible=!stage);npcs.forEach(p=>p.visible=!stage);follower.onTop(!!stage);
     if(lead){follower.visible=true;follower.set(lead.name,stage?1.25:.75);
       const dm=stage?(S.dodgeMe||0)*.8:0;const fx=stage?stage.ally[0]-stage.d[1]*dm:S.follow[0]+.5,fz=stage?stage.ally[1]+stage.d[0]*dm:S.follow[1]+.5;follower.position.x+=(fx-follower.position.x)*.15;follower.position.z+=(fz-follower.position.z)*.15;
       follower.position.y=Math.abs(Math.sin(t*(S.mv?13:3)))*(S.mv?.06:.03);
@@ -796,7 +808,7 @@ function init3d(THREE){
       const a=[stage.px,stage.pz],b=stage.foe;orb.position.set(a[0]+(b[0]-a[0])*k,.15+Math.sin(k*Math.PI)*1.1+(k>=1?0:.4*(1-k)),a[1]+(b[1]-a[1])*k);orb.rotation.z=S.wobble&&k>=1?Math.sin(t*12)*.4:t*10*(1-k)}else orb.visible=false;lastInOrb=S.inOrb;
     // camera
     if(stage){const d=stage.d,pp=[-d[1],d[0]];const f=stage.foe,al=stage.ally;
-      const m2=stage.mid;tgt.set(m2[0]+d[0]*.6,.45,m2[1]+d[1]*.6);V.set(stage.px-d[0]*2.4+pp[0]*2.2,3.1,stage.pz-d[1]*2.4+pp[1]*2.2)}
+      const m2=stage.mid;tgt.set(m2[0]+d[0]*.3,-.75,m2[1]+d[1]*.3);V.set(stage.ally[0]-d[0]*2.3+pp[0]*1.6,1.5,stage.ally[1]-d[1]*2.1+pp[1]*1.5)}
     else{tgt.set(S.dx+.5,.5,S.dy+.5);V.copy(tgt).add(M.indoor?new THREE.Vector3(0,5.2,4.4):new THREE.Vector3(0,3.6,4.6))}
     if(!camPos){camPos=V.clone();look.copy(tgt)}camPos.lerp(V,stage?.08:.12);look.lerp(tgt,.15);cam.position.copy(camPos);cam.lookAt(look);
     sun.position.set(S.dx-5,12,S.dy+6);sun.target.position.set(S.dx,0,S.dy);
@@ -810,14 +822,53 @@ function say(t,opts){if(S.scene==='battle'&&!opts)return toast(t);return new Pro
   else{const go=()=>{box.onclick=null;document.onkeydown=null;res()};setTimeout(()=>{box.onclick=go;document.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')go()}},150);box.innerHTML+='<div style="text-align:right">▼</div>'}})}
 function toast(t){box.className='hide';return new Promise(res=>{const el=document.getElementById('toast');el.innerHTML=t;el.className='on';
   let done=false;const fin=()=>{if(done)return;done=true;el.className='';el.onclick=null;res()};el.onclick=fin;setTimeout(fin,Math.min(2200,700+t.length*22))})}
-function hudChoice(me,tr){return new Promise(res=>{const hud=document.getElementById('hud'),mv=document.getElementById('moves'),orb=document.getElementById('orbBtn'),team=document.getElementById('team'),run=document.getElementById('runBtn'),hint=document.getElementById('hint');
-  const end=v=>{hud.className='';res(v)};
-  mv.innerHTML='';me.moves.forEach(m=>{const d=document.createElement('div');d.className='mv';d.style.background=TC[MOVES[m].type];d.innerHTML=`${m}<small>${MOVES[m].type}${MOVES[m].pow?' · '+MOVES[m].pow:''}</small>`;mv.appendChild(d);if(MOVES[m].pow)flick(d,sd=>end({t:'move',mv:m,side:sd}),true);else flick(d,()=>end({t:'move',mv:m}))});
-  orb.querySelector('small').textContent=S.orbs;orb.classList.toggle('off',!!tr||!S.orbs);orb.onpointerdown=null;if(!tr&&S.orbs)flick(orb,()=>end({t:'orb'}));else orb.onpointerdown=e=>{hint.textContent=tr?"You can't catch a trainer's Wildling!":'No orbs left!'};
-  team.innerHTML='';S.party.forEach((m,i)=>{const im=document.createElement('img');im.src=sprite(m.name);im.className=(m===me?'cur':'')+(m.hp<=0?' ko':'');im.title=m.name;
-    im.onclick=()=>{if(m!==me&&m.hp>0)end({t:'swap',i})};team.appendChild(im)});
-  run.style.display=tr?'none':'';run.onclick=()=>end({t:'run'});
-  hint.textContent=S.party.length>1?'Swipe an attack ← or → to aim where the enemy will dodge':'Swipe an attack ← or → to aim where the enemy will dodge';hud.className='on'})}
+// ---- v0.14 battle: reaction wheel, attack/defense moves ----
+const DEFS={Guard:'½ damage',Recover:'+25% HP',Counter:'return ½',Growl:'foe ATK↓',Dustcloud:'foe ATK↓',Harden:'DEF↑'};
+const atks=m=>m.moves.filter(x=>MOVES[x].pow).slice(0,4);
+const defs=m=>['Guard',...m.moves.filter(x=>!MOVES[x].pow),...(m.lv>=8?['Recover']:[]),...(m.lv>=14?['Counter']:[])].slice(0,4);
+const rnd1=a=>a[Math.floor(Math.random()*a.length)];const eAtk=w=>rnd1(atks(w))||'Tackle';
+function hudChoice(me,tr){return new Promise(res=>{const hud=document.getElementById('hud'),mv=document.getElementById('moves'),team=document.getElementById('team'),run=document.getElementById('runBtn'),hint=document.getElementById('hint');
+  const t0=performance.now(),end=v=>{hud.className='';v.time=(performance.now()-t0)/1000;res(v)};
+  const P=(a,r)=>[(Math.cos(a*Math.PI/180)*r).toFixed(1),(Math.sin(a*Math.PI/180)*r).toFixed(1)];
+  const seg=(a0,fill,l1,l2,attr,dim)=>{const a=a0+1.5,b=a0+43.5,[x1,y1]=P(a,98),[x2,y2]=P(b,98),[x3,y3]=P(b,40),[x4,y4]=P(a,40),[tx,ty]=P(a0+22.5,70);
+    return `<g ${attr} class="sg${dim?' dim':''}"><path d="M${x1} ${y1} A98 98 0 0 1 ${x2} ${y2} L${x3} ${y3} A40 40 0 0 0 ${x4} ${y4} Z" fill="${fill}"/><text x="${tx}" y="${+ty-1}" class="l1">${l1}</text><text x="${tx}" y="${+ty+9}" class="l2">${l2}</text></g>`};
+  const A=atks(me),D=defs(me);let h='';
+  for(let i=0;i<4;i++){const m=A[i];h+=m?seg(180+i*45,TC[MOVES[m].type],m,MOVES[m].type+' · '+MOVES[m].pow,`data-mv="${m}"`):seg(180+i*45,'#ffffff','—','',"",1)}
+  for(let i=0;i<4;i++){const m=D[i];h+=m?seg(i*45,'#3f4f86',m,DEFS[m]||'',`data-dv="${m}"`):seg(i*45,'#ffffff','—','',"",1)}
+  const orbOk=!tr&&S.orbs>0;
+  h+=`<g data-orb="1" class="hub${orbOk?'':' off'}"><circle r="36" fill="url(#og)" stroke="#ffd54f" stroke-width="3"/><path d="M0 -24 L5 -8 L22 -8 L8 2 L13 19 L0 9 L-13 19 L-8 2 L-22 -8 L-5 -8 Z" fill="#ffffff55"/><text y="-2" class="l1" style="font-size:15px">${tr?'✕':S.orbs}</text><text y="12" class="l2" style="font:700 7px system-ui">${tr?'':'CATCH'}</text></g>`;
+  mv.innerHTML=`<svg viewBox="-102 -102 204 204"><defs><radialGradient id="og" cx="35%" cy="30%"><stop offset="0" stop-color="#7ee8f5"/><stop offset="1" stop-color="#1565c0"/></radialGradient></defs>${h}</svg>`;
+  mv.querySelectorAll('[data-mv]').forEach(g=>g.onclick=()=>end({t:'move',mv:g.dataset.mv}));mv.querySelectorAll('[data-dv]').forEach(g=>g.onclick=()=>end({t:'def',dv:g.dataset.dv}));
+  mv.querySelector('[data-orb]').onclick=()=>{if(orbOk)end({t:'orb'});else hint.textContent=tr?"You can't catch a trainer's Wildling!":'No orbs left!'};
+  team.innerHTML='';if(S.party.length>1)S.party.forEach((m,i)=>{const im=document.createElement('img');im.src=sprite(m.name);im.className=(m===me?'cur':'')+(m.hp<=0?' ko':'');im.onclick=()=>{if(m!==me&&m.hp>0)end({t:'swap',i})};team.appendChild(im)});
+  run.style.display=tr?'none':'';run.onclick=()=>end({t:'run'});hint.textContent='Tap fast — the quicker pick strikes first! ⚔ top · 🛡 bottom';hud.className='on'})}
+function pickSide(title,ms){return new Promise(res=>{const el=document.getElementById('side');el.querySelector('b').textContent=title;const bar=el.querySelector('.bar');bar.style.animation='none';void bar.offsetWidth;bar.style.animation=`shrink ${ms}ms linear forwards`;el.className='on';
+  let done=false;const fin=v=>{if(done)return;done=true;el.className='';removeEventListener('keydown',kd);res(v)},kd=e=>{if(e.key==='ArrowLeft')fin('l');if(e.key==='ArrowRight')fin('r')};
+  el.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>fin(b.dataset.s));addEventListener('keydown',kd);setTimeout(()=>fin(null),ms)})}
+async function applyDef(u,foe,dv){await say(`${u.name} uses ${dv}!`);
+  if(dv==='Guard')u.guard=true;else if(dv==='Counter')u.counter=true;else if(dv==='Recover'){u.hp=Math.min(u.maxhp,u.hp+Math.ceil(u.maxhp*.25))}
+  else if(dv==='Harden')u.def=Math.ceil(u.def*1.25);else foe.atkMod=Math.max(.5,foe.atkMod*.8)}
+async function strike(a,d,mv,mine){let side,dodge;const SD=x=>x==='l'?-1:1;
+  if(mine){side=(await pickSide(`${a.name} · ${mv} — pick a side to strike`,3000))||rnd1(['l','r']);dodge=rnd1(['l','r']);S.dodgeFoe=SD(dodge)}
+  else{side=rnd1(['l','r']);dodge=await pickSide(`${a.name} uses ${mv} — dodge!`,1800);S.dodgeMe=dodge?SD(dodge):0}
+  await wait(350);let hit=!dodge||side===dodge;
+  if(mine&&DEV.kill)hit=true;if(!mine&&DEV.god){await say(`${d.name} takes no damage (dev).`);S.dodgeMe=0;return false}
+  if(!hit){await say(mine?`${d.name} dodged ${dodge==='l'?'left':'right'}!`:`${d.name} dodged!`);S.dodgeFoe=S.dodgeMe=0;return false}
+  const r=dmg(a,d,mv);let dd=mine&&DEV.kill?d.hp:r.d;if(d.guard)dd=Math.ceil(dd/2);S.hit=d;S.shake=14;S.flash=3;d.hp=Math.max(0,d.hp-dd);await wait(300);S.dodgeFoe=S.dodgeMe=0;
+  await say(`${mv} hits for ${dd}!${r.crit?' Critical!':''}${r.e>1?' Super effective!':r.e<1?' Not very effective…':''}${d.guard?' (guarded)':''}`);
+  if(d.counter&&d.hp>0){const c=Math.max(1,Math.floor(dd/2));a.hp=Math.max(0,a.hp-c);S.hit=a;S.shake=10;await say(`${d.name} counters for ${c}!`)}
+  return true}
+async function assist(me,w){for(const p of S.partners){if(w.hp<=0||Math.random()<.4)continue;const pmn=mk(p.mon,Math.max(p.lv,me.lv-1)),am=atks(pmn).sort((a,b)=>MOVES[b].pow-MOVES[a].pow)[0];if(!am)continue;
+  const r=dmg(pmn,w,am);S.hit=w;S.shake=10;w.hp=Math.max(0,w.hp-Math.max(1,Math.floor(r.d*.5)));await say(`🤝 ${p.name}'s ${pmn.name} helps with ${am}!`)}}
+async function turn(me,w,ch,tr){me.guard=me.counter=w.guard=w.counter=false;const pd=ch.t==='def',eDef=Math.random()<.22,eMv=eDef?rnd1(defs(w)):eAtk(w);
+  const adj=(a,b)=>1-Math.min(.45,Math.max(0,(a.lv-b.lv)*.03)),pT=ch.time*adj(me,w),eT=((tr?.6:.8)+Math.random()*(tr?1:1.2))*adj(w,me),prac=tr&&tr.practice;
+  if(pd)await applyDef(me,w,ch.dv);if(eDef)await applyDef(w,me,eMv);
+  if(pd&&eDef){await say('Both sides hold their ground.');return}
+  if(pd){await strike(w,me,eMv,false);return}
+  if(eDef){if(await strike(me,w,ch.mv,true)&&w.hp>0&&!prac)await assist(me,w);return}
+  const first=pT<=eT;await say(`⚡ ${first?me.name:w.name} is faster! ${pT.toFixed(2)}s vs ${eT.toFixed(2)}s`);
+  if(first){const h=await strike(me,w,ch.mv,true);if(h){if(w.hp>0&&!prac)await assist(me,w)}else if(w.hp>0&&me.hp>0)await strike(w,me,eMv,false)}
+  else{const h=await strike(w,me,eMv,false);if(!h&&me.hp>0&&w.hp>0){if(await strike(me,w,ch.mv,true)&&w.hp>0&&!prac)await assist(me,w)}}}
 function flick(el,fire,sideways){el.onclick=null;el.onpointerdown=e=>{e.preventDefault();el.setPointerCapture(e.pointerId);const x0=e.clientX,y0=e.clientY;el.classList.add('drag');
   el.onpointermove=ev=>{el.style.transform=`translate(${ev.clientX-x0}px,${(ev.clientY-y0)*.4}px) rotate(${(ev.clientX-x0)/8}deg) scale(1.06)`};
   el.onpointerup=ev=>{el.onpointermove=el.onpointerup=null;el.classList.remove('drag');const dx=ev.clientX-x0,dy=ev.clientY-y0,h=document.getElementById('hint');
@@ -902,20 +953,16 @@ async function battleLoop(tr){
   const LV=MP.lv||(S.map==='route1'?[4,6]:[3,5]);
   const foes=tr?tr.team.map(([n,l])=>mk(n,l)):[mk(pool[Math.floor(Math.random()*pool.length)],LV[0]+Math.floor(Math.random()*(LV[1]-LV[0]+1)))];
   let fi=0;S.wild=foes[0];S.inOrb=false;S.scene='battle';box.className='hide';
-  const alive=()=>S.party.filter(m=>m.hp>0);let me=alive()[0]||S.party[0];S.party.forEach(m=>m.atkMod=1);S.lead=me;
+  const alive=()=>S.party.filter(m=>m.hp>0);let me=alive()[0]||S.party[0];S.party.forEach(m=>{m.atkMod=1;restat(m)});S.lead=me;
   const foeName=w=>tr?`${tr.name}'s ${w.name}`:`Wild ${w.name}`;
   mark('seen',S.wild.name);await say(tr?`${tr.name} sent out ${S.wild.name}!`:`A wild ${S.wild.name} appeared!`);await say(`Go, ${me.name}!`);
   const swap=async(forced)=>{const opts=S.party.map((m,i)=>({label:`${m.name} <span class="t">Lv${m.lv} ${m.hp}/${m.maxhp}</span>`,v:i,disabled:m.hp<=0||m===me})).concat(forced?[]:[{label:'BACK',v:-1}]);
     const i=await say(forced?'Choose your next Wildling:':'Switch to which Wildling?',opts);if(i<0)return false;me=S.party[i];S.lead=me;await say(`Go, ${me.name}!`);return true};
   while(true){const w=S.wild;
-    const ch=await hudChoice(me,tr),act={move:'f',orb:'o',swap:'h',run:'r'}[ch.t];
+    const ch=await hudChoice(me,tr),act={move:'f',def:'f',orb:'o',swap:'h',run:'r'}[ch.t];
     if(act==='r'){await say('Got away safely!');break}
-    if(act==='h'){me=S.party[ch.i];S.lead=me;await say(`Go, ${me.name}!`);await useMove(w,me,pick(w),false)}
-    if(act==='f'){const mv=ch.mv,sd=ch.side;
-      if(me.spd>=w.spd){await useMove(me,w,mv,true,sd);if(w.hp>0)await useMove(w,me,pick(w),false)}
-      else{await useMove(w,me,pick(w),false);if(me.hp>0)await useMove(me,w,mv,true,sd)}}
-    if(act==='f'&&w.hp>0&&me.hp>0&&!(tr&&tr.practice))for(const p of S.partners){if(w.hp<=0||Math.random()<.4)continue;const pmn=mk(p.mon,Math.max(p.lv,me.lv-1)),am=pmn.moves.filter(x=>MOVES[x].pow).sort((a,b)=>MOVES[b].pow-MOVES[a].pow)[0];if(!am)continue;
-      const r=dmg(pmn,w,am);S.hit=w;S.shake=10;w.hp=Math.max(0,w.hp-Math.max(1,Math.floor(r.d*.5)));await say(`🤝 ${p.name}'s ${pmn.name} helps with ${am}!`)}
+    if(act==='h'){me=S.party[ch.i];S.lead=me;await say(`Go, ${me.name}!`);await strike(w,me,eAtk(w),false)}
+    if(act==='f')await turn(me,w,ch,tr);
     if(act==='o'){S.orbs--;await say(`${S.player} threw a CATCH ORB!`);S.inOrb=true;
       const rate=(3*w.maxhp-2*w.hp)/(3*w.maxhp);let shakes=0;S.wobble=true;
       for(let i=0;i<3;i++){await wait(650);if(Math.random()<Math.pow(rate,.6)*0.9+.05)shakes++;else break}
@@ -923,7 +970,7 @@ async function battleLoop(tr){
       if(shakes===3){w.caught=true;S.party.push(w);mark('caught',w.name);await say(`Gotcha! ${w.name} was caught!`);
         await say(`${w.name} joined ${S.player}'s team. Team size: ${S.party.length}.`);break}
       S.inOrb=false;await say(['Oh no! It broke free!','Argh! Almost had it!','Shoot! So close!'][Math.min(shakes,2)]);
-      await useMove(w,me,pick(w),false)}
+      await strike(w,me,eAtk(w),false)}
     if(w.hp<=0){await say(`${foeName(w)} fainted!`);if(!(tr&&tr.practice))await gain(me,w.lv*(tr?14:8));
       if(++fi<foes.length){S.wild=foes[fi];mark('seen',S.wild.name);await say(`${tr.name} sent out ${S.wild.name}!`);continue}
       S.wild=null;S.lead=null;return true}
