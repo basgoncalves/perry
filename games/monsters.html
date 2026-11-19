@@ -51,9 +51,9 @@ input:focus{border-color:#5b4fd8}
 #stick i{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:#ffffffcc;box-shadow:0 2px 8px #0004}
 #screen{touch-action:none}
 .hint2{font-size:10px;letter-spacing:1px;opacity:.75}
-#hud{position:absolute;inset:0;display:none;z-index:4}#hud.on{display:block}
+#hud{position:absolute;inset:0;display:none;z-index:4;pointer-events:none}#hud>*{pointer-events:auto}#hint{pointer-events:none}#hud.on{display:block}
 #moves{position:absolute;left:8px;right:64px;bottom:8px;display:flex;gap:6px}
-.mv{flex:1;border-radius:14px;padding:7px 4px;color:#fff;font-weight:800;font-size:clamp(10px,3vw,13px);text-align:center;box-shadow:0 4px 12px #0005,inset 0 1px 0 #fff5;touch-action:none;cursor:grab;transition:transform .12s;position:relative}
+.mv{flex:1;border-radius:14px;padding:7px 4px;color:#fff;font-weight:800;font-size:clamp(10px,3vw,13px);text-align:center;box-shadow:0 4px 12px #0005,inset 0 1px 0 #fff5;touch-action:none;cursor:pointer;transition:transform .12s;position:relative}
 .mv small{display:block;font-weight:600;font-size:.72em;opacity:.85;text-transform:uppercase}
 .mv.drag{transition:none;z-index:9;box-shadow:0 10px 24px #0007}
 .mv.fly{transition:transform .35s ease-in,opacity .35s;opacity:0}
@@ -72,15 +72,15 @@ input:focus{border-color:#5b4fd8}
 <body>
 <div id="gba">
   <div id="screen"><canvas id="c3" style="position:absolute;inset:0;width:100%;height:100%;display:none"></canvas><canvas id="c" width="720" height="480"></canvas><div id="banner"></div><div id="panel"></div><button id="mbtn" title="Menu">☰</button><div id="stick"><i></i></div>
-<div id="hud"><div id="team"></div><button id="runBtn">RUN</button><div id="hint">Swipe a move up at the enemy</div><div id="moves"></div><div id="orbBtn"><span>◓</span><small></small></div></div><div id="toast"></div></div>
+<div id="hud"><div id="team"></div><button id="runBtn">RUN</button><div id="hint">Tap a move to attack</div><div id="moves"></div><div id="orbBtn"><span>◓</span><small></small></div></div><div id="toast"></div></div>
   <div id="box" class="hide"></div>
-  <div id="dpad" style="display:none"></div>
-  <div class="label hint2" id="howto">Drag on the screen to walk · ☰ for menu</div>
+  <div id="dpad"><button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button></div>
+  <div class="label hint2" id="howto">Use the arrows to walk · ☰ for menu</div>
   <div class="label" id="ver">WILDLINGS</div>
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.10.0',BUILT='19 Nov 2026 21:30';
+const VERSION='0.10.1',BUILT='19 Nov 2026 21:10';
 document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -591,12 +591,9 @@ function hudChoice(me,tr){return new Promise(res=>{const hud=document.getElement
   team.innerHTML='';S.party.forEach((m,i)=>{const im=document.createElement('img');im.src=sprite(m.name);im.className=(m===me?'cur':'')+(m.hp<=0?' ko':'');im.title=m.name;
     im.onclick=()=>{if(m!==me&&m.hp>0)end({t:'swap',i})};team.appendChild(im)});
   run.style.display=tr?'none':'';run.onclick=()=>end({t:'run'});
-  hint.textContent=S.party.length>1?'Swipe a move up at the enemy · tap a portrait to switch':'Swipe a move up at the enemy';hud.className='on'})}
-function flick(el,fire){el.onpointerdown=e=>{e.preventDefault();el.setPointerCapture(e.pointerId);const x0=e.clientX,y0=e.clientY;el.classList.add('drag');
-  el.onpointermove=ev=>{el.style.transform=`translate(${ev.clientX-x0}px,${ev.clientY-y0}px) scale(1.08)`};
-  el.onpointerup=ev=>{el.onpointermove=el.onpointerup=null;el.classList.remove('drag');const dy=ev.clientY-y0;
-    if(dy<-45){el.classList.add('fly');el.style.transform=`translate(${(ev.clientX-x0)*1.5}px,${dy*3}px) scale(.6)`;setTimeout(()=>{el.classList.remove('fly');el.style.transform='';fire()},330)}
-    else{el.style.transform='';const h=document.getElementById('hint');h.textContent='Swipe it UP toward the enemy ↑'}}}}
+  hint.textContent=S.party.length>1?'Tap a move to attack · tap a portrait to switch':'Tap a move to attack';hud.className='on'})}
+function flick(el,fire){el.onpointerdown=null;el.onclick=e=>{e.preventDefault();if(el.classList.contains('fly'))return;el.classList.add('fly');el.style.transform='translateY(-120px) scale(.6)';
+  setTimeout(()=>{el.classList.remove('fly');el.style.transform='';fire()},300)}}
 function ask(t){return new Promise(res=>{box.className='';box.innerHTML='<div>'+t+'</div><input id="nm" maxlength="10" autocomplete="off"><div id="menu"><button id="ok">OK</button></div>';
   const i=document.getElementById('nm');i.focus();const go=()=>{const v=i.value.trim();if(v)res(v)};document.getElementById('ok').onclick=go;i.onkeydown=e=>{if(e.key==='Enter')go()}})}
 
@@ -700,7 +697,7 @@ dpad.querySelectorAll('button[data-d]').forEach(b=>{const d=b.dataset.d;
 dpad.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0],el=document.elementFromPoint(t.clientX,t.clientY),d=el&&el.dataset&&el.dataset.d;if(d&&d!==S.hold)press(d)},{passive:false});
 addEventListener('blur',()=>release());
 (()=>{const sc=document.getElementById('screen'),st=document.getElementById('stick'),knob=st.firstChild;let o=null;
-  const ok=()=>S.scene==='town'&&!S.busy&&!panel.className&&box.className==='hide';
+  const ok=()=>false;
   sc.addEventListener('pointerdown',e=>{if(!ok()||e.target.closest('#mbtn,#panel,#hud'))return;e.preventDefault();sc.setPointerCapture(e.pointerId);const r=sc.getBoundingClientRect();
     o={x:e.clientX,y:e.clientY,id:e.pointerId};st.style.left=(e.clientX-r.left)+'px';st.style.top=(e.clientY-r.top)+'px';st.style.display='block';knob.style.transform=''});
   sc.addEventListener('pointermove',e=>{if(!o||e.pointerId!==o.id)return;let dx=e.clientX-o.x,dy=e.clientY-o.y;const L=Math.hypot(dx,dy),m=34;if(L>m){dx*=m/L;dy*=m/L}
