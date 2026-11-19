@@ -334,6 +334,11 @@ $('#live').onclick=()=>{if(live){setLive(false);speechSynthesis&&speechSynthesis
 $('#mic').onclick=listen;$('#core').onclick=listen;
 
 /* ---------- boot ---------- */
+// One-tap holdings import: ?h=SYM,qty,avgCost,price;SYM,... (replaces holdings with the same ticker)
+(()=>{const h=new URLSearchParams(location.search).get('h');if(!h)return;
+  h.split(';').map(x=>x.split(',')).filter(a=>a[0]&&+a[1]).forEach(([sym,qty,cost,price])=>{sym=sym.toUpperCase();
+    S.holdings=S.holdings.filter(x=>x.sym!==sym);S.holdings.push({sym,qty:+qty,cost:+cost||0,price:+price||0})});
+  save();history.replaceState(null,'',location.pathname);setTimeout(()=>say('Holdings imported, my lord.',true),600)})();
 function render(){renderSpend();renderPort();renderGoals();renderInvest()}
 render();
 const h=new Date().getHours();
