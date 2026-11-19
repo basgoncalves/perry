@@ -12,7 +12,7 @@ body{margin:0;background:radial-gradient(circle at 30% 20%,#2c2f4a,#12131c);colo
 #gba{width:min(100vw,480px);background:linear-gradient(160deg,#7b6cf0,#4b3fb0);border-radius:28px;padding:14px;box-shadow:0 20px 50px #0009,inset 0 1px 0 #fff4}
 #screen{border-radius:16px;aspect-ratio:3/2;position:relative;overflow:hidden;box-shadow:inset 0 0 0 3px #0003,0 4px 14px #0005;background:#000}
 canvas{width:100%;height:100%;display:block;position:relative}
-#box{position:absolute;left:8px;right:8px;bottom:8px;min-height:28%;background:#ffffffe8;backdrop-filter:blur(6px);border-radius:14px;padding:9px 12px;font-size:clamp(12px,3.5vw,15px);line-height:1.4;box-shadow:0 6px 18px #0004;animation:pop .18s ease-out}
+#box{position:relative;margin-top:10px;min-height:96px;background:#ffffffee;border-radius:16px;padding:10px 14px;font-size:clamp(13px,3.8vw,16px);line-height:1.4;box-shadow:0 6px 18px #0004;animation:pop .18s ease-out}
 #box.hide{display:none}
 @keyframes pop{from{transform:translateY(8px);opacity:0}}
 #menu{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
@@ -49,13 +49,14 @@ input:focus{border-color:#5b4fd8}
 </head>
 <body>
 <div id="gba">
-  <div id="screen"><canvas id="c3" style="position:absolute;inset:0;width:100%;height:100%;display:none"></canvas><canvas id="c" width="720" height="480"></canvas><div id="banner"></div><div id="box"></div><div id="panel"></div></div>
+  <div id="screen"><canvas id="c3" style="position:absolute;inset:0;width:100%;height:100%;display:none"></canvas><canvas id="c" width="720" height="480"></canvas><div id="banner"></div><div id="panel"></div></div>
+  <div id="box" class="hide"></div>
   <div id="dpad"><button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button><button id="mbtn">MENU</button></div>
   <div class="label" id="ver">WILDLINGS</div>
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.8.1',BUILT='19 Nov 2026 21:05';
+const VERSION='0.8.2',BUILT='19 Nov 2026 21:10';
 document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -185,7 +186,7 @@ function render(){S.anim++;const use3=(S.scene==='town'||S.scene==='battle')&&!!
     g.fillStyle='#7a5a3a';g.fillRect(20,62,200,14);['Lincendo','Platymind','Venibri'].forEach((n,i)=>{const sel=S.pick===i;
       drawMon(n,32+i*66,24+(sel?Math.sin(S.anim/5)*2:0),3);if(sel){g.strokeStyle='#5b4fd8';g.lineWidth=2;g.beginPath();g.roundRect(28+i*66,20,44,44,10);g.stroke();g.lineWidth=1}})}
   else if(S.scene==='town'){if(T3){stepAnim();T3.draw()}else drawWorld()}
-  else if(S.scene==='battle'&&T3){stepAnim();T3.draw();const w=S.wild,me=S.lead||S.party[0];if(w&&!w.caught)bar(8,6,w,false);if(me)bar(136,40,me,true);
+  else if(S.scene==='battle'&&T3){stepAnim();T3.draw();const w=S.wild,me=S.lead||S.party[0];if(w&&!w.caught)bar(8,6,w,false);if(me)bar(136,124,me,true);
     if(S.flash>0){g.fillStyle='#fff8';g.fillRect(0,0,240,160);S.flash--}if(S.shake>0)S.shake--}
   else if(S.scene==='battle'){let bg=g.createLinearGradient(0,0,0,160);bg.addColorStop(0,'#cfeaff');bg.addColorStop(.55,'#e8f7d8');bg.addColorStop(1,'#bfe3a0');g.fillStyle=bg;g.fillRect(0,0,240,160);g.fillStyle='#9fd27e';
     g.beginPath();g.ellipse(170,62,40,9,0,0,7);g.fill();g.beginPath();g.ellipse(64,112,46,10,0,0,7);g.fill();
