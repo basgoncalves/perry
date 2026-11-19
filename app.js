@@ -232,10 +232,15 @@ $('#demo').onclick=()=>{const m=thisMonth(),p=new Date();p.setMonth(p.getMonth()
 /* ---------- Perry brain ---------- */
 const log=$('#log');
 function add(text,who){const d=document.createElement('div');d.className='msg '+who;d.textContent=text;log.appendChild(d);d.scrollIntoView({behavior:'smooth'})}
-function speak(t){if(!S.settings.voice||!window.speechSynthesis)return;speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(t.replace(/€/g,' euros ').replace(/−/g,'minus '));u.lang='en-GB';u.rate=1.02;
+function speak(t){const v0=S.settings.voice&&window.speechSynthesis;
+  if(!v0){if(live)setTimeout(listen,400);return}speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(t.replace(/€/g,' euros ').replace(/−/g,'minus ').replace(/—\s*Wikipedia:.*$/s,''));u.lang='en-GB';u.rate=1.02;
   const v=speechSynthesis.getVoices().find(v=>/en-GB/.test(v.lang)&&/male|daniel|george|arthur/i.test(v.name))||speechSynthesis.getVoices().find(v=>/en-GB/.test(v.lang));if(v)u.voice=v;
-  $('#core').classList.add('talk');u.onend=()=>$('#core').classList.remove('talk');speechSynthesis.speak(u)}
+  $('#core').classList.add('talk');
+  // Chrome on Android sometimes never fires onend, so poll as well; whichever comes first hands back to the mic.
+  let done=false;const fin=()=>{if(done)return;done=true;clearInterval(poll);$('#core').classList.remove('talk');if(live)setTimeout(listen,350)};
+  u.onend=fin;u.onerror=fin;speechSynthesis.speak(u);
+  const poll=setInterval(()=>{if(!speechSynthesis.speaking&&!speechSynthesis.pending)fin()},400)}
 function say(t,quiet){add(t,'p');if(!quiet)speak(t);$('#status').textContent=t.split('\n')[0].slice(0,60)}
 function monthFrom(q){const names=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
   if(/last month/.test(q)){const d=new Date();d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,7)}
@@ -284,11 +289,23 @@ $('#chips').innerHTML=CHIPS.map(c=>`<button>${c}</button>`).join('');
 $('#chips').onclick=e=>{if(e.target.tagName=='BUTTON')ask(e.target.textContent)};
 
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-function listen(){if(!SR){say('Voice input is not supported in this browser. Chrome works best.',true);return}
-  const r=new SR();r.lang='en-GB';r.interimResults=false;
+let live=false,rec=null,silent=0;
+function setLive(on){live=on;$('#live').classList.toggle('on',on);
+  if(!on){silent=0;try{rec&&rec.abort()}catch{}}}
+function listen(){if(!SR){setLive(false);say('Voice input is not supported in this browser. Chrome works best.',true);return}
+  if(rec)return;
+  const r=new SR();rec=r;r.lang='en-GB';r.interimResults=true;let heard='';
   $('#mic').classList.add('on');$('#core').classList.add('listen');
-  r.onresult=e=>ask(e.results[0][0].transcript);
-  r.onend=()=>{$('#mic').classList.remove('on');$('#core').classList.remove('listen')};r.start()}
+  r.onresult=e=>{const res=e.results[e.results.length-1];$('#q').value=res[0].transcript;if(res.isFinal)heard=res[0].transcript};
+  r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){setLive(false);say('I need microphone permission for live mode, sir.',true)}};
+  r.onend=()=>{rec=null;$('#mic').classList.remove('on');$('#core').classList.remove('listen');$('#q').value='';
+    if(heard.trim()){silent=0;
+      if(live&&/^(stop|bye|goodbye|that'?s all|end (live|conversation)|thanks?,? perry|thank you,? perry)\b/i.test(heard.trim())){add(heard,'u');setLive(false);say('Standing by, sir.');return}
+      ask(heard)}
+    else if(live){if(++silent>=3){setLive(false);say('Live mode off — I heard nothing, sir.',true)}else setTimeout(listen,300)}};
+  try{r.start()}catch{rec=null}}
+$('#live').onclick=()=>{if(live){setLive(false);speechSynthesis&&speechSynthesis.cancel();say('Live mode off, sir.',true);return}
+  setLive(true);say(brain.smartReady()?'Live mode on, sir. Talk to me — say "stop" when you are done.':'Live mode on, sir. Tip: turn on Smart Perry in Settings for real conversation. Say "stop" to end.')};
 $('#mic').onclick=listen;$('#core').onclick=listen;
 
 /* ---------- boot ---------- */
