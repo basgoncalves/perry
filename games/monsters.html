@@ -112,7 +112,7 @@ input:focus{border-color:#5b4fd8}
 #dev,#dex{border-radius:22px!important}
 #moves{width:min(44%,172px)!important;bottom:8px!important}
 #box:not(.hide)~#dpad{visibility:hidden!important}
-#dpad{display:none!important}
+#dpad{display:none!important}body.arrows #dpad{display:grid!important}
 </style>
 </head>
 <body>
@@ -127,7 +127,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.16.2',BUILT='19 Nov 2026 22:50';
+const VERSION='0.16.3',BUILT='19 Nov 2026 22:55';
 document.getElementById('ver').textContent=`v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -919,9 +919,9 @@ function load(){try{return JSON.parse(localStorage.getItem(SAVE))}catch{return n
 function closePanel(){panel.className='';panel.innerHTML='';S.busy=false}
 function openMenu(){if(S.scene!=='town'||S.busy)return;S.busy=true;panel.className='on';
   panel.innerHTML=`<h3>${S.player}<button class="x">✕</button></h3><div class="s" style="color:#667">Orbs: ${S.orbs} · Coins: ${S.coins} · Badges: ${S.badges.length?S.badges.map(b=>'🏅'+b).join(' '):'none'} · Caught: ${S.caught.length}/${Object.keys(SP).length}${S.beaten.includes('aurelia')?' · 🏆 Champion':''} · v${VERSION}</div>
-  <div class="main"><button data-a="team">🐾 Team</button><button data-a="dex">📖 Wildlingdex</button><button data-a="pals">🤝 Partners</button><button data-a="bag">🎒 Bag &amp; camping</button><button data-a="save">💾 Save</button><button data-a="close">↩ Back to game</button></div>`;
+  <div class="main"><button data-a="team">🐾 Team</button><button data-a="dex">📖 Wildlingdex</button><button data-a="pals">🤝 Partners</button><button data-a="bag">🎒 Bag &amp; camping</button><button data-a="ctl">🎮 Controls: ${CTL==='arrows'?'Arrows':'Tap & hold'} (tap to switch)</button><button data-a="save">💾 Save</button><button data-a="close">↩ Back to game</button></div>`;
   panel.querySelector('.x').onclick=closePanel;
-  panel.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>({team:showTeam,dex:showDex,pals:showPartners,bag:showBag,close:closePanel,
+  panel.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>({team:showTeam,dex:showDex,pals:showPartners,bag:showBag,close:closePanel,ctl:()=>{setCtl(CTL==='arrows'?'tap':'arrows');b.textContent=`🎮 Controls: ${CTL==='arrows'?'Arrows':'Tap & hold'} (tap to switch)`},
     save:()=>{b.textContent=save()?'✅ Saved!':'⚠ Could not save';setTimeout(()=>b.textContent='💾 Save',1200)}})[b.dataset.a]())}
 function showTeam(){panel.innerHTML=`<h3>Team<button class="x">‹ Menu</button></h3>`+S.party.map((m,i)=>{const p=m.hp/m.maxhp,c=p>.5?'#3ddc84':p>.2?'#ffd166':'#ff6b6b';
   return `<div class="card"><img src="${sprite(m.name)}"><div style="flex:1"><div class="n">${m.name} <span class="s">Lv${m.lv}</span> ${i===0?'<span class="pill" style="background:#5b4fd8">lead</span>':''}</div>
@@ -1041,7 +1041,8 @@ function goTo(tx,ty,it){const W=M.rows[0].length,H=M.rows.length,key=(x,y)=>y*W+
   else{let best=1e9;for(const k of prev.keys()){const x=k%W,y=(k-x)/W,dd=Math.abs(x-tx)+Math.abs(y-ty);if(dd<best){best=dd;goal=[x,y]}}if(!goal||best>3)return}
   const path=[];let c=prev.get(key(goal[0],goal[1]));while(c){path.unshift(c[2]);c=prev.get(key(c[0],c[1]))}
   S.path=path;S.pathEnd=end;S.dest=it?[it[0],it[1]]:[goal[0],goal[1]];pathStep()}
-function tapAt(cx,cy){if(!T3||S.scene!=='town'||S.busy||panel.className||box.className!=='hide')return;
+let CTL=localStorage.getItem('wildlings-ctl')||'tap';const setCtl=v=>{CTL=v;try{localStorage.setItem('wildlings-ctl',v)}catch{}document.body.classList.toggle('arrows',v==='arrows')};setCtl(CTL);
+function tapAt(cx,cy){if(CTL==='arrows')return;if(!T3||S.scene!=='town'||S.busy||panel.className||box.className!=='hide')return;
   let it=null,bd=34;const cand=[...NP().map(n=>[n.x,n.y,.55]),...S.camps.filter(c=>c.map===S.map).map(c=>[c.x,c.y,.4]),...Object.keys(M.signs||{}).map(k=>[...k.split(',').map(Number),.45])];
   for(const[x,y,h]of cand){const[px,py]=T3.project(x,y,h),dd=Math.hypot(px-cx,py-cy);if(dd<bd){bd=dd;it=[x,y]}}
   const t=T3.pick(cx,cy);if(!it&&!t)return;if(!it)it=interactAt(t[0],t[1]);
@@ -1051,7 +1052,7 @@ function tapAt(cx,cy){if(!T3||S.scene!=='town'||S.busy||panel.className||box.cla
     const dx=t[0]-S.dx,dy=t[1]-S.dy;if(Math.abs(dx)<.6&&Math.abs(dy)<.6){S.hold=null;return}const d=Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u');S.touchHold=true;if(d!==S.hold){S.hold=d;if(!S.mv)move(d)}};
   const stop=()=>{clearTimeout(tm);clearInterval(iv);if(holding){holding=false;S.touchHold=false;release()}};let iv=null;
   sc.addEventListener('pointerdown',e=>{if(e.target.tagName!=='CANVAS'){dn=null;return}dn=[e.clientX,e.clientY];pos=dn;try{sc.setPointerCapture(e.pointerId)}catch{}
-    clearTimeout(tm);tm=setTimeout(()=>{if(!dn||S.scene!=='town'||S.busy||panel.className||box.className!=='hide')return;holding=true;S.path=null;S.pathEnd=null;S.dest=null;steer();iv=setInterval(steer,80)},220)});
+    clearTimeout(tm);tm=setTimeout(()=>{if(CTL==='arrows')return;if(!dn||S.scene!=='town'||S.busy||panel.className||box.className!=='hide')return;holding=true;S.path=null;S.pathEnd=null;S.dest=null;steer();iv=setInterval(steer,80)},220)});
   sc.addEventListener('pointermove',e=>{if(dn)pos=[e.clientX,e.clientY]});
   const up=e=>{const was=holding,d0=dn;stop();dn=null;if(was||!d0)return;if(Math.hypot(e.clientX-d0[0],e.clientY-d0[1])>14)return;tapAt(e.clientX,e.clientY)};
   sc.addEventListener('pointerup',up);sc.addEventListener('pointercancel',()=>{stop();dn=null})})();
