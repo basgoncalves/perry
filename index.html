@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05080f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Perry</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="core" id="core" title="Talk to Perry"><img src="perry-head.png" alt="Perry"></div>
+  <div>
+    <h1>PERRY</h1>
+    <button id="ver" class="ver" title="Click to check for updates">v35 · 19 Nov 2026</button>
+    <p class="sub" id="status">Online. All systems nominal.</p>
+  </div>
+  <a class="dl" id="dl" href="https://github.com/basgoncalves/perry/releases/latest/download/PerrySetup.exe" title="Get Perry for Windows"><span class="ico">⬇</span><span><span id="dl-l">Download for Windows</span><small id="dl-s">desktop assistant</small></span></a>
+  <div id="dl-sheet" class="dl-sheet" hidden><div class="dl-card"><b>Install Perry</b><p id="dl-how"></p><a href="https://github.com/basgoncalves/perry/releases/latest/download/PerrySetup.exe" class="dl-alt">Windows desktop app (installer)</a><button class="btn small" id="dl-ok">OK</button></div></div>
+</header>
+
+<main>
+  <!-- PERRY CHAT -->
+  <section id="tab-perry" class="tab active">
+    <div id="log" class="log"></div>
+    <form id="ask" class="ask">
+      <button type="button" id="mic" class="mic" aria-label="Speak">🎙</button>
+      <button type="button" id="live" class="mic live" aria-label="Live conversation" title="Live conversation: talk back and forth hands-free">LIVE</button>
+      <input id="q" autocomplete="off" placeholder="Ask Perry… e.g. spending on food this month">
+      <button class="send" aria-label="Send">➤</button>
+    </form>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <!-- SPENDING -->
+  <section id="tab-spend" class="tab cols">
+    <div class="card">
+      <h2>Spending</h2>
+      <div class="row">
+        <select id="month"></select>
+        <label class="btn small">Import CSV<input type="file" id="csv" accept=".csv,text/csv" hidden></label>
+      </div>
+      <div class="kpis">
+        <div><b id="k-out">€0</b><span>Spent</span></div>
+        <div><b id="k-in">€0</b><span>Income</span></div>
+        <div><b id="k-net">€0</b><span>Net</span></div>
+      </div>
+      <canvas id="c-cat" height="220"></canvas>
+    </div>
+    <div class="card">
+      <h2>Budgets</h2>
+      <div id="budgets"></div>
+      <form id="f-budget" class="row">
+        <select id="b-cat"></select><input id="b-amt" type="number" min="0" step="1" placeholder="€ / month"><button class="btn small">Set</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Add transaction</h2>
+      <form id="f-tx" class="grid">
+        <input id="t-date" type="date" required>
+        <input id="t-desc" placeholder="Description" required>
+        <input id="t-amt" type="number" step="0.01" placeholder="Amount (− = spend)" required>
+        <select id="t-cat"></select>
+        <button class="btn">Add</button>
+      </form>
+      <h3>Transactions</h3>
+      <div id="txlist" class="list"></div>
+    </div>
+  </section>
+
+  <!-- PORTFOLIO -->
+  <section id="tab-port" class="tab cols">
+    <div class="card">
+      <h2>Portfolio</h2>
+      <div class="kpis">
+        <div><b id="p-val">€0</b><span>Value</span></div>
+        <div><b id="p-cost">€0</b><span>Cost</span></div>
+        <div><b id="p-gain">€0</b><span>Gain</span></div>
+      </div>
+      <canvas id="c-port" height="220"></canvas>
+      <button id="refresh" class="btn small">Refresh prices</button>
+      <p class="hint" id="price-hint"></p>
+    </div>
+    <div class="card">
+      <h2>Holdings</h2>
+      <div id="holdings" class="list"></div>
+      <form id="f-hold" class="grid">
+        <input id="h-sym" placeholder="Ticker (e.g. VWCE.DE, AAPL)" required>
+        <input id="h-qty" type="number" step="any" placeholder="Quantity" required>
+        <input id="h-cost" type="number" step="any" placeholder="Avg buy price" required>
+        <input id="h-price" type="number" step="any" placeholder="Current price (optional)">
+        <button class="btn">Add holding</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- GOALS -->
+  <section id="tab-goals" class="tab cols">
+    <div class="card">
+      <h2>Savings goals</h2>
+      <div id="goals"></div>
+      <form id="f-goal" class="grid">
+        <input id="g-name" placeholder="Goal (e.g. Emergency fund)" required>
+        <input id="g-target" type="number" min="1" placeholder="Target €" required>
+        <input id="g-saved" type="number" min="0" placeholder="Saved so far €" required>
+        <input id="g-month" type="number" min="0" placeholder="Adding per month €" required>
+        <button class="btn">Add goal</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- INVEST -->
+  <section id="tab-invest" class="tab cols">
+    <div class="card">
+      <h2>Compare investments</h2>
+      <div class="grid">
+        <label>Start €<input id="i-start" type="number" value="10000"></label>
+        <label>Monthly €<input id="i-month" type="number" value="200"></label>
+        <label>Years<input id="i-years" type="number" value="5"></label>
+        <label>Inflation<select id="i-infl"></select></label>
+        <label>Tax residence<select id="i-tax"><option value="PT">Portugal (28%)</option><option value="AT">Austria (27.5% KESt)</option><option value="0">Ignore tax</option></select></label>
+        <label>Show<select id="i-region"><option value="all">All</option><option value="PT">🇵🇹 Portugal</option><option value="AT">🇦🇹 Austria</option><option value="MK">🌍 Markets</option></select></label>
+      </div>
+      <canvas id="c-grow" height="260"></canvas>
+      <p class="hint">Tick options below to add or remove them from the chart. Tap a rate to edit it.</p>
+    </div>
+    <div class="card">
+      <h2>Results after <span id="i-yl">5</span> years</h2>
+      <div id="grow-out" class="list"></div>
+    </div>
+    <div class="card">
+      <h2>Options &amp; rates</h2>
+      <div id="options"></div>
+      <p class="hint">Rates checked 30 Oct 2026 from public comparison sites; banks change them often, so confirm before subscribing. Deposit rates are fixed only for their term and are assumed to renew at the same rate. Market figures are last-12-month returns, which don't predict next year. Gross rates; tax applied using your tax residence. General information, not financial advice.</p>
+      <button id="i-reset" class="btn small ghost">Reset rates to defaults</button>
+    </div>
+  </section>
+
+  <!-- MARKET MAP -->
+  <section id="tab-market" class="tab">
+    <div id="m-stock" hidden>
+      <div class="card">
+        <button class="btn small ghost" id="s-back">← Market</button>
+        <div class="s-head">
+          <div><h2 id="s-name">—</h2><p class="hint" id="s-meta"></p></div>
+          <div class="s-px"><b id="s-price">—</b><span id="s-chg"></span></div>
+        </div>
+        <div class="m-range" id="s-range">
+          <button data-r="1M">1M</button><button data-r="3M">3M</button><button data-r="6M">6M</button><button data-r="YTD">YTD</button><button data-r="1Y" class="on">1Y</button><button data-r="2Y">2Y</button><button data-r="5Y">5Y</button>
+        </div>
+        <div class="kpis" id="s-kpis"></div>
+        <div style="height:260px"><canvas id="s-line"></canvas></div>
+        <label class="check"><input type="checkbox" id="s-vs"> Compare with the whole market (both start at 100)</label>
+      </div>
+      <div class="card">
+        <h2>Numbers</h2>
+        <div class="list" id="s-facts"></div>
+        <p class="hint">Prices in US dollars, not adjusted for dividends. Older than 2 years is weekly. Not financial advice.</p>
+      </div>
+    </div>
+    <div id="m-main">
+    <div class="m-range m-top" id="m-range" role="group" aria-label="Time range">
+        <button data-r="1D" class="on">1D</button><button data-r="1M">1M</button><button data-r="3M">3M</button><button data-r="6M">6M</button><button data-r="YTD">YTD</button><button data-r="1Y">1Y</button><button data-r="2Y">2Y</button><button data-r="5Y">5Y</button>
+      </div>
+    <div class="card">
+      <h2 id="m-title">Market today</h2>
+      <div class="kpis" id="m-kpis"></div>
+      <div id="m-map" class="m-map"></div>
+      <p class="hint" id="m-pick">Loading the market…</p>
+      <p class="hint" id="m-asof"></p>
+    </div>
+    <div class="card">
+      <h2>Total market value</h2>
+      <div class="kpis" id="m-tk"></div>
+      <div style="height:260px"><canvas id="m-line"></canvas></div>
+      <p class="hint">Combined market cap of the ~60 largest US companies (about two-thirds of the S&amp;P 500): daily close × today's share count, in US dollars. Ignores buybacks and new shares, so it's close over months and rougher over years. Not financial advice.</p>
+    </div>
+    </div>
+  </section>
+
+  <!-- BUSINESS PLAN (testing) -->
+  <section id="tab-biz" class="tab">
+    <iframe src="biz/plan.html" title="Coaching practice finances" style="width:100%;height:calc(100vh - 180px);border:0;border-radius:12px;background:#fff"></iframe>
+  </section>
+
+  <!-- OFFICE -->
+  <section id="tab-office" class="tab">
+    <div class="card">
+      <h2>Virtual office</h2>
+      <p class="sub" id="office-status">Connecting…</p>
+      <div class="kpis" id="office-kpis" style="margin-top:10px;grid-template-columns:repeat(4,1fr)"></div>
+      <div class="row">
+        <label class="check" style="margin:0"><input type="checkbox" id="office-hide"> Hide idle</label>
+        <button class="btn small ghost" id="office-notify">🔔 Alerts</button>
+        <button class="btn small ghost" id="office-full">Full office ↗</button>
+      </div>
+    </div>
+    <div class="card" id="office-help" hidden>
+      <h2>Start the office</h2>
+      <p class="sub">This tab reads the office running on your PC, so nothing goes online. On the PC, say <b>"Perry, open virtual office"</b> or run <code>python office</code> in <code>Desktop\perry</code>, then come back here.</p>
+      <p class="sub">On your phone, Perry Online can't reach the PC directly (browsers block it). Run <code>python office --lan</code> on the PC and use <b>Full office ↗</b> with the address it prints.</p>
+      <div class="row"><input id="office-url" placeholder="http://localhost:8765"><button class="btn small" id="office-save">Save</button></div>
+    </div>
+    <div id="office-rooms"></div>
+  </section>
+
+  <!-- GAMES -->
+  <section id="tab-games" class="tab">
+    <iframe src="games/monsters.html?v=0.7.0" title="Wildlings demo" style="width:100%;height:calc(100vh - 180px);border:0;border-radius:12px;background:#1b1d2a"></iframe>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="tab-set" class="tab cols">
+    <div class="card">
+      <h2>Settings</h2>
+      <label>Finnhub API key (optional, for live prices — free at finnhub.io)
+        <input id="s-key" placeholder="Stored only on this device"></label>
+      <label class="check"><input type="checkbox" id="s-voice" checked> Perry speaks replies</label>
+      <label class="check"><input type="checkbox" id="s-smart"> Smart Perry — general-purpose AI model on this device (~1 GB download once, works offline)</label>
+      <p class="hint" id="s-smart-st">Off. Without it, general questions are answered from Wikipedia.</p>
+      <div class="row">
+        <button id="export" class="btn small">Export backup</button>
+        <label class="btn small">Import backup<input type="file" id="import" accept=".json" hidden></label>
+        <button id="demo" class="btn small ghost">Load demo data</button>
+        <button id="wipe" class="btn small danger">Erase all data</button>
+      </div>
+      <p class="hint">Your financial data never leaves this device. It's saved in this browser only. Export a backup to move it to another device.</p>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs">
+  <button data-tab="perry" class="on">◎<span>Perry</span></button>
+  <button data-tab="spend">€<span>Spend</span></button>
+  <button data-tab="port">▲<span>Portfolio</span></button>
+  <button data-tab="market">▦<span>Market</span></button>
+  <button data-tab="goals">◆<span>Goals</span></button>
+  <button data-tab="invest">%<span>Invest</span></button>
+  <button data-tab="biz">✚<span>Biz</span></button>
+  <button data-tab="office">⌂<span>Office</span></button>
+  <button data-tab="games">♣<span>Games</span></button>
+  <button data-tab="set">⚙<span>Settings</span></button>
+</nav>
+
+<script src="market.js"></script>
+<script src="office.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
