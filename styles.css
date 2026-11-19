@@ -131,3 +131,24 @@ label{display:block;color:var(--mut);font-size:12px}label input{margin-top:4px}
 .office-right{display:flex;flex-direction:column;align-items:flex-end}.office-st{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--c)}
 @keyframes officePulse{to{box-shadow:0 0 12px var(--c)}}
 .ver{all:unset;cursor:pointer;display:block;font-size:11px;letter-spacing:.06em;color:var(--mut);margin-top:2px}.ver:hover{color:var(--cyan)}
+
+/* ---- Home orbit ---- */
+#tab-home.active{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 220px)}
+.orbit{position:relative;width:min(92vw,520px);aspect-ratio:1}
+.orbit::before{content:"";position:absolute;inset:14%;border-radius:50%;border:1px dashed #22d3ee40;animation:spin 60s linear infinite}
+.hub{position:absolute;left:50%;top:50%;width:42%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;border:0;padding:0;cursor:pointer;
+  background:radial-gradient(circle,#0b2a3a,#05080f 70%);box-shadow:0 0 40px #22d3ee55,0 0 0 3px #22d3ee66 inset;animation:pulse 3s ease-in-out infinite}
+.hub img{width:86%;height:86%;object-fit:contain;border-radius:50%;margin:7%}
+.bub{position:absolute;width:19%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;border:1px solid #22d3ee55;cursor:pointer;
+  background:radial-gradient(circle at 35% 30%,#1b3a52,#0a1420);color:#cfefff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font:600 clamp(10px,2.6vw,13px) system-ui,sans-serif;box-shadow:0 6px 18px #0008,0 0 14px #22d3ee22;transition:transform .2s,box-shadow .2s;animation:float 5s ease-in-out infinite}
+.bub b{font-size:clamp(18px,5vw,26px);color:#22d3ee;line-height:1}
+.bub:hover,.bub:focus{transform:translate(-50%,-50%) scale(1.12);box-shadow:0 0 24px #22d3ee88;outline:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{50%{box-shadow:0 0 60px #22d3ee88,0 0 0 3px #22d3ee99 inset}}
+@keyframes float{50%{margin-top:-6px}}
+
+.finnav{display:flex;gap:6px;overflow-x:auto;padding:6px 12px 2px;position:sticky;top:0;z-index:5;background:#05080fcc;backdrop-filter:blur(6px)}
+.finnav[hidden]{display:none}
+.finnav button{flex:1;white-space:nowrap;border:1px solid #22d3ee44;background:#0a1420;color:#9fd8ea;border-radius:999px;padding:7px 12px;font:600 13px system-ui,sans-serif;cursor:pointer}
+.finnav button.on{background:#22d3ee;color:#05080f;border-color:#22d3ee}

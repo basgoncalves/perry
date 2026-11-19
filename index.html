@@ -18,7 +18,7 @@
   <div class="core" id="core" title="Talk to Perry"><img src="perry-head.png" alt="Perry"></div>
   <div>
     <h1>PERRY</h1>
-    <button id="ver" class="ver" title="Click to check for updates">v37 · 19 Nov 2026</button>
+    <button id="ver" class="ver" title="Click to check for updates">v40 · 19 Nov 2026</button>
     <p class="sub" id="status">Online. All systems nominal.</p>
   </div>
   <a class="dl" id="dl" href="https://github.com/basgoncalves/perry/releases/latest/download/PerrySetup.exe" title="Get Perry for Windows"><span class="ico">⬇</span><span><span id="dl-l">Download for Windows</span><small id="dl-s">desktop assistant</small></span></a>
@@ -26,8 +26,16 @@
 </header>
 
 <main>
+  <div id="finnav" class="finnav" hidden><button data-f="spend">€ Spending</button><button data-f="port">▲ Portfolio</button><button data-f="goals">◆ Goals</button><button data-f="invest">% Invest</button></div>
   <!-- PERRY CHAT -->
-  <section id="tab-perry" class="tab active">
+  <!-- HOME -->
+  <section id="tab-home" class="tab active">
+    <div class="orbit" id="orbit">
+      <button class="hub" data-go="perry" title="Talk to Perry"><img src="perry-head.png" alt="Perry"></button>
+    </div>
+  </section>
+
+  <section id="tab-perry" class="tab">
     <div id="log" class="log"></div>
     <form id="ask" class="ask">
       <button type="button" id="mic" class="mic" aria-label="Speak">🎙</button>
@@ -237,12 +245,10 @@
 </main>
 
 <nav class="tabs">
-  <button data-tab="perry" class="on">◎<span>Perry</span></button>
-  <button data-tab="spend">€<span>Spend</span></button>
-  <button data-tab="port">▲<span>Portfolio</span></button>
+  <button data-tab="home" class="on">◉<span>Home</span></button>
+  <button data-tab="perry">◎<span>Chat</span></button>
+  <button data-tab="spend" data-group="spend port goals invest">€<span>Finance</span></button>
   <button data-tab="market">▦<span>Market</span></button>
-  <button data-tab="goals">◆<span>Goals</span></button>
-  <button data-tab="invest">%<span>Invest</span></button>
   <button data-tab="biz">✚<span>Biz</span></button>
   <button data-tab="office">⌂<span>Office</span></button>
   <button data-tab="games">♣<span>Games</span></button>

@@ -55,9 +55,18 @@ const categorise = desc => (RULES.find(([,re])=>re.test(desc))||['Other'])[0];
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---------- tabs ---------- */
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+(()=>{const o=document.getElementById('orbit');if(!o)return;const items=[...document.querySelectorAll('.tabs button')].filter(b=>b.dataset.tab!=='home');
+  items.forEach((b,i)=>{const a=-Math.PI/2+i*2*Math.PI/items.length,el=document.createElement('button');el.className='bub';el.dataset.go=b.dataset.tab;
+    el.style.left=(50+40*Math.cos(a))+'%';el.style.top=(50+40*Math.sin(a))+'%';el.style.animationDelay=(-i*.6)+'s';
+    el.innerHTML=`<b>${b.childNodes[0].textContent.trim()}</b>${b.querySelector('span').textContent}`;o.appendChild(el)});
+  o.addEventListener('click',e=>{const t=e.target.closest('[data-go]');if(t)show(t.dataset.go)})})();
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{window._finClick=!!b.dataset.group;show(b.dataset.tab)});
+const FINT=['spend','port','goals','invest'];let lastFin='spend';
+document.querySelectorAll('#finnav button').forEach(b=>b.onclick=()=>show(b.dataset.f));
 function show(t){
-  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  if(t==='spend'&&FINT.includes(lastFin)&&window._finClick){t=lastFin}window._finClick=false;
+  if(FINT.includes(t))lastFin=t;const fn=document.getElementById('finnav');if(fn){fn.hidden=!FINT.includes(t);fn.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.f===t))}
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t||(b.dataset.group||'').split(' ').includes(t)));
   document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+t));
   render();
   window.renderMarket?.();
