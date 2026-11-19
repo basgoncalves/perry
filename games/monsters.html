@@ -112,6 +112,7 @@ input:focus{border-color:#5b4fd8}
 #dev,#dex{border-radius:22px!important}
 #moves{width:min(44%,172px)!important;bottom:8px!important}
 #box:not(.hide)~#dpad{visibility:hidden!important}
+#dpad{display:none!important}
 </style>
 </head>
 <body>
@@ -126,7 +127,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.15.0',BUILT='19 Nov 2026 22:25';
+const VERSION='0.16.0',BUILT='19 Nov 2026 22:35';
 document.getElementById('ver').textContent=`v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -584,7 +585,7 @@ function drawWorld(){stepAnim();
   if(S.banner&&S.banner.t>0){S.banner.t--;g.globalAlpha=Math.min(1,S.banner.t/20);RR(70,6,100,16,8,'#ffffffe0');g.fillStyle='#2b2f5c';g.font='700 8px system-ui,sans-serif';g.textAlign='center';g.fillText(S.banner.s,120,17);g.textAlign='left';g.globalAlpha=1}}
 function freeSpot(x,y){if(!blocked(x,y))return[x,y];const seen=new Set([x+','+y]),q=[[x,y]];while(q.length){const[cx,cy]=q.shift();for(const[dx,dy]of[[0,1],[1,0],[-1,0],[0,-1]]){const nx=cx+dx,ny=cy+dy,k=nx+','+ny;
     if(seen.has(k)||ny<0||nx<0||ny>=M.rows.length||nx>=M.rows[0].length)continue;seen.add(k);if(!blocked(nx,ny)&&!(M.warps&&M.warps[k]))return[nx,ny];q.push([nx,ny])}}return[x,y]}
-function enterMap(id,x,y){M=MAPS[id];S.map=id;[x,y]=freeSpot(x,y);S.px=x;S.py=y;S.mv=null;{const b=(MAPS[id].rows[y+1]||'')[x];S.follow=b&&!WALL.includes(b)?[x,y+1]:[x,y];S.trail=[S.follow,S.follow,S.follow]}if(T3)T3.build(id);else S.banner={s:M.name,t:110};showBanner(M.name)}
+function enterMap(id,x,y){S.path=null;S.pathEnd=null;S.dest=null;M=MAPS[id];S.map=id;[x,y]=freeSpot(x,y);S.px=x;S.py=y;S.mv=null;{const b=(MAPS[id].rows[y+1]||'')[x];S.follow=b&&!WALL.includes(b)?[x,y+1]:[x,y];S.trail=[S.follow,S.follow,S.follow]}if(T3)T3.build(id);else S.banner={s:M.name,t:110};showBanner(M.name)}
 function goTown(){S.scene='town';box.className='hide';S.busy=false;dpad.style.visibility='visible'}
 async function healAll(){S.party.forEach(m=>{m.hp=m.maxhp;m.atkMod=1});S.orbs=Math.max(S.orbs,5);await say(`Your team is fully healed! Orbs topped up to ${S.orbs}.`)}
 // ---- v0.12: partners, dojo mini-games ----
@@ -619,7 +620,7 @@ async function tutorial(n){
   const c=await say('Cousin Dina: Hi! Want me to show you how everything works?',[{label:'📖 Full tutorial',v:'all'},{label:'⚔️ Practice battle',v:'fight'},{label:'❓ Dodging only',v:'dodge'},{label:'No thanks',v:0}]);
   if(!c){goTown();return}
   if(c==='all'){
-    await say('🕹 WALKING: hold the arrows below the screen to walk. Walk into people to talk, into doors to go inside, and onto the red mat to leave.');
+    await say('🕹 WALKING: tap anywhere on the ground and you walk there by yourself. Tap a person, sign, door, tree, campfire or tent to walk over and use it. Tap the red mat to leave a house.');
     await say('☰ MENU: the round button in the corner shows your Team, the Wildlingdex and Save. Your game also saves after every battle.');
     await say('🌿 TALL GRASS hides wild Wildlings. Trainers on the routes challenge you when they spot you. Heal at the Lab, the Inns or with Prof. Alder.')}
   if(c==='all'||c==='dodge'||c==='fight'){
@@ -686,7 +687,7 @@ addEventListener('keyup',e=>{const k=KEYS[e.key];if(k)release(k)});
 
 // ---- 3D overworld (three.js, bundled locally) ----
 let T3=null;
-function stepAnim(){if(S.mv){const k=Math.min(1,(performance.now()-S.mv.t)/170);S.dx=S.mv.fx+(S.px-S.mv.fx)*k;S.dy=S.mv.fy+(S.py-S.mv.fy)*k;if(k>=1){const f=S.mv.done;S.mv=null;f();if(S.hold&&!S.busy&&S.scene==='town')move(S.hold)}}else{S.dx=S.px;S.dy=S.py}}
+function stepAnim(){if(S.mv){const k=Math.min(1,(performance.now()-S.mv.t)/170);S.dx=S.mv.fx+(S.px-S.mv.fx)*k;S.dy=S.mv.fy+(S.py-S.mv.fy)*k;if(k>=1){const f=S.mv.done;S.mv=null;f();if(S.hold&&!S.busy&&S.scene==='town')move(S.hold);else pathStep()}}else{S.dx=S.px;S.dy=S.py}}
 function showBanner(t){const b=document.getElementById('banner');b.textContent=t;b.classList.remove('on');void b.offsetWidth;b.classList.add('on')}
 import('./three.module.min.js').then(THREE=>{try{T3=init3d(THREE);if(S.map)T3.build(S.map)}catch(e){console.warn('3D unavailable',e);T3=null}}).catch(e=>console.warn(e));
 function init3d(THREE){
@@ -834,7 +835,12 @@ function init3d(THREE){
     if(!camPos){camPos=V.clone();look.copy(tgt)}camPos.lerp(V,stage?.08:.12);look.lerp(tgt,.15);cam.position.copy(camPos);cam.lookAt(look);
     sun.position.set(S.dx-5,12,S.dy+6);sun.target.position.set(S.dx,0,S.dy);
     R.render(scene,cam)}
-  return{build,draw}}
+  const ray=new THREE.Raycaster(),gp0=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+  const mk3=new THREE.Mesh(new THREE.RingGeometry(.22,.34,24),new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.85,depthTest:false}));mk3.rotation.x=-Math.PI/2;mk3.renderOrder=15;mk3.visible=false;scene.add(mk3);
+  const pick=(cx,cy)=>{const r=cv3.getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1),cam);const q=new THREE.Vector3();return ray.ray.intersectPlane(gp0,q)?[Math.floor(q.x),Math.floor(q.z)]:null};
+  const project=(x,z,h)=>{const v=new THREE.Vector3(x+.5,h,z+.5).project(cam),r=cv3.getBoundingClientRect();return[r.left+(v.x+1)/2*r.width,r.top+(1-v.y)/2*r.height]};
+  const mark=d=>{mk3.visible=!!d;if(d){mk3.position.set(d[0]+.5,.03,d[1]+.5);const k=1+Math.sin(performance.now()/150)*.12;mk3.scale.set(k,k,k)}};
+  return{build,draw:()=>{mark(S.scene==='town'?S.dest:null);draw()},pick,project}}
 
 // ---- Dialog helpers ----
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1016,8 +1022,32 @@ addEventListener('blur',()=>release());
     knob.style.transform=`translate(${dx}px,${dy}px)`;if(L<12){release();return}const d=Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u');if(d!==S.hold)press(d)});
   const up=e=>{if(!o||e.pointerId!==o.id)return;o=null;st.style.display='none';release()};sc.addEventListener('pointerup',up);sc.addEventListener('pointercancel',up)})();
 setInterval(()=>{document.getElementById('mbtn').style.display=S.scene==='town'?'block':'none'},250);
-(function holdLoop(){if(S.hold&&!S.mv&&!S.busy&&S.scene==='town')move(S.hold);requestAnimationFrame(holdLoop)})();
+(function holdLoop(){if(S.hold&&!S.mv&&!S.busy&&S.scene==='town')move(S.hold);else if(!S.mv)pathStep();requestAnimationFrame(holdLoop)})();
 addEventListener('contextmenu',e=>e.preventDefault());addEventListener('selectstart',e=>{if(e.target.tagName!=='INPUT')e.preventDefault()});
+// ---- Tap to move / tap to interact ----
+const DIRS=[['u',0,-1],['d',0,1],['l',-1,0],['r',1,0]];
+function pathStep(){if(!S.path&&!S.pathEnd)return;if(S.busy||S.scene!=='town'||panel.className){S.path=null;S.pathEnd=null;S.dest=null;return}if(S.mv)return;
+  if(S.path&&S.path.length){const d=S.path.shift(),px=S.px,py=S.py;move(d);if(S.px===px&&S.py===py){S.path=null;S.pathEnd=null;S.dest=null}return}
+  S.path=null;S.dest=null;if(S.pathEnd){const d=S.pathEnd;S.pathEnd=null;move(d)}}
+function interactAt(x,y){if(NP().some(n=>n.x===x&&n.y===y))return[x,y];if(M.signs&&M.signs[x+','+y])return[x,y];if(S.camps.some(c=>c.map===S.map&&c.x===x&&c.y===y))return[x,y];
+  const b=M.bld.find(b=>x>=b.x&&x<b.x+b.w&&y>=b.y&&y<b.y+b.h);if(b)return[b.door[0],b.door[1],1];if(!M.indoor&&(M.rows[y]||'')[x]==='T')return[x,y];return null}
+function goTo(tx,ty,it){const W=M.rows[0].length,H=M.rows.length,key=(x,y)=>y*W+x,prev=new Map([[key(S.px,S.py),null]]),q=[[S.px,S.py]];
+  while(q.length){const[cx,cy]=q.shift();for(const[d,dx,dy]of DIRS){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=W||ny>=H||prev.has(key(nx,ny))||blocked(nx,ny))continue;
+      prev.set(key(nx,ny),[cx,cy,d]);if(!(M.warps&&M.warps[nx+','+ny]))q.push([nx,ny])}}
+  let goal=null,end=null;
+  if(it){const cands=(it[2]?[['u',0,1]]:[['u',0,1],['d',0,-1],['l',1,0],['r',-1,0]]).map(([d,ox,oy])=>[it[0]+ox,it[1]+oy,d]).filter(c=>prev.has(key(c[0],c[1])));
+    if(!cands.length)return;const len=c=>{let n=0,k=prev.get(key(c[0],c[1]));while(k){n++;k=prev.get(key(k[0],k[1]))}return n};cands.sort((a,b)=>len(a)-len(b));goal=cands[0];end=goal[2]}
+  else{let best=1e9;for(const k of prev.keys()){const x=k%W,y=(k-x)/W,dd=Math.abs(x-tx)+Math.abs(y-ty);if(dd<best){best=dd;goal=[x,y]}}if(!goal||best>3)return}
+  const path=[];let c=prev.get(key(goal[0],goal[1]));while(c){path.unshift(c[2]);c=prev.get(key(c[0],c[1]))}
+  S.path=path;S.pathEnd=end;S.dest=it?[it[0],it[1]]:[goal[0],goal[1]];pathStep()}
+(()=>{const sc=document.getElementById('screen');let dn=null;
+  sc.addEventListener('pointerdown',e=>{dn=e.target.tagName==='CANVAS'?[e.clientX,e.clientY]:null});
+  sc.addEventListener('pointerup',e=>{if(!dn||Math.hypot(e.clientX-dn[0],e.clientY-dn[1])>14){dn=null;return}dn=null;
+    if(!T3||S.scene!=='town'||S.busy||panel.className||box.className!=='hide')return;
+    let it=null,bd=34;const cand=[...NP().map(n=>[n.x,n.y,.55]),...S.camps.filter(c=>c.map===S.map).map(c=>[c.x,c.y,.4]),...Object.keys(M.signs||{}).map(k=>[...k.split(',').map(Number),.45])];
+    for(const[x,y,h]of cand){const[px,py]=T3.project(x,y,h),dd=Math.hypot(px-e.clientX,py-e.clientY);if(dd<bd){bd=dd;it=[x,y]}}
+    const t=T3.pick(e.clientX,e.clientY);if(!it&&!t)return;if(!it)it=interactAt(t[0],t[1]);
+    if(it&&it[2]===undefined&&S.px===it[0]&&S.py===it[1])return;goTo(t?t[0]:it[0],t?t[1]:it[1],it)})})();
 // ---- Wildlingdex overlay ----
 const DEXN=Object.keys(SP),dexNo=n=>'#'+String(DEXN.indexOf(n)+1).padStart(2,'0');
 const baseOf=n=>{while(SP[n].from)n=SP[n].from;return n};
