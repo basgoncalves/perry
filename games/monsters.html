@@ -84,7 +84,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.11.1',BUILT='19 Nov 2026 21:20';
+const VERSION='0.11.2',BUILT='19 Nov 2026 21:25';
 document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -583,19 +583,29 @@ function init3d(THREE){
     water.forEach((wm,i)=>wm.material.opacity=.82+Math.sin(t*1.2+i)*.06);
     const lead=S.lead||S.party.find(m=>m.hp>0)||S.party[0];
     // battle staging in the world
-    if(battle&&!stage){if(!S.wildFrom){const ok=dd=>{const v=DV[dd];for(let k=1;k<=3;k++)if(blocked(S.px+v[0]*k,S.py+v[1]*k))return false;return true};
-      const pick=[S.face,...'udlr'.split('').filter(x=>x!==S.face)].find(ok);if(pick)S.face=pick}const d=DV[S.face];const px=S.px+.5,pz=S.py+.5;stage={d,px,pz,ally:[px+d[0]*1.0,pz+d[1]*1.0],foe:[px+d[0]*2.6,pz+d[1]*2.6]};if(S.wildFrom){stage.foe=[S.wildFrom[0]+.5-d[0]*.9,S.wildFrom[1]+.5-d[1]*.9]}}
+    if(battle&&!stage){const free=(c,ax)=>{let n=0;for(let k=-3;k<=3;k++)if(!blocked(Math.floor(c[0]+ax[0]*k),Math.floor(c[1]+ax[1]*k)))n++;return n};
+      let d,mid,trN=null;
+      if(S.wildFrom){const tx=S.wildFrom[0],ty=S.wildFrom[1];trN=(M.npcs||[]).find(n=>n.x===tx&&n.y===ty)||null;
+        mid=[(S.px+tx)/2+.5,(S.py+ty)/2+.5];d=[Math.sign(tx-S.px)||0,Math.sign(ty-S.py)||0];if(!d[0]&&!d[1])d=DV[S.face];
+        const alt=[-d[1],d[0]],alt2=[d[1],-d[0]];const sc=[[d,free(mid,d)+1],[alt,free(mid,alt)],[alt2,free(mid,alt2)]].sort((a,b)=>b[1]-a[1]);d=sc[0][0]}
+      else{const ok=dd=>{const v=DV[dd];let c=0;for(let k=1;k<=4;k++)if(!blocked(S.px+v[0]*k,S.py+v[1]*k))c++;return c};
+        const pick=[S.face,...'udlr'.split('').filter(x=>x!==S.face)].sort((a,b)=>ok(b)-ok(a)+(b===S.face?.5:0)-(a===S.face?.5:0))[0];S.face=pick;d=DV[pick];mid=[S.px+.5+d[0]*2.2,S.py+.5+d[1]*2.2]}
+      const at=k=>[mid[0]+d[0]*k,mid[1]+d[1]*k];
+      stage={d,mid,trN,me:at(-2.6),ally:at(-1.3),foe:at(1.4),tr:at(3),pm:player.position.clone(),tm:trN?new THREE.Vector3(trN.x+.5,0,trN.y+.5):null};
+      stage.px=stage.me[0];stage.pz=stage.me[1];S.face=Object.keys(DV).find(k=>DV[k][0]===d[0]&&DV[k][1]===d[1])||S.face}
     if(!battle)stage=null;
-    if(lead){follower.visible=true;follower.set(lead.name,stage?1.05:.75);
+    if(stage){stage.pm.lerp(V.set(stage.me[0],0,stage.me[1]),.12);player.position.copy(stage.pm);player.rotation.y=ROT[S.face]||0;
+      if(stage.trN){const p=npcs.find(q=>q.userData.n===stage.trN);if(p){stage.tm.lerp(V.set(stage.tr[0],0,stage.tr[1]),.12);p.position.copy(stage.tm);p.rotation.y=(ROT[S.face]||0)+Math.PI}}}
+    if(lead){follower.visible=true;follower.set(lead.name,stage?1.25:.75);
       const dm=stage?(S.dodgeMe||0)*.8:0;const fx=stage?stage.ally[0]-stage.d[1]*dm:S.follow[0]+.5,fz=stage?stage.ally[1]+stage.d[0]*dm:S.follow[1]+.5;follower.position.x+=(fx-follower.position.x)*.15;follower.position.z+=(fz-follower.position.z)*.15;
       follower.position.y=Math.abs(Math.sin(t*(S.mv?13:3)))*(S.mv?.06:.03);
       if(S.hit===lead&&S.shake>0)follower.position.x+=Math.sin(t*80)*.05;follower.children[0].material.opacity=lead.hp<=0&&battle?.35:1}else follower.visible=false;
-    if(stage&&S.wild&&!S.wild.caught){foe.visible=true;foe.set(S.wild.name,S.wild.hp>0?1.15:Math.max(.01,foe.children[0].scale.x*.9));foe.userData.dg=(foe.userData.dg||0)+((S.dodgeFoe||0)*.8-(foe.userData.dg||0))*.25;foe.position.set(stage.foe[0]+(S.hit===S.wild&&S.shake>0?Math.sin(t*80)*.06:0)-stage.d[1]*foe.userData.dg,Math.abs(Math.sin(t*3))*.03,stage.foe[1]+stage.d[0]*foe.userData.dg);foe.children[0].visible=!S.inOrb}else foe.visible=false;
+    if(stage&&S.wild&&!S.wild.caught){foe.visible=true;foe.set(S.wild.name,S.wild.hp>0?1.35:Math.max(.01,foe.children[0].scale.x*.9));foe.userData.dg=(foe.userData.dg||0)+((S.dodgeFoe||0)*.8-(foe.userData.dg||0))*.25;foe.position.set(stage.foe[0]+(S.hit===S.wild&&S.shake>0?Math.sin(t*80)*.06:0)-stage.d[1]*foe.userData.dg,Math.abs(Math.sin(t*3))*.03,stage.foe[1]+stage.d[0]*foe.userData.dg);foe.children[0].visible=!S.inOrb}else foe.visible=false;
     if(S.inOrb&&stage){if(!lastInOrb)orbT=t;const k=Math.min(1,(t-orbT)/.45);orb.visible=true;
       const a=[stage.px,stage.pz],b=stage.foe;orb.position.set(a[0]+(b[0]-a[0])*k,.15+Math.sin(k*Math.PI)*1.1+(k>=1?0:.4*(1-k)),a[1]+(b[1]-a[1])*k);orb.rotation.z=S.wobble&&k>=1?Math.sin(t*12)*.4:t*10*(1-k)}else orb.visible=false;lastInOrb=S.inOrb;
     // camera
     if(stage){const d=stage.d,pp=[-d[1],d[0]];const f=stage.foe,al=stage.ally;
-      tgt.set(f[0]*.7+al[0]*.3,.5,f[1]*.7+al[1]*.3);V.set(stage.px-d[0]*1.7+pp[0]*1.3,1.9,stage.pz-d[1]*1.7+pp[1]*1.3)}
+      const m2=stage.mid;tgt.set(m2[0]+d[0]*.6,.45,m2[1]+d[1]*.6);V.set(stage.px-d[0]*2.4+pp[0]*2.2,3.1,stage.pz-d[1]*2.4+pp[1]*2.2)}
     else{tgt.set(S.dx+.5,.5,S.dy+.5);V.copy(tgt).add(M.indoor?new THREE.Vector3(0,5.2,4.4):new THREE.Vector3(0,3.6,4.6))}
     if(!camPos){camPos=V.clone();look.copy(tgt)}camPos.lerp(V,stage?.08:.12);look.lerp(tgt,.15);cam.position.copy(camPos);cam.lookAt(look);
     sun.position.set(S.dx-5,12,S.dy+6);sun.target.position.set(S.dx,0,S.dy);
