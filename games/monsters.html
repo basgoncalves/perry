@@ -32,7 +32,7 @@ input:focus{border-color:#5b4fd8}
 #banner.on{animation:ban 2.4s ease forwards}@keyframes ban{0%{opacity:0;transform:translate(-50%,-8px)}12%,75%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
 #panel{position:absolute;inset:0;background:linear-gradient(160deg,#f6f7ff,#e3e6ff);padding:10px;overflow:auto;display:none;font-size:13px}
 #panel.on{display:block;animation:pop .18s ease-out}
-#panel h3{margin:0 0 8px;display:flex;justify-content:space-between;align-items:center;color:#2b2f5c}
+#panel h3{padding-right:46px;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center;color:#2b2f5c}
 #panel .x{border:0;background:#5b4fd8;color:#fff;border-radius:999px;padding:4px 12px;font-weight:700;cursor:pointer}
 .card{display:flex;gap:10px;align-items:center;background:#fff;border-radius:14px;padding:8px;margin-bottom:6px;box-shadow:0 2px 8px #2b2f5c18}
 .card img{width:48px;height:48px;background:#f0f2ff;border-radius:12px;padding:4px}
@@ -86,7 +86,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.12.1',BUILT='19 Nov 2026 21:45';
+const VERSION='0.13.0',BUILT='19 Nov 2026 22:00';
 document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -145,7 +145,7 @@ function mk(name,lv){while(SP[name].evo&&lv>=SP[name].evo[1])name=SP[name].evo[0
   m.hp=m.maxhp;return m}
 
 // ---- State ----
-let S={partners:[],trail:[],follow:[0,0],scene:'title',player:'',party:[],orbs:5,wild:null,anim:0,shake:0,flash:0,seen:[],caught:[],coins:0,beaten:[],badges:[],map:'maplewick'};
+let S={bag:{wood:0,stone:0,fiber:0,berry:0},camps:[],partners:[],trail:[],follow:[0,0],scene:'title',player:'',party:[],orbs:5,wild:null,anim:0,shake:0,flash:0,seen:[],caught:[],coins:0,beaten:[],badges:[],map:'maplewick'};
 const mark=(k,n)=>{if(!S[k].includes(n))S[k].push(n)};
 // ---- Smooth vector art (12x12 unit box) ----
 const OL='#2a2238';
@@ -489,6 +489,7 @@ const WALL='TWXKBCMf';
 let M=MAPS.maplewick;
 function blocked(x,y){if(x<0||y<0||y>=M.rows.length||x>=M.rows[0].length)return true;const c=M.rows[y][x];
   if(WALL.includes(c))return true;if(M.bld.some(b=>x>=b.x&&x<b.x+b.w&&y>=b.y&&y<b.y+b.h))return true;
+  if(S.camps.some(c=>c.map===S.map&&c.x===x&&c.y===y))return true;
   return NP().some(n=>n.x===x&&n.y===y)}
 function seed(x,y){return ((x*73856093)^(y*19349663))>>>0}
 const RR=(x,y,w,h,r,f)=>{g.fillStyle=f;g.beginPath();g.roundRect(x,y,w,h,r);g.fill()};
@@ -612,9 +613,30 @@ function move(dir){if(S.scene!=='town'||S.busy||S.mv||panel.className)return;
   const b=M.bld.find(b=>b.door[0]===nx&&b.door[1]===ny);if(b){enterMap(...b.to);
     if(['lab','inn'].includes(b.to[0])&&S.party.some(m=>m.hp<m.maxhp)){S.busy=true;(async()=>{await wait(300);await say(b.to[0]==='lab'?'PROF. ALDER: Welcome back! Let me patch up your team.':'Innkeeper Lia: Rest up, traveller!');await healAll();save();goTown()})()}
     return}
+  const cp=S.camps.find(c=>c.map===S.map&&c.x===nx&&c.y===ny);if(cp){useCamp(cp);return}
+  if(!M.indoor&&(M.rows[ny]||'')[nx]==='T'){const k=S.map+nx+','+ny,now=Date.now();if(now-(CHOP[k]||0)>45000){CHOP[k]=now;S.bag.wood++;showBanner('+1 🪵 Wood')}return}
   if(blocked(nx,ny))return;
   S.trail=[[S.px,S.py],...(S.trail||[])].slice(0,3);S.follow=S.trail[0];S.mv={fx:S.px,fy:S.py,t:performance.now(),done:()=>afterStep()};S.px=nx;S.py=ny}
+const CHOP={};const ITEM={wood:'🪵 Wood',stone:'🪨 Stone',fiber:'🌾 Fiber',berry:'🫐 Berry'};
+const RECIPE={fire:{name:'🔥 Campfire',cost:{wood:3,stone:2},info:'Warm up beside it: heals your team by 40%.'},tent:{name:'⛺ Tent',cost:{wood:4,fiber:4},info:'Rest inside: full heal and saves your game.'}};
+const canMake=k=>Object.entries(RECIPE[k].cost).every(([i,n])=>S.bag[i]>=n);
+function showBag(){const ft=DVV[S.face],tx=S.px+ft[0],ty=S.py+ft[1],spot=!M.indoor&&!blocked(tx,ty)&&!(M.warps&&M.warps[tx+','+ty]);
+  panel.innerHTML=`<h3>🎒 Bag<button class="x">‹ Menu</button></h3><div class="card"><div style="flex:1">${Object.keys(ITEM).map(k=>`${ITEM[k]} × <b>${S.bag[k]}</b>`).join(' &nbsp; ')}</div>${S.bag.berry?'<button class="lead" data-eat="1">Eat berry</button>':''}</div>`+
+   Object.keys(RECIPE).map(k=>{const r=RECIPE[k];return `<div class="card"><div style="flex:1"><div class="n">${r.name}</div><div class="s">${Object.entries(r.cost).map(([i,n])=>`${n} ${ITEM[i]}`).join(' + ')}<br>${r.info}</div></div><button class="lead" data-mk="${k}" ${canMake(k)&&spot?'':'disabled style="opacity:.4"'}>Place</button></div>`}).join('')+
+   `<div class="card"><div class="s">Walk into trees for wood. Tall grass gives fiber and berries. Stones turn up on open ground and sand. ${M.indoor?'You can only camp outdoors.':spot?'It will be placed on the tile in front of you.':'The tile in front of you is blocked — face open ground to place.'}</div></div>`;
+  panel.querySelector('.x').onclick=()=>{S.busy=false;openMenu()};
+  const e=panel.querySelector('[data-eat]');if(e)e.onclick=()=>{const m=S.party.find(q=>q.hp>0&&q.hp<q.maxhp)||S.party[0];S.bag.berry--;m.hp=Math.min(m.maxhp,m.hp+20);showBanner(`${m.name} +20 HP`);showBag()};
+  panel.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{const k=b.dataset.mk;if(!canMake(k)||!spot)return;Object.entries(RECIPE[k].cost).forEach(([i,n])=>S.bag[i]-=n);
+    S.camps=S.camps.filter(c=>c.k!==k);S.camps.push({map:S.map,x:tx,y:ty,k});if(T3)T3.build(S.map);save();closePanel();showBanner(RECIPE[k].name+' placed')})}
+async function useCamp(c){S.busy=true;const fire=c.k==='fire';
+  const a=await say(fire?'The campfire crackles warmly.':'Your tent. It looks cosy.',[{label:fire?'🔥 Warm up':'😴 Rest',v:1},{label:'🎒 Pack up',v:2},{label:'Leave',v:0}]);
+  if(a===1){if(fire){S.party.forEach(m=>m.hp=Math.min(m.maxhp,m.hp+Math.ceil(m.maxhp*.4)));await say('Your team warms up by the fire and recovers some HP.')}
+    else{S.flash=12;S.party.forEach(m=>{m.hp=m.maxhp;m.atkMod=1});save();await say('You rest in the tent... Your team is fully healed and the game is saved.')}}
+  if(a===2){S.camps=S.camps.filter(q=>q!==c);Object.entries(RECIPE[c.k].cost).forEach(([i,n])=>S.bag[i]+=n);if(T3)T3.build(S.map);await say('Packed up — the materials are back in your bag.')}
+  save();goTown()}
+const DVV={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]};
 async function afterStep(){const c=M.rows[S.py][S.px],w=M.warps&&M.warps[S.px+','+S.py];
+  if(!M.indoor&&!w){const r=Math.random();if(c==='G'&&r<.2){S.bag.fiber++;showBanner('+1 🌾 Fiber')}else if(c==='G'&&r<.3){S.bag.berry++;showBanner('+1 🫐 Berry')}else if((c==='.'||c==='s')&&r<.07){S.bag.stone++;showBanner('+1 🪨 Stone')}}
   if(w){enterMap(...w);return}if(c==='E'&&M.out){enterMap(...M.out);S.face='d';return}
   if(lookFor())return;
   if(c==='G'&&Math.random()<.15){S.busy=true;dpad.style.visibility='hidden';S.flash=8;await wait(400);await battleLoop();save();goTown()}}
@@ -719,9 +741,16 @@ function init3d(THREE){
       const fz=b.y+b.h-.17,dx=b.door[0]+.5;world.add(box(.62,.92,.06,'#5b3d24',dx,.5,fz));world.add(box(.5,.82,.07,'#7a5230',dx,.48,fz+.01));world.add(ball(.03,'#e8c070',dx+.17,.48,fz+.06));
       for(let i=0;i<b.w;i++)if(b.x+i!==b.door[0]){const wx=b.x+i+.5;world.add(box(.46,.4,.05,'#f7f3ea',wx,.9,fz));world.add(box(.38,.32,.06,'#8fc6e8',wx,.9,fz+.005,{emissive:'#2a5070',roughness:.1,metalness:.3}));world.add(box(.5,.05,.12,'#8a6a48',wx,.68,fz+.04))}
       if(b.label){const l=label(b.label,.9);l.position.set(cx,2.85,cz+.3);world.add(l)}});
+    fires=[];S.camps.filter(c=>c.map===id).forEach(c=>{const X=c.x+.5,Z=c.y+.5;
+      if(c.k==='fire'){for(let i=0;i<6;i++){const a=i/6*Math.PI*2;world.add(ball(.09,'#8c8c84',X+Math.cos(a)*.3,.05,Z+Math.sin(a)*.3,1,.7,1))}
+        [0,1,2].forEach(i=>{const l=cyl(.05,.05,.5,'#5b3d24',X,.08,Z,6);l.rotation.z=Math.PI/2;l.rotation.y=i*Math.PI/3;world.add(l)});
+        const f=new THREE.Mesh(new THREE.ConeGeometry(.17,.5,7),new THREE.MeshBasicMaterial({color:'#ff9f43'}));f.position.set(X,.36,Z);const f2=new THREE.Mesh(new THREE.ConeGeometry(.09,.3,7),new THREE.MeshBasicMaterial({color:'#ffe082'}));f2.position.set(X,.3,Z);
+        const L=new THREE.PointLight('#ff9a3c',6,5);L.position.set(X,.7,Z);world.add(f,f2,L);fires.push([f,f2,L])}
+      else{const t=sh(new THREE.Mesh(new THREE.ConeGeometry(.62,.95,4),mat('#c96f3a')));t.rotation.y=Math.PI/4;t.position.set(X,.47,Z);world.add(t);
+        const dr=new THREE.Mesh(new THREE.ConeGeometry(.2,.55,3),mat('#3a2418'));dr.position.set(X,.28,Z+.33);dr.rotation.x=-.5;world.add(dr);world.add(cyl(.015,.015,.25,'#eee',X,1,Z,5))}});
     (m.npcs||[]).filter(vis).forEach(n=>{const p=person(n.c,'#3a2a20');p.userData.n=n;npcs.push(p);world.add(p)});
     scene.add(world);camPos=null;follower.position.set(S.follow[0]+.5,0,S.follow[1]+.5)}
-  let pals=[];let camPos=null,stage=null,orbT=0,lastInOrb=false;const tgt=new THREE.Vector3(),look=new THREE.Vector3(),M4=new THREE.Matrix4(),Q=new THREE.Quaternion(),V=new THREE.Vector3(),SC=new THREE.Vector3(),E=new THREE.Euler();
+  let pals=[],fires=[];let camPos=null,stage=null,orbT=0,lastInOrb=false;const tgt=new THREE.Vector3(),look=new THREE.Vector3(),M4=new THREE.Matrix4(),Q=new THREE.Quaternion(),V=new THREE.Vector3(),SC=new THREE.Vector3(),E=new THREE.Euler();
   function draw(){const t=performance.now()/1000,w=cv3.clientWidth,h=cv3.clientHeight;
     if(R.domElement.width!==Math.round(w*R.getPixelRatio())){R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
     const battle=S.scene==='battle';
@@ -730,6 +759,7 @@ function init3d(THREE){
     const sw=S.mv?Math.sin(t*13)*.5:0;player.userData.arms[0].rotation.x=sw;player.userData.arms[1].rotation.x=-sw;
     npcs.forEach(p=>{const n=p.userData.n;p.position.x+=(n.x+.5-p.position.x)*.2;p.position.z+=(n.y+.5-p.position.z)*.2;p.rotation.y=ROT[n.face||'d'];p.userData.ex.visible=!!n.alert});
     if(grassI){grassData.forEach(([x,z,hh,ph],i)=>{E.set(Math.sin(t*1.4+ph+x*.3)*.12,ph,Math.cos(t*1.1+ph)*.08);Q.setFromEuler(E);V.set(x,0,z);SC.set(1,hh,1);M4.compose(V,Q,SC);grassI.setMatrixAt(i,M4)});grassI.instanceMatrix.needsUpdate=true}
+    fires.forEach(([f,f2,L],i)=>{const k=1+Math.sin(t*11+i)*.15+Math.sin(t*23)*.08;f.scale.set(1,k,1);f2.scale.set(1,2-k,1);L.intensity=5+k*2});
     water.forEach((wm,i)=>wm.material.opacity=.82+Math.sin(t*1.2+i)*.06);
     const lead=S.lead||S.party.find(m=>m.hp>0)||S.party[0];
     // battle staging in the world
@@ -797,14 +827,14 @@ function ask(t){return new Promise(res=>{box.className='';box.innerHTML='<div>'+
 
 // ---- Start menu, team, dex, save ----
 const SAVE='wildlings-save';
-function save(){try{localStorage.setItem(SAVE,JSON.stringify({player:S.player,party:S.party,orbs:S.orbs,px:S.px,py:S.py,seen:S.seen,caught:S.caught,coins:S.coins,beaten:S.beaten,badges:S.badges,map:S.map,partners:S.partners}));return true}catch{return false}}
+function save(){try{localStorage.setItem(SAVE,JSON.stringify({player:S.player,party:S.party,orbs:S.orbs,px:S.px,py:S.py,seen:S.seen,caught:S.caught,coins:S.coins,beaten:S.beaten,badges:S.badges,map:S.map,partners:S.partners,bag:S.bag,camps:S.camps}));return true}catch{return false}}
 function load(){try{return JSON.parse(localStorage.getItem(SAVE))}catch{return null}}
 function closePanel(){panel.className='';panel.innerHTML='';S.busy=false}
 function openMenu(){if(S.scene!=='town'||S.busy)return;S.busy=true;panel.className='on';
   panel.innerHTML=`<h3>${S.player}<button class="x">✕</button></h3><div class="s" style="color:#667">Orbs: ${S.orbs} · Coins: ${S.coins} · Badges: ${S.badges.length?S.badges.map(b=>'🏅'+b).join(' '):'none'} · Caught: ${S.caught.length}/${Object.keys(SP).length}${S.beaten.includes('aurelia')?' · 🏆 Champion':''} · v${VERSION}</div>
-  <div class="main"><button data-a="team">🐾 Team</button><button data-a="dex">📖 Wildlingdex</button><button data-a="pals">🤝 Partners</button><button data-a="save">💾 Save</button><button data-a="close">↩ Back to game</button></div>`;
+  <div class="main"><button data-a="team">🐾 Team</button><button data-a="dex">📖 Wildlingdex</button><button data-a="pals">🤝 Partners</button><button data-a="bag">🎒 Bag &amp; camping</button><button data-a="save">💾 Save</button><button data-a="close">↩ Back to game</button></div>`;
   panel.querySelector('.x').onclick=closePanel;
-  panel.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>({team:showTeam,dex:showDex,pals:showPartners,close:closePanel,
+  panel.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>({team:showTeam,dex:showDex,pals:showPartners,bag:showBag,close:closePanel,
     save:()=>{b.textContent=save()?'✅ Saved!':'⚠ Could not save';setTimeout(()=>b.textContent='💾 Save',1200)}})[b.dataset.a]())}
 function showTeam(){panel.innerHTML=`<h3>Team<button class="x">‹ Menu</button></h3>`+S.party.map((m,i)=>{const p=m.hp/m.maxhp,c=p>.5?'#3ddc84':p>.2?'#ffd166':'#ff6b6b';
   return `<div class="card"><img src="${sprite(m.name)}"><div style="flex:1"><div class="n">${m.name} <span class="s">Lv${m.lv}</span> ${i===0?'<span class="pill" style="background:#5b4fd8">lead</span>':''}</div>
@@ -823,7 +853,7 @@ addEventListener('keydown',e=>{if(['Escape','m','M'].includes(e.key)||(e.key==='
 async function start(){
   S.scene='title';const sv=load();
   const pickT=await say('Welcome, trainer!',[{label:'▶ New game',v:'n'},{label:'⟳ Continue',v:'c',disabled:!sv}]);
-  if(pickT==='c'){Object.assign(S,{player:sv.player,party:sv.party,orbs:sv.orbs,seen:sv.seen||[],caught:sv.caught||[],coins:sv.coins||0,beaten:sv.beaten||[],badges:sv.badges||[],partners:sv.partners||[],face:'d'});enterMap(MAPS[sv.map]?sv.map:'maplewick',MAPS[sv.map]?sv.px:10,MAPS[sv.map]?sv.py:7);
+  if(pickT==='c'){Object.assign(S,{player:sv.player,party:sv.party,orbs:sv.orbs,seen:sv.seen||[],caught:sv.caught||[],coins:sv.coins||0,beaten:sv.beaten||[],badges:sv.badges||[],partners:sv.partners||[],bag:Object.assign({wood:0,stone:0,fiber:0,berry:0},sv.bag),camps:sv.camps||[],face:'d'});enterMap(MAPS[sv.map]?sv.map:'maplewick',MAPS[sv.map]?sv.px:10,MAPS[sv.map]?sv.py:7);
     await say(`Welcome back, ${S.player}!`);goTown();return}
   S.scene='lab';S.pick=-1;
   await say('PROF. ALDER: Welcome to the world of WILDLINGS — creatures living in every meadow, river and ember-field.');
