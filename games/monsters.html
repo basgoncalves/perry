@@ -102,22 +102,32 @@ input:focus{border-color:#5b4fd8}
 .dd .row{background:#fff;border-radius:12px;padding:8px 10px;margin-top:6px}.dd .row b{display:block;font-size:11px;color:#5b4fd8;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
 .sbar{display:grid;grid-template-columns:34px 1fr 26px;gap:6px;align-items:center;font-size:11px}.sbar i{display:block;height:7px;border-radius:9px;background:#5b4fd8}
 .evo{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.evo button{border:0;background:#eef0ff;border-radius:10px;padding:3px 6px;font:600 10px system-ui}.evo img{width:38px;height:38px;margin:0;display:block;background:none;box-shadow:none}
+/* ---- vertical layout: everything overlays the tall screen ---- */
+#gba{padding:8px 8px 6px!important;border-radius:22px!important}
+#box{position:absolute!important;left:8px;right:8px;bottom:8px;margin:0!important;height:auto!important;max-height:46%;min-height:84px;z-index:6}
+#dpad{position:absolute!important;left:50%;bottom:10px;transform:translateX(-50%);margin:0!important;z-index:5;grid-template-columns:repeat(3,50px)!important;grid-template-rows:repeat(3,42px)!important}
+#dpad button{background:#0b0b2a66!important;border:1.5px solid #ffffff66!important;backdrop-filter:blur(3px)}
+#howto{display:none}#ver{margin:6px 0 2px!important;font-size:9px!important}
+#devBtn,#dexBtn{bottom:4px!important;padding:5px 10px!important;font-size:10px!important}#devBtn{left:10px!important}#dexBtn{right:10px!important}
+#dev,#dex{border-radius:22px!important}
+#moves{width:min(44%,172px)!important;bottom:8px!important}
+#box:not(.hide)~#dpad{visibility:hidden!important}
 </style>
 </head>
 <body>
 <div id="gba">
   <div id="screen"><canvas id="c3" style="position:absolute;inset:0;width:100%;height:100%;display:none"></canvas><canvas id="c" width="720" height="480"></canvas><div id="banner"></div><div id="panel"></div><button id="mbtn" title="Menu">☰</button><div id="stick"><i></i></div>
-<div id="hud"><div id="team"></div><button id="runBtn">RUN</button><div id="hint"></div><div id="moves"></div><div id="orbBtn"><span>◓</span><small></small></div></div><div id="toast"></div><div id="side"><b></b><div class="sb"><button data-s="l">◀ LEFT</button><button data-s="r">RIGHT ▶</button></div><i class="bar"></i></div><div id="dodge"><b></b><span>⟵ swipe to dodge ⟶</span><i class="bar"></i></div></div>
-  <div id="box" class="hide"></div>
-  <div id="dpad"><button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button></div>
+<div id="hud"><div id="team"></div><button id="runBtn">RUN</button><div id="hint"></div><div id="moves"></div><div id="orbBtn"><span>◓</span><small></small></div></div><div id="toast"></div><div id="side"><b></b><div class="sb"><button data-s="l">◀ LEFT</button><button data-s="r">RIGHT ▶</button></div><i class="bar"></i></div><div id="dodge"><b></b><span>⟵ swipe to dodge ⟶</span><i class="bar"></i></div><div id="box" class="hide"></div>
+  <div id="dpad"><button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button></div></div>
+
   <button id="dexBtn">📖 DEX</button><div id="dex"><div class="sheet"></div></div><button id="devBtn">🛠 DEV</button><div id="dev"><div class="sheet"></div></div>
   <div class="label hint2" id="howto">Use the arrows to walk · ☰ for menu</div>
   <div class="label" id="ver">WILDLINGS</div>
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.14.1',BUILT='19 Nov 2026 22:10';
-document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
+const VERSION='0.15.0',BUILT='19 Nov 2026 22:25';
+document.getElementById('ver').textContent=`v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
 g.setTransform(3,0,0,3,0,0);const panel=document.getElementById('panel');
@@ -782,7 +792,7 @@ function init3d(THREE){
     scene.add(world);camPos=null;follower.position.set(S.follow[0]+.5,0,S.follow[1]+.5)}
   let pals=[],fires=[];let camPos=null,stage=null,orbT=0,lastInOrb=false;const tgt=new THREE.Vector3(),look=new THREE.Vector3(),M4=new THREE.Matrix4(),Q=new THREE.Quaternion(),V=new THREE.Vector3(),SC=new THREE.Vector3(),E=new THREE.Euler();
   function draw(){const t=performance.now()/1000,w=cv3.clientWidth,h=cv3.clientHeight;
-    if(R.domElement.width!==Math.round(w*R.getPixelRatio())){R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
+    if(R.domElement.width!==Math.round(w*R.getPixelRatio())){R.setSize(w,h,false);cam.aspect=w/h;cam.fov=w<h?58:50;cam.updateProjectionMatrix()}
     const battle=S.scene==='battle';
     player.position.set(S.dx+.5,S.mv?Math.abs(Math.sin(t*13))*.04:0,S.dy+.5);
     const want=ROT[S.face]||0;player.rotation.y+=(((want-player.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI)*.3;
@@ -801,7 +811,7 @@ function init3d(THREE){
       else{const ok=dd=>{const v=DV[dd];let c=0;for(let k=1;k<=4;k++)if(!blocked(S.px+v[0]*k,S.py+v[1]*k))c++;return c};
         const pick=[S.face,...'udlr'.split('').filter(x=>x!==S.face)].sort((a,b)=>ok(b)-ok(a)+(b===S.face?.5:0)-(a===S.face?.5:0))[0];S.face=pick;d=DV[pick];mid=[S.px+.5+d[0]*2.2,S.py+.5+d[1]*2.2]}
       const at=k=>[mid[0]+d[0]*k,mid[1]+d[1]*k];
-      stage={d,mid,trN,me:at(-2.6),ally:at(-1.3),foe:at(1.4),tr:at(3),pm:player.position.clone(),tm:trN?new THREE.Vector3(trN.x+.5,0,trN.y+.5):null};
+      stage={d,mid,trN,me:at(-2.6),ally:at(-1.8),foe:at(2.1),tr:at(3),pm:player.position.clone(),tm:trN?new THREE.Vector3(trN.x+.5,0,trN.y+.5):null};
       stage.px=stage.me[0];stage.pz=stage.me[1];S.face=Object.keys(DV).find(k=>DV[k][0]===d[0]&&DV[k][1]===d[1])||S.face}
     if(!battle)stage=null;
     if(stage){stage.pm.lerp(V.set(stage.me[0],0,stage.me[1]),.12);player.position.copy(stage.pm);player.rotation.y=ROT[S.face]||0;
@@ -819,8 +829,8 @@ function init3d(THREE){
       const a=[stage.px,stage.pz],b=stage.foe;orb.position.set(a[0]+(b[0]-a[0])*k,.15+Math.sin(k*Math.PI)*1.1+(k>=1?0:.4*(1-k)),a[1]+(b[1]-a[1])*k);orb.rotation.z=S.wobble&&k>=1?Math.sin(t*12)*.4:t*10*(1-k)}else orb.visible=false;lastInOrb=S.inOrb;
     // camera
     if(stage){const d=stage.d,pp=[-d[1],d[0]];const f=stage.foe,al=stage.ally;
-      const m2=stage.mid;tgt.set(m2[0]+d[0]*.3,-.75,m2[1]+d[1]*.3);V.set(stage.ally[0]-d[0]*2.3+pp[0]*1.6,1.5,stage.ally[1]-d[1]*2.1+pp[1]*1.5)}
-    else{tgt.set(S.dx+.5,.5,S.dy+.5);V.copy(tgt).add(M.indoor?new THREE.Vector3(0,5.2,4.4):new THREE.Vector3(0,3.6,4.6))}
+      const m2=stage.mid;const pt=cam.aspect<1;tgt.set(m2[0]+d[0]*.4,pt?-.9:-.75,m2[1]+d[1]*.4);V.set(stage.ally[0]-d[0]*(pt?3:2.4)+pp[0]*(pt?.8:1.8),pt?2.5:1.6,stage.ally[1]-d[1]*(pt?3:2.4)+pp[1]*(pt?.8:1.8))}
+    else{const pt=cam.aspect<1;tgt.set(S.dx+.5,.5,S.dy+.5-(pt?1.1:0));V.set(S.dx+.5,M.indoor?(pt?8.5:5.2):(pt?6:3.6),S.dy+.5+(M.indoor?(pt?5:4.4):(pt?5.2:4.6)))}
     if(!camPos){camPos=V.clone();look.copy(tgt)}camPos.lerp(V,stage?.08:.12);look.lerp(tgt,.15);cam.position.copy(camPos);cam.lookAt(look);
     sun.position.set(S.dx-5,12,S.dy+6);sun.target.position.set(S.dx,0,S.dy);
     R.render(scene,cam)}
