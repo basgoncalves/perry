@@ -253,10 +253,28 @@ function monthFrom(q){const names=['jan','feb','mar','apr','may','jun','jul','au
   if(/last month/.test(q)){const d=new Date();d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,7)}
   const i=names.findIndex(n=>q.includes(n));if(i>=0){const y=new Date().getFullYear();return `${i>new Date().getMonth()?y-1:y}-${String(i+1).padStart(2,'0')}`}
   return thisMonth()}
+const FIN=/\b(spen[dt]|spending|budgets?|portfolio|holdings?|my (stocks|shares|money|savings|finances|business)|etfs?|goals?|invest\w*|deposits?|bonds?|aforro|bundesschatz|festgeld|income|expens\w*|earn(ed|ings)?|transactions?|groceries|eating out|biz|business plan|coaching|the market|stock market|heat ?map|daddy'?s home|help|what can you do|\d+ (a|per|each) month)\b/;
+const WMO={0:'clear sky',1:'mainly clear',2:'partly cloudy',3:'overcast',45:'fog',48:'fog',51:'light drizzle',53:'drizzle',55:'heavy drizzle',61:'light rain',63:'rain',65:'heavy rain',71:'light snow',73:'snow',75:'heavy snow',80:'showers',81:'showers',82:'heavy showers',95:'thunderstorms',96:'thunderstorms with hail',99:'thunderstorms with hail'};
+function here(){return new Promise(ok=>{if(!navigator.geolocation)return ok(null);
+  navigator.geolocation.getCurrentPosition(p=>ok({lat:p.coords.latitude,lon:p.coords.longitude,name:''}),()=>ok(null),{timeout:8000,maximumAge:6e5})})}
+async function weather(q){try{
+  const city=(q.match(/\bin ([a-zà-ÿ .'-]+?)(?: today| tomorrow| now| this week)?\??$/)||[])[1];let loc=null;
+  if(city){const g=await (await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&name='+encodeURIComponent(city))).json();
+    const r=g.results&&g.results[0];if(r)loc={lat:r.latitude,lon:r.longitude,name:r.name}}
+  loc??=await here();if(!loc)return "I need your location for the weather, my lord — allow location, or ask e.g. \"weather in Vienna\".";
+  const d=await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=2`)).json();
+  const tm=/tomorrow/.test(q),i=tm?1:0,c=d.current,dl=d.daily,w=WMO[dl.weather_code[i]]||'mixed weather',where=loc.name?` in ${loc.name}`:'';
+  return tm?`Tomorrow${where}: ${w}, ${Math.round(dl.temperature_2m_min[1])} to ${Math.round(dl.temperature_2m_max[1])}°C, ${dl.precipitation_probability_max[1]}% chance of rain, my lord.`
+    :`Right now${where} it's ${Math.round(c.temperature_2m)}°C (feels like ${Math.round(c.apparent_temperature)}°C), ${WMO[c.weather_code]||w}. Today ${Math.round(dl.temperature_2m_min[0])} to ${Math.round(dl.temperature_2m_max[0])}°C, ${dl.precipitation_probability_max[0]}% chance of rain.`+(dl.precipitation_probability_max[0]>=50?' Take an umbrella, my lord.':'')
+}catch(e){return "I couldn't reach the weather service, my lord."}}
 function answer(raw){
   const q=raw.toLowerCase().replace(/^(hey |ok )?perry[, ]*/,'').trim();const m=monthFrom(q);
   if(/daddy'?s home/.test(q))return "Welcome home, my lord. Session restore runs on the desktop Perry — open it on your PC with Ctrl+Alt+P. Here, all financial systems are online.";
-  if(!q||/^(hi|hello|hey|yo)\b/.test(q))return "At your service, my lord. Ask me about spending, budgets, your portfolio or goals.";
+  if(!q||/^(hi|hello|hey|yo)\W*$/.test(q))return "At your service, my lord. Ask me anything — the weather, a question, an idea — or about your money.";
+  if(/\b(time is it|the time|what'?s the date|today'?s date|what day is)\b/.test(q))return new Date().toLocaleString('en-GB',{weekday:'long',hour:'2-digit',minute:'2-digit',day:'numeric',month:'long'});
+  if(/\b(weather|temperature|rain|raining|forecast|umbrella|sunny|cold outside|hot outside)\b/.test(q))return weather(q);
+  // Anything that isn't plainly about the user's own money goes to the general brain.
+  if(!FIN.test(q))return brain.think(raw.replace(/^(hey |ok )?perry[, ]*/i,'').trim(), financeContext());
   if(/^help$|what can you do/.test(q))return "Try:\n• How much did I spend this month?\n• Spending on groceries last month\n• Am I over budget?\n• How's my portfolio?\n• How are my goals?\n• If I invest 200 a month for 20 years?\n• Compare investment options";
   const inv=q.match(/(\d[\d.,]*)\D+(?:a |per |each )?month\D+(\d+)\s*year/);
   if(inv){const mo=num(inv[1]),y=+inv[2];return `Investing ${eur(mo)} a month for ${y} years (${eur(mo*12*y)} paid in) could grow to roughly:\n`+
@@ -291,7 +309,7 @@ function financeContext(){try{const m=thisMonth(),tx=monthTx(m).filter(t=>t.cat!
   return `this month spent ${eur(out)} over ${tx.length} transactions; portfolio ${eur(v)}; ${S.goals.length} savings goals.`}catch{return ''}}
 function ask(t){if(!t.trim())return;add(t,'u');$('#core').classList.add('think');setTimeout(()=>Promise.resolve(answer(t)).then(say).finally(()=>$('#core').classList.remove('think')),250)}
 $('#ask').onsubmit=e=>{e.preventDefault();ask($('#q').value);$('#q').value=''};
-const CHIPS=['Spending this month','Am I over budget?','How\'s my portfolio?','How\'s the market?','How are my goals?','200 a month for 20 years','Compare investment options'];
+const CHIPS=['What\'s the weather?','Tell me a joke','Spending this month','Am I over budget?','How\'s my portfolio?','How\'s the market?','How are my goals?','200 a month for 20 years','Compare investment options'];
 $('#chips').innerHTML=CHIPS.map(c=>`<button>${c}</button>`).join('');
 $('#chips').onclick=e=>{if(e.target.tagName=='BUTTON')ask(e.target.textContent)};
 
