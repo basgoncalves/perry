@@ -26,7 +26,7 @@ export async function loadSmart(onProgress = () => {}) {
 export const smartReady = () => !!engine;
 
 async function askModel(q, context) {
-  const sys = "You are Perry, a witty, concise Jarvis-style assistant who calls the user 'sir'. " +
+  const sys = "You are Perry, a witty, concise Jarvis-style assistant who always addresses the user as 'my lord' (never 'sir'). " +
     "Answer in at most 3 short sentences. If unsure, say so instead of inventing facts. " +
     "Never give personalised buy/sell advice. Context about the user's finances (use only if relevant): " + context;
   history.push({ role: 'user', content: q });
@@ -61,6 +61,6 @@ export async function think(q, context = '') {
     if (w) return w;
   } catch (e) { console.warn(e); }
   return navigator.onLine === false
-    ? "I'm offline, sir, and Smart Perry isn't loaded — I can only do your finances right now."
-    : "I couldn't find that, sir. Say 'help' for what I do best.";
+    ? "I'm offline, my lord, and Smart Perry isn't loaded — I can only do your finances right now."
+    : "I couldn't find that, my lord. Say 'help' for what I do best.";
 }

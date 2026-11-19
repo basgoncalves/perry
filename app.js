@@ -214,7 +214,7 @@ $('#i-reset').onclick=()=>{S.rates={};S.inv={};save();renderInvest()};
 ['#i-start','#i-month','#i-years','#i-infl','#i-tax','#i-region'].forEach(s=>$(s).oninput=$(s).onchange=renderInvest);
 
 /* ---------- settings ---------- */
-$('#s-key').value=S.settings.key;$('#s-voice').checked=S.settings.voice;
+$('#s-key').value=S.settings.key;if(S.settings.voice===undefined)S.settings.voice=true;$('#s-voice').checked=S.settings.voice;
 $('#s-key').onchange=e=>{S.settings.key=e.target.value.trim();save();render()};
 $('#s-voice').onchange=e=>{S.settings.voice=e.target.checked;save()};
 $('#export').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));
@@ -232,15 +232,22 @@ $('#demo').onclick=()=>{const m=thisMonth(),p=new Date();p.setMonth(p.getMonth()
 /* ---------- Perry brain ---------- */
 const log=$('#log');
 function add(text,who){const d=document.createElement('div');d.className='msg '+who;d.textContent=text;log.appendChild(d);d.scrollIntoView({behavior:'smooth'})}
-function speak(t){const v0=S.settings.voice&&window.speechSynthesis;
-  if(!v0){if(live)setTimeout(listen,400);return}speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(t.replace(/€/g,' euros ').replace(/−/g,'minus ').replace(/—\s*Wikipedia:.*$/s,''));u.lang='en-GB';u.rate=1.02;
-  const v=speechSynthesis.getVoices().find(v=>/en-GB/.test(v.lang)&&/male|daniel|george|arthur/i.test(v.name))||speechSynthesis.getVoices().find(v=>/en-GB/.test(v.lang));if(v)u.voice=v;
-  $('#core').classList.add('talk');
-  // Chrome on Android sometimes never fires onend, so poll as well; whichever comes first hands back to the mic.
-  let done=false;const fin=()=>{if(done)return;done=true;clearInterval(poll);$('#core').classList.remove('talk');if(live)setTimeout(listen,350)};
-  u.onend=fin;u.onerror=fin;speechSynthesis.speak(u);
-  const poll=setInterval(()=>{if(!speechSynthesis.speaking&&!speechSynthesis.pending)fin()},400)}
+// Pick the voice once the browser has loaded its list (on Android it arrives late).
+let VOICE=null;function pickVoice(){const vs=window.speechSynthesis?speechSynthesis.getVoices():[];
+  VOICE=vs.find(v=>/en-GB/i.test(v.lang)&&/male|daniel|george|arthur|rjs/i.test(v.name))||vs.find(v=>/en-GB|en_GB/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null}
+if(window.speechSynthesis){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function speak(t){const on=window.speechSynthesis&&(S.settings.voice||live);
+  if(!on){if(live)setTimeout(listen,400);return}
+  const u=new SpeechSynthesisUtterance(t.replace(/€/g,' euros ').replace(/−/g,'minus ').replace(/—\s*Wikipedia:.*$/s,'').replace(/[•\n]+/g,'. '));
+  u.lang='en-GB';u.rate=1.02;if(!VOICE)pickVoice();if(VOICE)u.voice=VOICE;
+  let done=false,started=false,poll=null;
+  const fin=()=>{if(done)return;done=true;clearInterval(poll);$('#core').classList.remove('talk');if(live)setTimeout(listen,350)};
+  u.onstart=()=>{started=true;$('#core').classList.add('talk')};u.onend=fin;u.onerror=fin;
+  speechSynthesis.cancel();speechSynthesis.resume();
+  // Chrome drops an utterance queued in the same tick as cancel(), so wait a beat.
+  setTimeout(()=>{speechSynthesis.speak(u);
+    // Android Chrome sometimes never fires onend — poll, but only after speech actually began (or 4 s passed).
+    const t0=Date.now();poll=setInterval(()=>{if((started||Date.now()-t0>4000)&&!speechSynthesis.speaking&&!speechSynthesis.pending)fin()},400)},120)}
 function say(t,quiet){add(t,'p');if(!quiet)speak(t);$('#status').textContent=t.split('\n')[0].slice(0,60)}
 function monthFrom(q){const names=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
   if(/last month/.test(q)){const d=new Date();d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,7)}
@@ -248,8 +255,8 @@ function monthFrom(q){const names=['jan','feb','mar','apr','may','jun','jul','au
   return thisMonth()}
 function answer(raw){
   const q=raw.toLowerCase().replace(/^(hey |ok )?perry[, ]*/,'').trim();const m=monthFrom(q);
-  if(/daddy'?s home/.test(q))return "Welcome home, sir. Session restore runs on the desktop Perry — open it on your PC with Ctrl+Alt+P. Here, all financial systems are online.";
-  if(!q||/^(hi|hello|hey|yo)\b/.test(q))return "At your service, sir. Ask me about spending, budgets, your portfolio or goals.";
+  if(/daddy'?s home/.test(q))return "Welcome home, my lord. Session restore runs on the desktop Perry — open it on your PC with Ctrl+Alt+P. Here, all financial systems are online.";
+  if(!q||/^(hi|hello|hey|yo)\b/.test(q))return "At your service, my lord. Ask me about spending, budgets, your portfolio or goals.";
   if(/^help$|what can you do/.test(q))return "Try:\n• How much did I spend this month?\n• Spending on groceries last month\n• Am I over budget?\n• How's my portfolio?\n• How are my goals?\n• If I invest 200 a month for 20 years?\n• Compare investment options";
   const inv=q.match(/(\d[\d.,]*)\D+(?:a |per |each )?month\D+(\d+)\s*year/);
   if(inv){const mo=num(inv[1]),y=+inv[2];return `Investing ${eur(mo)} a month for ${y} years (${eur(mo*12*y)} paid in) could grow to roughly:\n`+
@@ -258,16 +265,16 @@ function answer(raw){
   if(/\bspen|\bcost|\bpaid\b|expens/.test(q)&&cat){const v=catTotals(m)[cat]||0,b=S.budgets[cat];
     return `You spent ${eur2(v)} on ${cat.toLowerCase()} in ${m}.`+(b?` That's ${Math.round(v/b*100)}% of your ${eur(b)} budget.`:'')}
   if(/\bbudget/.test(q)){const ct=catTotals(m),over=Object.entries(S.budgets).filter(([c,b])=>(ct[c]||0)>b);
-    if(!Object.keys(S.budgets).length)return "You haven't set any budgets yet, sir. Add some in the Spend tab.";
-    return over.length?`Over budget in ${over.map(([c,b])=>`${c} (${eur(ct[c])} of ${eur(b)})`).join(', ')}.`:`All budgets on track for ${m}. Well done, sir.`}
+    if(!Object.keys(S.budgets).length)return "You haven't set any budgets yet, my lord. Add some in the Spend tab.";
+    return over.length?`Over budget in ${over.map(([c,b])=>`${c} (${eur(ct[c])} of ${eur(b)})`).join(', ')}.`:`All budgets on track for ${m}. Well done, my lord.`}
   if(/(biggest|top|most)\b.*(spen|expens|categor|cost)/.test(q)){const ct=catTotals(m),top=Object.entries(ct).sort((a,b)=>b[1]-a[1]).slice(0,3);
     return top.length?`Top spending in ${m}: `+top.map(([c,v])=>`${c} ${eur(v)}`).join(', ')+'.':'No spending recorded for that month.'}
   if(/\bspen|\bincome\b|\bearn(ed|ing)?\b|\bnet\b|\bsav(e|ed|ing)\b|this month|last month/.test(q)&&!/goal|invest/.test(q)){const tx=monthTx(m).filter(t=>t.cat!=='Transfers');
     const out=-tx.filter(t=>t.amt<0).reduce((a,t)=>a+t.amt,0),inc=tx.filter(t=>t.amt>0).reduce((a,t)=>a+t.amt,0);
     if(!tx.length)return `No transactions for ${m} yet. Import a bank CSV in the Spend tab.`;
     return `In ${m}: spent ${eur(out)}, income ${eur(inc)}, net ${eur(inc-out)}${inc?` (saving ${Math.round((inc-out)/inc*100)}%)`:''}.`}
-  if(/\b(my business|biz|coaching|business plan)\b/.test(q)){show('biz');return 'Opening the business plan, sir.';}
-  if(/\b(the market|stock market|markets?\b.*today|heat ?map|is it over)\b|how'?s the market/.test(q)){show('market');return window.marketSummary?window.marketSummary():'Opening the market map, sir.'}
+  if(/\b(my business|biz|coaching|business plan)\b/.test(q)){show('biz');return 'Opening the business plan, my lord.';}
+  if(/\b(the market|stock market|markets?\b.*today|heat ?map|is it over)\b|how'?s the market/.test(q)){show('market');return window.marketSummary?window.marketSummary():'Opening the market map, my lord.'}
   if(/\b(portfolio|my stocks|holdings?|my shares|etfs?)\b/.test(q)){if(!S.holdings.length)return "No holdings yet. Add them in the Portfolio tab.";
     const {v,c,g}=portTotals(),best=[...S.holdings].sort((a,b)=>((b.price||b.cost)/b.cost)-((a.price||a.cost)/a.cost))[0];
     return `Portfolio is worth ${eur(v)}, ${g>=0?'up':'down'} ${eur(Math.abs(g))} (${(g/c*100).toFixed(1)}%). Best performer: ${best.sym}.`}
@@ -275,7 +282,7 @@ function answer(raw){
     return S.goals.map(g=>`${g.name}: ${Math.round(g.saved/g.target*100)}% — ${goalETA(g)}`).join('\n')}
   if(/best (rate|deposit)|deposit|bond|aforro|bundesschatz|festgeld/.test(q)){const t=[...INVEST].filter(o=>o.g!=='MK').sort((a,b)=>rateOf(b)-rateOf(a)).slice(0,4);show('invest');return 'Top safe rates right now:\n'+t.map(o=>`• ${FLAG[o.g]} ${o.n}: ${rateOf(o)}%`).join('\n')+'\nCheck conditions — the highest are often promos for new clients.'}
   if(/\binvest|where.*(put|park).*money|compare (investment|option)/.test(q)){show('invest');return "Here are the main options with risk, access and typical long-run returns. It's general information, not advice for your situation — a licensed advisor can tailor it to you."}
-  if(/\b(buy|sell)\b.*\b(stock|share|etf|crypto|bitcoin|fund)/.test(q)||/should i (buy|sell|invest)/.test(q))return "I can't tell you what to buy or sell, sir — I'm not a licensed advisor. I can show your numbers, compare options and project growth so you can decide.";
+  if(/\b(buy|sell)\b.*\b(stock|share|etf|crypto|bitcoin|fund)/.test(q)||/should i (buy|sell|invest)/.test(q))return "I can't tell you what to buy or sell, my lord — I'm not a licensed advisor. I can show your numbers, compare options and project growth so you can decide.";
   if(/\b(what time|the time|what'?s the date|today'?s date|what day)\b/.test(q))return new Date().toLocaleString('en-GB',{weekday:'long',hour:'2-digit',minute:'2-digit',day:'numeric',month:'long'});
   return brain.think(raw.replace(/^(hey |ok )?perry[, ]*/i,'').trim(), financeContext());
 }
@@ -297,22 +304,22 @@ function listen(){if(!SR){setLive(false);say('Voice input is not supported in th
   const r=new SR();rec=r;r.lang='en-GB';r.interimResults=true;let heard='';
   $('#mic').classList.add('on');$('#core').classList.add('listen');
   r.onresult=e=>{const res=e.results[e.results.length-1];$('#q').value=res[0].transcript;if(res.isFinal)heard=res[0].transcript};
-  r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){setLive(false);say('I need microphone permission for live mode, sir.',true)}};
+  r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){setLive(false);say('I need microphone permission for live mode, my lord.',true)}};
   r.onend=()=>{rec=null;$('#mic').classList.remove('on');$('#core').classList.remove('listen');$('#q').value='';
     if(heard.trim()){silent=0;
-      if(live&&/^(stop|bye|goodbye|that'?s all|end (live|conversation)|thanks?,? perry|thank you,? perry)\b/i.test(heard.trim())){add(heard,'u');setLive(false);say('Standing by, sir.');return}
+      if(live&&/^(stop|bye|goodbye|that'?s all|end (live|conversation)|thanks?,? perry|thank you,? perry)\b/i.test(heard.trim())){add(heard,'u');setLive(false);say('Standing by, my lord.');return}
       ask(heard)}
-    else if(live){if(++silent>=3){setLive(false);say('Live mode off — I heard nothing, sir.',true)}else setTimeout(listen,300)}};
+    else if(live){if(++silent>=3){setLive(false);say('Live mode off — I heard nothing, my lord.',true)}else setTimeout(listen,300)}};
   try{r.start()}catch{rec=null}}
-$('#live').onclick=()=>{if(live){setLive(false);speechSynthesis&&speechSynthesis.cancel();say('Live mode off, sir.',true);return}
-  setLive(true);say(brain.smartReady()?'Live mode on, sir. Talk to me — say "stop" when you are done.':'Live mode on, sir. Tip: turn on Smart Perry in Settings for real conversation. Say "stop" to end.')};
+$('#live').onclick=()=>{if(live){setLive(false);speechSynthesis&&speechSynthesis.cancel();say('Live mode off, my lord.',true);return}
+  setLive(true);say(brain.smartReady()?'Live mode on, my lord. Talk to me — say "stop" when you are done.':'Live mode on, my lord. Tip: turn on Smart Perry in Settings for real conversation. Say "stop" to end.')};
 $('#mic').onclick=listen;$('#core').onclick=listen;
 
 /* ---------- boot ---------- */
 function render(){renderSpend();renderPort();renderGoals();renderInvest()}
 render();
 const h=new Date().getHours();
-say(`Good ${h<12?'morning':h<18?'afternoon':'evening'}, sir. Perry online.`+(S.tx.length?'':' No data yet — load demo data in Settings or import a bank CSV.'),true);
+say(`Good ${h<12?'morning':h<18?'afternoon':'evening'}, my lord. Perry online.`+(S.tx.length?'':' No data yet — load demo data in Settings or import a bank CSV.'),true);
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 // Version label: click to fetch the newest Perry Online and reload.
 (()=>{const v=document.getElementById('ver');if(!v)return;const cur=v.textContent;
@@ -359,7 +366,7 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
 (()=>{const box=$('#s-smart'),st=$('#s-smart-st');if(!box)return;
   if(!brain.smartSupported()){box.disabled=true;st.textContent="Not available in this browser (needs WebGPU — recent Chrome on Android/desktop).";return}
   const go=()=>{st.textContent='Loading model… 0%';brain.loadSmart((p,t)=>st.textContent=`Loading model… ${p}%`)
-    .then(()=>{st.textContent='Smart Perry is ready — running on this device.';say('Smart mode online, sir.',true)})
+    .then(()=>{st.textContent='Smart Perry is ready — running on this device.';say('Smart mode online, my lord.',true)})
     .catch(e=>{st.textContent='Could not load: '+e.message;box.checked=false;S.settings.smart=false;save()})};
   box.checked=!!S.settings.smart;
   box.onchange=()=>{S.settings.smart=box.checked;save();if(box.checked)go();else st.textContent='Off. Reload the page to free the memory.'};

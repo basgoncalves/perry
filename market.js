@@ -201,9 +201,9 @@ window.renderMarket=async()=>{
   drawKpis(); drawMap(); drawTimeline();
 };
 window.marketSummary=async()=>{
-  if(!await load())return "I can't reach the market data right now, sir.";
+  if(!await load())return "I can't reach the market data right now, my lord.";
   const t=D.tiles, avg=weighted(t,x=>x.chg), srt=[...t].sort((a,b)=>a.chg-b.chg);
-  const mood=avg<=-2?"It's a rough day, sir.":avg<=-0.5?"Markets are down, sir.":avg<0.5?"A quiet day, sir.":"Markets are up, sir.";
+  const mood=avg<=-2?"It's a rough day, my lord.":avg<=-0.5?"Markets are down, my lord.":avg<0.5?"A quiet day, my lord.":"Markets are up, my lord.";
   return `${mood} The ${t.length} biggest US companies are ${P(avg)} today, worth ${T(t.reduce((s,x)=>s+x.cap,0))} combined. Best: ${srt[srt.length-1].s} ${P(srt[srt.length-1].chg,1)}. Worst: ${srt[0].s} ${P(srt[0].chg,1)}.`;
 };
 document.addEventListener('click',e=>{const b=e.target.closest('#m-range button');if(!b)return;
