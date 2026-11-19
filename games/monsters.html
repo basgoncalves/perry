@@ -80,7 +80,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.9.0',BUILT='19 Nov 2026 21:20';
+const VERSION='0.10.0',BUILT='19 Nov 2026 21:30';
 document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -98,6 +98,10 @@ const MOVES={
 };
 // ---- Species: pixel art from palette strings (12x12) ----
 const SP={
+  Gullwing:{type:'plain',hp:40,atk:50,def:38,spd:70,moves:['Peck','Gust','Growl'],col:{a:'#fff'},art:[]},
+  Kelpling:{type:['leaf','tide'],hp:48,atk:44,def:55,spd:38,moves:['Splash','Thornshot','Harden'],col:{a:'#2a9d8f'},art:[]},
+  Glimstar:{type:'psychic',hp:38,atk:56,def:44,spd:58,moves:['Mindwave','Tackle','Harden'],col:{a:'#f48fb1'},art:[]},
+  Dunemole:{type:'ground',hp:46,atk:58,def:50,spd:34,moves:['Mudslap','Scratch','Dustcloud'],col:{a:'#c8a46a'},art:[]},
   Lincendo:{type:['flame','ground'],hp:41,atk:56,def:42,spd:66,moves:['Scratch','Cinder','Mudslap'],
     col:{a:'#c9773a',b:'#f3d9a4',c:'#222',e:'#4a2c17'},
     art:["..e......e..","..ae....ea..","..aaaaaaaa..",".aaaaaaaaaa.",".aacaaaacaa.","eaaaabbaaaae","ebaabbbbaabe","..aaaaaaaa..","..aeaaaaea..","..aaaaaaaa..","..aa....aa..","............"]},
@@ -145,6 +149,20 @@ function painter(c){const fs=(f,st=true)=>{c.fillStyle=f;c.fill();if(st){c.lineW
     eye:(x,y,r=.42)=>{c.beginPath();c.ellipse(x,y,r*.8,r,0,0,7);c.fillStyle=OL;c.fill();c.beginPath();c.arc(x-r*.25,y-r*.35,r*.35,0,7);c.fillStyle='#fff';c.fill()},
     shine:(x,y,rx,ry,r=0)=>{c.beginPath();c.ellipse(x,y,rx,ry,r,0,7);c.fillStyle='#ffffff55';c.fill()}}}
 const ART={
+ Gullwing(d){d.p('M6 7 Q2 3.4 .2 4.6 Q2.6 6.2 4.6 8.4 Z','#b0bec5');d.el(6.4,8,2.7,1.9,'#fafafa');d.p('M8.4 7.6 L11.6 6.6 L10.8 8.8 Z','#cfd8dc');
+  d.el(4.4,5.6,1.6,1.5,'#fafafa');d.p('M3 5.6 L.8 6.2 L3 6.6 Z','#ffca28');d.el(1.4,6.3,.25,.18,'#e65100',0,false);d.p('M6.4 7.4 Q8.6 3.2 11.2 3.6 Q9.8 6.6 7.4 8.6 Z','#cfd8dc');d.line('M7.2 7 Q8.6 5 10.2 4.2','#90a4ae',.15);
+  d.el(5.6,10.4,.55,.25,'#ff8a65');d.el(7.2,10.4,.55,.25,'#ff8a65');d.line('M5.8 9.6 L5.6 10.3 M7 9.6 L7.2 10.3','#ff8a65',.2);d.eye(4,5.3,.38);d.shine(4.8,4.6,.8,.3);d.shine(6.6,7,1.3,.4)},
+ Kelpling(d){[[3,9,'M3 10 Q1 6 2.6 2.6 Q3.4 6 4 9.4 Z'],[9,9,'M8 9.4 Q8.6 6 9.4 2.2 Q11 6 9 10 Z'],[6,6,'M5.2 6 Q5.4 2.6 6.4 .8 Q7.6 3 6.8 6 Z']].forEach(([a,b,pth])=>d.p(pth,'#43a047'));
+  d.el(6,8.4,3.2,2.6,'#2a9d8f');d.el(6,9.2,2,1.3,'#8ee3d4',0,false);d.line('M3.6 7.4 Q4.6 6.8 5.4 7.6 M6.8 7.4 Q7.6 6.8 8.6 7.6','#1f7a6f',.15);
+  d.eye(4.9,8.1,.42);d.eye(7.1,8.1,.42);d.line('M5.4 9.5 Q6 9.9 6.6 9.5');[[10.6,4],[11.2,2.6],[1.2,5]].forEach(([x,y],i)=>{d.el(x,y,.35-i*.08,.35-i*.08,'#b3e5fc66')});d.shine(5.2,7,1.2,.4)},
+ Glimstar(d){const pts=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?2.2:5;pts.push(`${(6+Math.cos(a)*r).toFixed(2)} ${(6.6+Math.sin(a)*r).toFixed(2)}`)}
+  d.p('M'+pts.join(' L')+' Z','#f48fb1');const p2=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?1.2:2.6;p2.push(`${(6+Math.cos(a)*r).toFixed(2)} ${(6.6+Math.sin(a)*r).toFixed(2)}`)}d.p('M'+p2.join(' L')+' Z','#ce93d8',false);
+  d.el(6,6.6,.7,.7,'#ffe082',0,false);d.eye(5.1,6.2,.38);d.eye(6.9,6.2,.38);d.line('M5.5 7.4 Q6 7.8 6.5 7.4');
+  [[1.2,2],[10.8,2.4],[10.6,10.4]].forEach(([x,y])=>{d.p(`M${x} ${y-.6} L${x+.18} ${y-.18} L${x+.6} ${y} L${x+.18} ${y+.18} L${x} ${y+.6} L${x-.18} ${y+.18} L${x-.6} ${y} L${x-.18} ${y-.18} Z`,'#fff59d',false)});d.shine(5,4.4,1,.35,-.4)},
+ Dunemole(d){d.el(6,8.4,3.6,2.6,'#c8a46a');d.el(6,9.2,2.2,1.4,'#efd9b0',0,false);
+  [[2.2,9.6,-.5],[9.8,9.6,.5]].forEach(([x,y,r])=>{d.el(x,y,1.1,.7,'#e8b4a0',r);d.line(`M${x-.6} ${y+.3} L${x-.9} ${y+.9} M${x} ${y+.5} L${x} ${y+1.1} M${x+.6} ${y+.3} L${x+.9} ${y+.9}`,'#fff',.18)});
+  d.el(6,6.2,2.2,1.9,'#c8a46a');d.el(6,7,.6,.45,'#f48fb1');d.el(4.8,5.8,.22,.22,OL,0,false);d.el(7.2,5.8,.22,.22,OL,0,false);
+  d.line('M4.4 7 L3 6.8 M4.4 7.3 L3.1 7.6 M7.6 7 L9 6.8 M7.6 7.3 L8.9 7.6','#7a5a3a',.12);d.el(6,11.2,3,.4,'#d9bf8a',0,false);d.shine(5.2,4.9,1,.35)},
  Lincendo(d){d.el(10,8.2,1.1,.6,'#d4843f',-.6);d.el(10.9,7.4,.45,.4,OL,0,false);
   d.p('M7 6.6 Q7.4 4.6 8.6 5.6 Q8.8 4 10 5 Q10.8 6.3 9.9 7.3 Z','#ff6b35');d.p('M7.8 6.6 Q8.2 5.6 8.8 6.2 Q9.2 5.4 9.6 6.2 Q9.8 6.9 9.3 7.1 Z','#ffc145',false);
   d.el(5,10.8,.85,.7,'#c27535');d.el(8.6,10.8,.85,.7,'#c27535');d.el(7,8.7,3.2,2.3,'#d4843f');d.el(6.6,9.4,1.7,1.1,'#f6dfb0',0,false);
@@ -275,17 +293,56 @@ const MAPS={
 "T.............T",
 "T.............T",
 "T.............T",
-"T=============T",
+"T==============",
 "T......=......T",
 "T.WW...=...GG.T",
 "T.WW...=f..GG.T",
 "T......=......T",
 "T......=......T",
 "TTTTTTT=TTTTTTT"],
-  warps:{'7,11':['route1',7,1]},
+  warps:{'7,11':['route1',7,1],'14,5':['route2',1,4]},
   bld:[{x:1,y:2,w:3,h:3,roof:'#8e6cc9',door:[2,4],to:['bhouse',4,4]},{x:5,y:1,w:5,h:4,roof:'#e3a43a',door:[7,4],to:['arena',4,7],label:'ARENA'},{x:11,y:2,w:3,h:3,roof:'#e0675a',door:[12,4],to:['inn',4,4],label:'INN'}],
-  signs:{'8,8':'Brookhaven — home of the Tide Arena. Leader: Marina.'},
+  signs:{'8,8':'Brookhaven — home of the Tide Arena. Leader: Marina. The coast road leads east.'},
   npcs:[{x:3,y:9,c:'#f0a35e',talk:'The arena leader uses tide and flame Wildlings. Leaf and ground moves help!'}]},
+ route2:{name:'Route 2 · Coast',rows:[
+"TTTTTTTTTTTTTTTTTTTTTT",
+"T....GGGG.....GGGG...T",
+"T....GGGG..T..GGGG...T",
+"T....................T",
+"======================",
+"T..ssssssssssssssss..T",
+"TsssGGssssssssssGGsssT",
+"Tsssssss.f.ssssssssssT",
+"WWssssssssssssssssssWW",
+"WWWWWWWWWWWWWWWWWWWWWW",
+"WWWWWWWWWWWWWWWWWWWWWW"],
+  warps:{'0,4':['brookhaven',13,5],'21,4':['saltmere',1,4]},bld:[],pool:['Gullwing','Gullwing','Kelpling','Glimstar','Dunemole','Coralisk','Platymind'],lv:[6,9],
+  signs:{'9,7':'ROUTE 2 — Brookhaven ←  ·  Saltmere →. Watch for Wildlings in the dune grass!'},
+  npcs:[{id:'nia',x:6,y:5,c:'#26c6da',face:'d',sight:2,name:'Swimmer Nia',team:[['Kelpling',8],['Gullwing',8]],pre:"The sea breeze makes me want to battle!",post:"You swim circles around me!",prize:200},
+        {id:'joe',x:15,y:7,c:'#8d6e63',face:'u',sight:3,name:'Fisher Joe',team:[['Coralisk',9],['Glimstar',9]],pre:"Shh, the fish were biting! Fine — let's battle.",post:"Reeled in by a kid... well done.",prize:220},
+        {id:'kai',x:12,y:3,c:'#ffb74d',face:'l',sight:4,name:'Surfer Kai',team:[['Dunemole',9],['Gullwing',10]],pre:"Dude! Ride this wave of a battle!",post:"Gnarly. Saltmere is just east.",prize:240}]},
+ saltmere:{name:'Saltmere Village',rows:[
+"TTTTTTTTTTTTTTT",
+"T.............T",
+"T.............T",
+"T.............T",
+"=======+======T",
+"T......=......T",
+"T..f...=...GG.T",
+"Tssssss=ssssssT",
+"TsssssssssssssT",
+"WWWWWWWWWWWWWWW",
+"WWWWWWWWWWWWWWW"],
+  warps:{'0,4':['route2',20,4]},pool:['Gullwing','Dunemole','Glimstar'],lv:[7,10],
+  bld:[{x:1,y:1,w:3,h:3,roof:'#5c8fbf',door:[2,3],to:['shouse',4,4]},{x:6,y:1,w:3,h:3,roof:'#e0675a',door:[7,3],to:['sinn',4,4],label:'INN'},{x:10,y:1,w:3,h:3,roof:'#7aa36b',door:[11,3],to:['shack',4,4],label:'DOCK'}],
+  signs:{'3,6':'Saltmere Village — where the river meets the sea.'},
+  npcs:[{x:5,y:8,c:'#9575cd',talk:'Glimstars shine on the beach at night. Some say they can read your mind!'},{x:12,y:5,c:'#a1887f',talk:'The dune grass to the east hides Dunemoles. They dig right under your feet!'}]},
+ shouse:{name:'Cottage',indoor:1,rows:["XXXXXXXXX","XKK...BBX","X.......X","X...CC..X","X.......X","XXXXEXXXX"],out:['saltmere',2,4],
+  npcs:[{x:2,y:3,c:'#4db6ac',talk:"Grandma Ines: My late husband sailed these waters with a Gullwing on his shoulder."}]},
+ sinn:{name:'Seaside Inn',indoor:1,rows:["XXXXXXXXX","XCCCCCC.X","X.......X","X.......X","X.......X","XXXXEXXXX"],out:['saltmere',7,4],
+  npcs:[{x:3,y:2,c:'#f06292',heal:1,talk:'Innkeeper Rosa-Mar: Fresh sheets and sea air — your team is good as new!'}]},
+ shack:{name:'Dock Shack',indoor:1,rows:["XXXXXXXXX","XMK...KMX","X.......X","X..CC...X","X.......X","XXXXEXXXX"],out:['saltmere',11,4],
+  npcs:[{x:6,y:3,c:'#78909c',gift:1,talk:'Old Captain Bento: A trainer heading out to sea? Take these orbs, I have plenty.'}]},
  home:{name:'Home',indoor:1,rows:["XXXXXXXXX","XKK...BBX","X.......X","X..CC...X","X.......X","XXXXEXXXX"],out:['maplewick',3,7],
   npcs:[{x:2,y:3,c:'#d97b7b',talk:"Mom: Off on an adventure? Don't forget to come home for dinner!"}]},
  lab:{name:'Lab',indoor:1,rows:["XXXXXXXXX","XMMK.KMMX","X.......X","X.CC....X","X.......X","XXXXEXXXX"],out:['maplewick',10,7],
@@ -319,6 +376,7 @@ function tile(c,x,y){const X=x*16,Y=y*16,sd=seed(x,y);
     return}
   g.fillStyle='#8fd16f';g.fillRect(X,Y,16,16);
   if(sd%7===0){g.fillStyle=['#fff','#ffd54f','#f48fb1'][sd%3];g.beginPath();g.arc(X+4+sd%8,Y+4+(sd>>3)%8,1,0,7);g.fill()}
+  if(c==='s'){g.fillStyle='#f0dca8';g.fillRect(X,Y,16,16);g.fillStyle='#e2c88a';g.beginPath();g.arc(X+4+sd%7,Y+5+(sd>>3)%6,.8,0,7);g.fill()}
   if(c==='='||c==='+'){g.fillStyle='#e6cf9b';g.beginPath();g.roundRect(X+1,Y+1,14,14,6);g.fill();
     if(isPath(x-1,y))g.fillRect(X,Y+1,8,14);if(isPath(x+1,y))g.fillRect(X+8,Y+1,8,14);if(isPath(x,y-1))g.fillRect(X+1,Y,14,8);if(isPath(x,y+1))g.fillRect(X+1,Y+8,14,8)}
   if(c==='G'){const sw=Math.sin(S.anim/18+x+y)*1.2;g.strokeStyle='#3d9a3d';g.lineWidth=1.6;g.lineCap='round';
@@ -359,7 +417,7 @@ function goTown(){S.scene='town';box.className='hide';S.busy=false;dpad.style.vi
 async function healAll(){S.party.forEach(m=>{m.hp=m.maxhp;m.atkMod=1});S.orbs=Math.max(S.orbs,5);await say(`Your team is fully healed! Orbs topped up to ${S.orbs}.`)}
 async function talk(n){S.busy=true;n.face={u:'d',d:'u',l:'r',r:'l'}[S.face];
   if(n.team&&!S.beaten.includes(n.id)){await trainerBattle(n);return}
-  await say(n.team?(n.post):n.talk);if(n.heal)await healAll();save();goTown()}
+  await say(n.team?(n.post):n.talk);if(n.heal)await healAll();if(n.gift&&!S.beaten.includes('gift_'+S.map)){S.beaten.push('gift_'+S.map);S.orbs+=5;await say(`${S.player} received 5 CATCH ORBS!`)}else if(n.gift)await say('Captain Bento: Come back if the sea is kind to you.');save();goTown()}
 async function trainerBattle(n){S.busy=true;dpad.style.visibility='hidden';n.alert=true;await wait(600);n.alert=false;
   await say(`${n.name}: ${n.pre}`);S.wildFrom=[n.x,n.y];const won=await battleLoop(n);S.wildFrom=null;
   if(won){S.beaten.push(n.id);S.coins+=n.prize;await say(`${n.name}: ${n.post}`);await say(`${S.player} got ${n.prize} coins!`);
@@ -439,7 +497,7 @@ function init3d(THREE){
     const isP=(a,b)=>m.rows[b]&&'=+'.includes(m.rows[b][a]);
     for(let y=0;y<H;y++)for(let X=0;X<W;X++){const t=m.rows[y][X];
       if(m.indoor){x.fillStyle=t==='X'?'#4b3f60':((X+y)%2?'#c9a273':'#bf9767');x.fillRect(X*P,y*P,P,P);if(t!=='X'){x.fillStyle='#00000018';for(let i=1;i<4;i++)x.fillRect(X*P,y*P+i*12,P,1.5)}continue}
-      const base=[110+rnd(X,y,1)*25,170+rnd(X,y,2)*25,80+rnd(X,y,3)*20];x.fillStyle=`rgb(${base})`;x.fillRect(X*P,y*P,P,P)}
+      const base=t==='s'?[236+rnd(X,y,1)*10,214+rnd(X,y,2)*10,160+rnd(X,y,3)*12]:[110+rnd(X,y,1)*25,170+rnd(X,y,2)*25,80+rnd(X,y,3)*20];x.fillStyle=`rgb(${base})`;x.fillRect(X*P,y*P,P,P)}
     if(!m.indoor){for(let i=0;i<W*H*60;i++){const px=Math.random()*W*P,py=Math.random()*H*P;x.fillStyle=Math.random()<.5?'#5f9a4033':'#b9e08a33';x.fillRect(px,py,2,3)}
       x.lineCap='round';x.lineJoin='round';
       for(let y=0;y<H;y++)for(let X=0;X<W;X++)if(isP(X,y)){[[1,0],[0,1]].forEach(([a,b])=>{if(isP(X+a,y+b)){x.strokeStyle='#b89b68';x.lineWidth=P*.98;x.beginPath();x.moveTo(X*P+P/2,y*P+P/2);x.lineTo((X+a)*P+P/2,(y+b)*P+P/2);x.stroke()}});
@@ -473,6 +531,7 @@ function init3d(THREE){
       if(c==='W'){const w=new THREE.Mesh(new THREE.PlaneGeometry(1.02,1.02),new THREE.MeshStandardMaterial({color:'#3a86c8',roughness:.06,metalness:.35,transparent:true,opacity:.9}));w.rotation.x=-Math.PI/2;w.position.set(X,.02,Z);w.receiveShadow=true;water.push(w);world.add(w)}
       if(c==='T')world.add(tree(X+(rnd(x,y,3)-.5)*.2,Z+(rnd(x,y,4)-.5)*.2,x*31+y));
       if(c==='G')for(let i=0;i<22;i++)blades.push([x+.05+rnd(x,y,i)*.9,y+.05+rnd(x,y,i+40)*.9,.35+rnd(x,y,i+80)*.3,rnd(x,y,i+120)*6]);
+      if(c==='s'&&rnd(x,y,11)>.9)world.add(ball(.07,['#fff3e0','#ffccbc','#f8bbd0'][Math.floor(rnd(x,y,12)*3)],x+.3+rnd(x,y,13)*.4,.03,y+.3+rnd(x,y,14)*.4,1.4,.5,1));
       if(c==='.'&&rnd(x,y,5)>.84)for(let i=0;i<3;i++)world.add(ball(.035,['#fff','#ffd54f','#f48fb1','#b39ddb'][Math.floor(rnd(x,y,6)*4)],x+rnd(x,y,7+i)*.8+.1,.04,y+rnd(x,y,8+i)*.8+.1));
       if(c==='.'&&rnd(x,y,9)>.93)world.add(ball(.12,'#8c8c84',x+.5,.04,y+.5,1.3,.6,1));
       if(c==='f'){world.add(cyl(.04,.05,.65,'#5b3d24',X,.32,Z,8));world.add(box(.62,.34,.06,'#a87a48',X,.62,Z))}}));
@@ -599,8 +658,9 @@ async function useMove(a,d,mv,mine){const who=mine?a.name:'Wild '+a.name;
   if(r.crit)await say('A critical hit!');if(r.e>1)await say("It's super effective!");else if(r.e<1)await say("It's not very effective...")}
 
 async function battleLoop(tr){
-  const pool=S.map==='route1'?['Pibbit','Pebblor','Mothwisp','Hootle','Hootle','Coralisk','Fumepot','Lincendo','Platymind','Venibri']:['Pibbit','Pibbit','Pebblor','Mothwisp','Hootle','Coralisk'];
-  const foes=tr?tr.team.map(([n,l])=>mk(n,l)):[mk(pool[Math.floor(Math.random()*pool.length)],S.map==='route1'?4+Math.floor(Math.random()*3):3+Math.floor(Math.random()*3))];
+  const MP=MAPS[S.map]||{};const pool=MP.pool||(S.map==='route1'?['Pibbit','Pebblor','Mothwisp','Hootle','Hootle','Coralisk','Fumepot','Lincendo','Platymind','Venibri']:['Pibbit','Pibbit','Pebblor','Mothwisp','Hootle','Coralisk']);
+  const LV=MP.lv||(S.map==='route1'?[4,6]:[3,5]);
+  const foes=tr?tr.team.map(([n,l])=>mk(n,l)):[mk(pool[Math.floor(Math.random()*pool.length)],LV[0]+Math.floor(Math.random()*(LV[1]-LV[0]+1)))];
   let fi=0;S.wild=foes[0];S.inOrb=false;S.scene='battle';box.className='hide';
   const alive=()=>S.party.filter(m=>m.hp>0);let me=alive()[0]||S.party[0];S.party.forEach(m=>m.atkMod=1);S.lead=me;
   const foeName=w=>tr?`${tr.name}'s ${w.name}`:`Wild ${w.name}`;
