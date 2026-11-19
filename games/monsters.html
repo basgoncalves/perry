@@ -80,7 +80,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.10.1',BUILT='19 Nov 2026 21:10';
+const VERSION='0.10.2',BUILT='19 Nov 2026 21:15';
 document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -489,7 +489,7 @@ function init3d(THREE){
   // monster billboards from the vector art
   const texC={};function monTex(n){if(texC[n])return texC[n];const im=new Image();const t=new THREE.Texture(im);t.colorSpace=THREE.SRGBColorSpace;im.onload=()=>t.needsUpdate=true;im.src=sprite(n);return texC[n]=t}
   const shadowTex=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,2,32,32,30);gr.addColorStop(0,'#000a');gr.addColorStop(1,'#0000');x.fillStyle=gr;x.fillRect(0,0,64,64);return new THREE.CanvasTexture(c)})();
-  function monster(){const g=new THREE.Group();const s=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,alphaTest:.05}));s.center.set(.5,.08);g.add(s);
+  function monster(){const g=new THREE.Group();const s=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,alphaTest:.05}));g.onTop=v=>{s.material.depthTest=!v;s.renderOrder=v?20:0};s.center.set(.5,.08);g.add(s);
     const sd=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false}));sd.rotation.x=-Math.PI/2;sd.position.y=.01;g.add(sd);
     g.userData={s,sd,name:null};g.set=(n,size=.85)=>{if(g.userData.name!==n){s.material.map=monTex(n);s.material.needsUpdate=true;g.userData.name=n}s.scale.set(size,size,1);sd.scale.set(size*.7,size*.35,1)};return g}
   // ground texture (whole map painted)
@@ -509,7 +509,7 @@ function init3d(THREE){
   const ROT={d:0,u:Math.PI,l:-Math.PI/2,r:Math.PI/2},DV={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]};
   let world=null,npcs=[],water=[],grassI=null,grassData=[];
   const player=person('#2f5fb8','#c23030');scene.add(player);
-  const follower=monster();scene.add(follower);const foe=monster();scene.add(foe);foe.visible=false;
+  const follower=monster();scene.add(follower);const foe=monster();foe.onTop(true);scene.add(foe);foe.visible=false;
   const orb=new THREE.Group();{const a=new THREE.Mesh(new THREE.SphereGeometry(.12,20,10,0,Math.PI*2,0,Math.PI/2),mat('#e53935',{roughness:.3}));const b=new THREE.Mesh(new THREE.SphereGeometry(.12,20,10,0,Math.PI*2,Math.PI/2,Math.PI/2),mat('#f5f5f5',{roughness:.3}));const r=new THREE.Mesh(new THREE.TorusGeometry(.12,.012,6,24),mat('#222'));r.rotation.x=Math.PI/2;orb.add(a,b,r);orb.traverse(o=>o.castShadow=true)}scene.add(orb);orb.visible=false;
   function build(id){const m=MAPS[id];if(world){scene.remove(world);world.traverse(o=>{o.geometry&&o.geometry!==blobG[0]&&o.geometry.dispose&&!blobG.includes(o.geometry)&&o.geometry.dispose()})}
     world=new THREE.Group();npcs=[];water=[];grassData=[];const H=m.rows.length,W=m.rows[0].length;
@@ -559,7 +559,8 @@ function init3d(THREE){
     water.forEach((wm,i)=>wm.material.opacity=.82+Math.sin(t*1.2+i)*.06);
     const lead=S.lead||S.party.find(m=>m.hp>0)||S.party[0];
     // battle staging in the world
-    if(battle&&!stage){const d=DV[S.face];const px=S.px+.5,pz=S.py+.5;stage={d,px,pz,ally:[px+d[0]*1.0,pz+d[1]*1.0],foe:[px+d[0]*2.6,pz+d[1]*2.6]};if(S.wildFrom){stage.foe=[S.wildFrom[0]+.5-d[0]*.9,S.wildFrom[1]+.5-d[1]*.9]}}
+    if(battle&&!stage){if(!S.wildFrom){const ok=dd=>{const v=DV[dd];for(let k=1;k<=3;k++)if(blocked(S.px+v[0]*k,S.py+v[1]*k))return false;return true};
+      const pick=[S.face,...'udlr'.split('').filter(x=>x!==S.face)].find(ok);if(pick)S.face=pick}const d=DV[S.face];const px=S.px+.5,pz=S.py+.5;stage={d,px,pz,ally:[px+d[0]*1.0,pz+d[1]*1.0],foe:[px+d[0]*2.6,pz+d[1]*2.6]};if(S.wildFrom){stage.foe=[S.wildFrom[0]+.5-d[0]*.9,S.wildFrom[1]+.5-d[1]*.9]}}
     if(!battle)stage=null;
     if(lead){follower.visible=true;follower.set(lead.name,stage?1.05:.75);
       const fx=stage?stage.ally[0]:S.follow[0]+.5,fz=stage?stage.ally[1]:S.follow[1]+.5;follower.position.x+=(fx-follower.position.x)*.15;follower.position.z+=(fz-follower.position.z)*.15;
