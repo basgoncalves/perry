@@ -341,6 +341,14 @@ $('#live').onclick=()=>{if(live){setLive(false);speechSynthesis&&speechSynthesis
   setLive(true);window.wakeBrain&&window.wakeBrain();say(brain.smartReady()?'Live mode on, my lord. Talk to me — say "stop" when you are done.':'Live mode on, my lord. Tip: turn on Smart Perry in Settings for real conversation. Say "stop" to end.')};
 $('#mic').onclick=listen;$('#core').onclick=listen;
 
+/* ---------- free AI model storage (keeps your finance data) ---------- */
+async function aiStorage(){try{const e=await navigator.storage.estimate();return Math.round((e.usage||0)/1e6)}catch{return null}}
+(async()=>{const b=$('#s-freeai'),st=$('#s-freeai-st');if(!b)return;const u=await aiStorage();if(u!=null)st.textContent=`Perry is using ${u>1000?(u/1000).toFixed(1)+' GB':u+' MB'} on this phone.`;
+  b.onclick=async()=>{st.textContent='Deleting…';let n=0;
+    try{for(const k of await caches.keys())if(/webllm|mlc|tvmjs/i.test(k)){await caches.delete(k);n++}}catch{}
+    try{for(const d of (await indexedDB.databases?.())||[])if(/webllm|mlc|tvmjs/i.test(d.name||'')){indexedDB.deleteDatabase(d.name);n++}}catch{}
+    S.settings.smart=false;save();const box=$('#s-smart');if(box)box.checked=false;
+    const u2=await aiStorage();st.textContent=`Done — removed ${n} store(s). Now using ${u2??'?'} MB. Smart Perry is off; reload the page to free its memory.`}})();
 /* ---------- boot ---------- */
 // One-tap holdings import: ?h=SYM,qty,avgCost,price;SYM,... (replaces holdings with the same ticker)
 (()=>{const h=new URLSearchParams(location.search).get('h');if(!h)return;
