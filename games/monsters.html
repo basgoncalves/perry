@@ -127,7 +127,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.16.3',BUILT='19 Nov 2026 22:55';
+const VERSION='0.17.0',BUILT='19 Nov 2026 23:05';
 document.getElementById('ver').textContent=`v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -329,7 +329,7 @@ function restat(m){const s=SP[m.name],st=k=>Math.floor(s[k]*m.lv/50)+5,old=m.max
 async function learn(m,mv){const M0=MOVES[mv];if(m.moves.length<4){m.moves.push(mv);await say(`${m.name} learned ${mv}!`);return}
   const i=await say(`${m.name} wants to learn ${mv} (${M0.type.toUpperCase()}${M0.pow?' · '+M0.pow:''}). Replace which move?`,m.moves.map((x,k)=>({label:`${x} <span class="t">${MOVES[x].pow||'—'}</span>`,v:k})).concat([{label:'Keep old moves',v:-1}]));
   box.className='hide';if(i>=0){const o=m.moves[i];m.moves[i]=mv;await say(`${m.name} forgot ${o} and learned ${mv}!`)}}
-async function gain(m,xp){m.xp=(m.xp||0)+xp;await say(`${m.name} gained ${xp} XP.`);
+async function gain(m,xp){xp=Math.round(xp*(1+bond(m).f/500));bond(m).l=Math.min(100,bond(m).l+1);m.xp=(m.xp||0)+xp;await say(`${m.name} gained ${xp} XP.`);
   while(m.xp>=need(m)&&m.lv<60){m.xp-=need(m);m.lv++;restat(m);await say(`${m.name} grew to Lv ${m.lv}!`);
     let mv=(SP[m.name].learn||{})[m.lv];if(mv&&!m.moves.includes(mv))await learn(m,mv);
     const ev=SP[m.name].evo;if(ev&&m.lv>=ev[1]){const o=m.name;await say(`What? ${o} is evolving!`);S.flash=10;m.name=ev[0];restat(m);mark('seen',m.name);mark('caught',m.name);await say(`✨ ${o} evolved into ${m.name}!`);
@@ -882,14 +882,15 @@ async function strike(a,d,mv,mine){let side,dodge;const SD=x=>x==='l'?-1:1;
   await wait(350);let hit=!dodge||side===dodge;
   if(mine&&DEV.kill)hit=true;if(!mine&&DEV.god){await say(`${d.name} takes no damage (dev).`);S.dodgeMe=0;return false}
   if(!hit){await say(mine?`${d.name} dodged ${dodge==='l'?'left':'right'}!`:`${d.name} dodged!`);S.dodgeFoe=S.dodgeMe=0;return false}
-  const r=dmg(a,d,mv);let dd=mine&&DEV.kill?d.hp:r.d;if(d.guard)dd=Math.ceil(dd/2);S.hit=d;S.shake=14;S.flash=3;d.hp=Math.max(0,d.hp-dd);await wait(300);S.dodgeFoe=S.dodgeMe=0;
+  const r=dmg(a,d,mv);let dd=mine&&DEV.kill?d.hp:r.d;if(d.guard)dd=Math.ceil(dd/2);S.hit=d;S.shake=14;S.flash=3;d.hp=Math.max(0,d.hp-dd);let held=false;if(!mine&&d.hp===0&&dd>1&&Math.random()<bond(d).l/500){d.hp=1;held=true}await wait(300);S.dodgeFoe=S.dodgeMe=0;
   await say(`${mv} hits for ${dd}!${r.crit?' Critical!':''}${r.e>1?' Super effective!':r.e<1?' Not very effective…':''}${d.guard?' (guarded)':''}`);
+  if(held)await say(`🛡 ${d.name} held on out of loyalty to you!`);
   if(d.counter&&d.hp>0){const c=Math.max(1,Math.floor(dd/2));a.hp=Math.max(0,a.hp-c);S.hit=a;S.shake=10;await say(`${d.name} counters for ${c}!`)}
   return true}
 async function assist(me,w){for(const p of S.partners){if(w.hp<=0||Math.random()<.4)continue;const pmn=mk(p.mon,Math.max(p.lv,me.lv-1)),am=atks(pmn).sort((a,b)=>MOVES[b].pow-MOVES[a].pow)[0];if(!am)continue;
   const r=dmg(pmn,w,am);S.hit=w;S.shake=10;w.hp=Math.max(0,w.hp-Math.max(1,Math.floor(r.d*.5)));await say(`🤝 ${p.name}'s ${pmn.name} helps with ${am}!`)}}
 async function turn(me,w,ch,tr){me.guard=me.counter=w.guard=w.counter=false;const pd=ch.t==='def',eDef=Math.random()<.22,eMv=eDef?rnd1(defs(w)):eAtk(w);
-  const adj=(a,b)=>1-Math.min(.45,Math.max(0,(a.lv-b.lv)*.03)),pT=ch.time*adj(me,w),eT=((tr?.6:.8)+Math.random()*(tr?1:1.2))*adj(w,me),prac=tr&&tr.practice;
+  const adj=(a,b)=>1-Math.min(.45,Math.max(0,(a.lv-b.lv)*.03)),pT=ch.time*adj(me,w)*(1-bond(me).h/667),eT=((tr?.6:.8)+Math.random()*(tr?1:1.2))*adj(w,me),prac=tr&&tr.practice;
   if(pd)await applyDef(me,w,ch.dv);if(eDef)await applyDef(w,me,eMv);
   if(pd&&eDef){await say('Both sides hold their ground.');return}
   if(pd){await strike(w,me,eMv,false);return}
@@ -925,7 +926,7 @@ function openMenu(){if(S.scene!=='town'||S.busy)return;S.busy=true;panel.classNa
     save:()=>{b.textContent=save()?'✅ Saved!':'⚠ Could not save';setTimeout(()=>b.textContent='💾 Save',1200)}})[b.dataset.a]())}
 function showTeam(){panel.innerHTML=`<h3>Team<button class="x">‹ Menu</button></h3>`+S.party.map((m,i)=>{const p=m.hp/m.maxhp,c=p>.5?'#3ddc84':p>.2?'#ffd166':'#ff6b6b';
   return `<div class="card"><img src="${sprite(m.name)}"><div style="flex:1"><div class="n">${m.name} <span class="s">Lv${m.lv}</span> ${i===0?'<span class="pill" style="background:#5b4fd8">lead</span>':''}</div>
-  <div>${pills(m.type)}</div><div class="hp"><i style="width:${p*100}%;background:${c}"></i></div>
+  <div>${pills(m.type)}</div><div class="hp"><i style="width:${p*100}%;background:${c}"></i></div>${bondBars(m)}
   <div class="s">HP ${m.hp}/${m.maxhp} · ATK ${m.atk} · DEF ${m.def} · SPD ${m.spd} · XP ${m.xp||0}/${10+m.lv*10}<br>${m.moves.join(' · ')}</div></div>
   ${i?`<button class="lead" data-i="${i}">Make lead</button>`:''}</div>`}).join('');
   panel.querySelector('.x').onclick=()=>{S.busy=false;openMenu()};
@@ -1002,7 +1003,7 @@ async function battleLoop(tr){
     if(w.hp<=0){await say(`${foeName(w)} fainted!`);if(!(tr&&tr.practice))await gain(me,w.lv*(tr?14:8));
       if(++fi<foes.length){S.wild=foes[fi];mark('seen',S.wild.name);await say(`${tr.name} sent out ${S.wild.name}!`);continue}
       S.wild=null;S.lead=null;return true}
-    if(me.hp<=0){await say(`${me.name} fainted!`);
+    if(me.hp<=0){bond(me).h=Math.max(0,bond(me).h-5);await say(`${me.name} fainted!`);
       if(alive().length){await swap(true);continue}
       if(tr&&tr.practice){await say('Practice over!');break}await say(`${S.player} has no Wildlings left... and hurried back to Maplewick.`);S.party.forEach(m=>m.hp=m.maxhp);enterMap('maplewick',10,7);break}}
   S.wild=null;S.inOrb=false;S.lead=null;return false}
@@ -1042,7 +1043,20 @@ function goTo(tx,ty,it){const W=M.rows[0].length,H=M.rows.length,key=(x,y)=>y*W+
   const path=[];let c=prev.get(key(goal[0],goal[1]));while(c){path.unshift(c[2]);c=prev.get(key(c[0],c[1]))}
   S.path=path;S.pathEnd=end;S.dest=it?[it[0],it[1]]:[goal[0],goal[1]];pathStep()}
 let CTL=localStorage.getItem('wildlings-ctl')||'tap';const setCtl=v=>{CTL=v;try{localStorage.setItem('wildlings-ctl',v)}catch{}document.body.classList.toggle('arrows',v==='arrows')};setCtl(CTL);
-function tapAt(cx,cy){if(CTL==='arrows')return;if(!T3||S.scene!=='town'||S.busy||panel.className||box.className!=='hide')return;
+const bond=m=>m.bond||(m.bond={f:10,l:10,h:30});const PALCD={};
+const bondBars=m=>{const b=bond(m);return [['❤️','Friendship',b.f,'#ff6b9a'],['🛡','Loyalty',b.l,'#5b8def'],['😊','Happiness',b.h,'#ffc145']].map(([e,n,v,c])=>`<div class="sbar" style="grid-template-columns:86px 1fr 24px;font-size:10.5px">${e} ${n}<span style="background:#e6e8f5;border-radius:9px"><i style="width:${v}%;background:${c}"></i></span>${v}</div>`).join('')};
+async function palMenu(m){S.busy=true;S.path=null;S.pathEnd=null;S.dest=null;const b=bond(m),up=(k,n)=>{b[k]=Math.max(0,Math.min(100,b[k]+n))};
+  const a=await say(`${m.name} ${b.h>=60?'bounces around you happily':b.h>=30?'looks up at you':'seems a bit down'}.<div style="margin-top:4px">${bondBars(m)}</div>`,[{label:'🤚 Pet',v:'pet'},{label:'🎾 Play',v:'play'},{label:`🫐 Feed berry ×${S.bag.berry}`,v:'feed',disabled:!S.bag.berry},{label:'💬 Praise',v:'praise'},{label:'Close',v:0}]);
+  if(a){const k=m.name+a,now=Date.now();if(a!=='feed'&&now-(PALCD[k]||0)<25000)await say(`${m.name} is content for now — try something else or come back in a moment.`);
+    else{PALCD[k]=now;let t='';
+      if(a==='pet'){up('f',6);up('h',2);t=`You pet ${m.name}. It nuzzles your hand! ❤️ Friendship +6 · 😊 +2`}
+      if(a==='play'){up('h',8);up('f',2);t=`You play chase with ${m.name}. It's having a blast! 😊 Happiness +8 · ❤️ +2`}
+      if(a==='feed'){S.bag.berry--;up('h',5);up('f',4);m.hp=Math.min(m.maxhp,m.hp+20);t=`${m.name} munches the berry. Yum! 😊 +5 · ❤️ +4 · +20 HP`}
+      if(a==='praise'){up('l',6);up('f',1);t=`You tell ${m.name} how well it's doing. It stands a little taller. 🛡 Loyalty +6 · ❤️ +1`}
+      S.flash=4;await say(t)}}
+  save();goTown()}
+function tapAt(cx,cy){if(T3&&S.scene==='town'&&!S.busy&&!panel.className&&box.className==='hide'){const lead=S.party.find(m=>m.hp>0)||S.party[0];if(lead){const[fx,fy]=T3.project(S.follow[0],S.follow[1],.3);if(Math.hypot(fx-cx,fy-cy)<30&&!(S.follow[0]===S.px&&S.follow[1]===S.py)){palMenu(lead);return}}}
+  if(CTL==='arrows')return;if(!T3||S.scene!=='town'||S.busy||panel.className||box.className!=='hide')return;
   let it=null,bd=34;const cand=[...NP().map(n=>[n.x,n.y,.55]),...S.camps.filter(c=>c.map===S.map).map(c=>[c.x,c.y,.4]),...Object.keys(M.signs||{}).map(k=>[...k.split(',').map(Number),.45])];
   for(const[x,y,h]of cand){const[px,py]=T3.project(x,y,h),dd=Math.hypot(px-cx,py-cy);if(dd<bd){bd=dd;it=[x,y]}}
   const t=T3.pick(cx,cy);if(!it&&!t)return;if(!it)it=interactAt(t[0],t[1]);
