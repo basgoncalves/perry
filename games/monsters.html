@@ -127,7 +127,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.16.1',BUILT='19 Nov 2026 22:40';
+const VERSION='0.16.2',BUILT='19 Nov 2026 22:50';
 document.getElementById('ver').textContent=`v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -649,6 +649,7 @@ function lookFor(){if(DEV.notr)return false;for(const n of M.npcs||[]){if(!n.tea
 function move(dir){if(S.scene!=='town'||S.busy||S.mv||panel.className)return;
   const d={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]}[dir];S.face=dir;
   const nx=S.px+d[0],ny=S.py+d[1];
+  if(S.touchHold){const ia=interactAt(nx,ny);if(ia&&!ia[2])return}
   const npc=NP().find(n=>n.x===nx&&n.y===ny);if(npc){talk(npc);return}
   const sg=M.signs&&M.signs[nx+','+ny];if(sg){S.busy=true;say('📜 '+sg).then(goTown);return}
   const b=M.bld.find(b=>b.door[0]===nx&&b.door[1]===ny);if(b){enterMap(...b.to);
@@ -1040,14 +1041,20 @@ function goTo(tx,ty,it){const W=M.rows[0].length,H=M.rows.length,key=(x,y)=>y*W+
   else{let best=1e9;for(const k of prev.keys()){const x=k%W,y=(k-x)/W,dd=Math.abs(x-tx)+Math.abs(y-ty);if(dd<best){best=dd;goal=[x,y]}}if(!goal||best>3)return}
   const path=[];let c=prev.get(key(goal[0],goal[1]));while(c){path.unshift(c[2]);c=prev.get(key(c[0],c[1]))}
   S.path=path;S.pathEnd=end;S.dest=it?[it[0],it[1]]:[goal[0],goal[1]];pathStep()}
-(()=>{const sc=document.getElementById('screen');let dn=null;
-  sc.addEventListener('pointerdown',e=>{dn=e.target.tagName==='CANVAS'?[e.clientX,e.clientY]:null});
-  sc.addEventListener('pointerup',e=>{if(!dn||Math.hypot(e.clientX-dn[0],e.clientY-dn[1])>14){dn=null;return}dn=null;
-    if(!T3||S.scene!=='town'||S.busy||panel.className||box.className!=='hide')return;
-    let it=null,bd=34;const cand=[...NP().map(n=>[n.x,n.y,.55]),...S.camps.filter(c=>c.map===S.map).map(c=>[c.x,c.y,.4]),...Object.keys(M.signs||{}).map(k=>[...k.split(',').map(Number),.45])];
-    for(const[x,y,h]of cand){const[px,py]=T3.project(x,y,h),dd=Math.hypot(px-e.clientX,py-e.clientY);if(dd<bd){bd=dd;it=[x,y]}}
-    const t=T3.pick(e.clientX,e.clientY);if(!it&&!t)return;if(!it)it=interactAt(t[0],t[1]);
-    if(it&&it[2]===undefined&&S.px===it[0]&&S.py===it[1])return;goTo(t?t[0]:it[0],t?t[1]:it[1],it)})})();
+function tapAt(cx,cy){if(!T3||S.scene!=='town'||S.busy||panel.className||box.className!=='hide')return;
+  let it=null,bd=34;const cand=[...NP().map(n=>[n.x,n.y,.55]),...S.camps.filter(c=>c.map===S.map).map(c=>[c.x,c.y,.4]),...Object.keys(M.signs||{}).map(k=>[...k.split(',').map(Number),.45])];
+  for(const[x,y,h]of cand){const[px,py]=T3.project(x,y,h),dd=Math.hypot(px-cx,py-cy);if(dd<bd){bd=dd;it=[x,y]}}
+  const t=T3.pick(cx,cy);if(!it&&!t)return;if(!it)it=interactAt(t[0],t[1]);
+  if(it&&it[2]===undefined&&S.px===it[0]&&S.py===it[1])return;goTo(t?t[0]:it[0],t?t[1]:it[1],it)}
+(()=>{const sc=document.getElementById('screen');let dn=null,tm=null,holding=false,pos=null;
+  const steer=()=>{if(!holding||!T3||S.scene!=='town'||S.busy){if(S.touchHold){S.touchHold=false;release()}return}const t=T3.pick(pos[0],pos[1]);if(!t)return;
+    const dx=t[0]-S.dx,dy=t[1]-S.dy;if(Math.abs(dx)<.6&&Math.abs(dy)<.6){S.hold=null;return}const d=Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u');S.touchHold=true;if(d!==S.hold){S.hold=d;if(!S.mv)move(d)}};
+  const stop=()=>{clearTimeout(tm);clearInterval(iv);if(holding){holding=false;S.touchHold=false;release()}};let iv=null;
+  sc.addEventListener('pointerdown',e=>{if(e.target.tagName!=='CANVAS'){dn=null;return}dn=[e.clientX,e.clientY];pos=dn;try{sc.setPointerCapture(e.pointerId)}catch{}
+    clearTimeout(tm);tm=setTimeout(()=>{if(!dn||S.scene!=='town'||S.busy||panel.className||box.className!=='hide')return;holding=true;S.path=null;S.pathEnd=null;S.dest=null;steer();iv=setInterval(steer,80)},220)});
+  sc.addEventListener('pointermove',e=>{if(dn)pos=[e.clientX,e.clientY]});
+  const up=e=>{const was=holding,d0=dn;stop();dn=null;if(was||!d0)return;if(Math.hypot(e.clientX-d0[0],e.clientY-d0[1])>14)return;tapAt(e.clientX,e.clientY)};
+  sc.addEventListener('pointerup',up);sc.addEventListener('pointercancel',()=>{stop();dn=null})})();
 // ---- Wildlingdex overlay ----
 const DEXN=Object.keys(SP),dexNo=n=>'#'+String(DEXN.indexOf(n)+1).padStart(2,'0');
 const baseOf=n=>{while(SP[n].from)n=SP[n].from;return n};
