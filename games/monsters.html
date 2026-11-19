@@ -8,12 +8,12 @@
 *{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 input{-webkit-user-select:text;user-select:text}
 button{touch-action:manipulation}
-body{margin:0;background:radial-gradient(circle at 30% 20%,#2c2f4a,#12131c);color:#1d2233;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh}
-#gba{width:min(100vw,480px);background:linear-gradient(160deg,#7b6cf0,#4b3fb0);border-radius:28px;padding:14px;box-shadow:0 20px 50px #0009,inset 0 1px 0 #fff4}
-#screen{border-radius:16px;aspect-ratio:3/2;position:relative;overflow:hidden;box-shadow:inset 0 0 0 3px #0003,0 4px 14px #0005;background:#000}
+body{margin:0;height:100vh;overflow:hidden;background:radial-gradient(circle at 30% 20%,#2c2f4a,#12131c);color:#1d2233;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh}
+#gba{width:min(100vw,480px);height:100vh;max-height:100vh;display:flex;flex-direction:column;background:linear-gradient(160deg,#7b6cf0,#4b3fb0);border-radius:28px;padding:14px;box-shadow:0 20px 50px #0009,inset 0 1px 0 #fff4}
+#screen{border-radius:16px;flex:1 1 auto;min-height:200px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 3px #0003,0 4px 14px #0005;background:#000}
 canvas{width:100%;height:100%;display:block;position:relative}
-#box{position:relative;margin-top:10px;min-height:96px;background:#ffffffee;border-radius:16px;padding:10px 14px;font-size:clamp(13px,3.8vw,16px);line-height:1.4;box-shadow:0 6px 18px #0004;animation:pop .18s ease-out}
-#box.hide{display:none}
+#box{position:relative;margin-top:10px;height:132px;flex:none;overflow:auto;background:#ffffffee;border-radius:16px;padding:10px 14px;font-size:clamp(13px,3.8vw,16px);line-height:1.4;box-shadow:0 6px 18px #0004;animation:pop .18s ease-out}
+#box.hide{visibility:hidden;animation:none}
 @keyframes pop{from{transform:translateY(8px);opacity:0}}
 #menu{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
 #menu button{font:inherit;font-weight:600;background:#eef0ff;border:0;border-radius:10px;padding:6px 10px;cursor:pointer;text-align:left;color:#2b2f5c;transition:.12s}
@@ -22,7 +22,7 @@ canvas{width:100%;height:100%;display:block;position:relative}
 #menu button .t{font-size:.75em;opacity:.7;font-weight:500}
 input{font:inherit;padding:6px 10px;border:2px solid #c9cdf5;border-radius:10px;width:100%;outline:none;margin-top:4px}
 input:focus{border-color:#5b4fd8}
-#dpad{touch-action:none;-webkit-user-select:none;user-select:none;display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,44px);gap:4px;justify-content:center;margin-top:12px;visibility:hidden}
+#dpad{flex:none;touch-action:none;-webkit-user-select:none;user-select:none;display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,44px);gap:4px;justify-content:center;margin-top:12px;visibility:hidden}
 #dpad button{font-size:17px;background:#ffffff22;color:#fff;border:0;border-radius:14px;touch-action:manipulation;box-shadow:inset 0 1px 0 #fff3,0 2px 6px #0003}
 #dpad button:active{background:#ffffff44;transform:scale(.95)}
 #dpad [data-d=u]{grid-area:1/2}#dpad [data-d=l]{grid-area:2/1}#dpad [data-d=r]{grid-area:2/3}#dpad [data-d=d]{grid-area:3/2}
@@ -67,12 +67,16 @@ input:focus{border-color:#5b4fd8}
 #hint{position:absolute;left:50%;bottom:62px;transform:translateX(-50%);background:#0007;color:#fff;font:600 11px system-ui;border-radius:999px;padding:3px 10px;white-space:nowrap;pointer-events:none}
 #toast{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);background:#ffffffee;color:#1d2233;font:700 clamp(12px,3.6vw,15px) system-ui;border-radius:14px;padding:8px 16px;box-shadow:0 6px 18px #0005;display:none;z-index:7;text-align:center;max-width:86%}
 #toast.on{display:block;animation:pop .2s ease-out}
+#dodge{position:absolute;inset:0;display:none;z-index:8;background:radial-gradient(circle,#ff525233,#0000 70%);color:#fff;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-shadow:0 2px 6px #000a;pointer-events:none}
+#dodge.on{display:flex;animation:pop .15s}#dodge b{font:800 clamp(16px,5vw,22px) system-ui}#dodge span{font:700 clamp(13px,4vw,17px) system-ui;animation:wig .6s ease-in-out infinite}
+#dodge .bar{width:50%;height:5px;border-radius:9px;background:#fff;margin-top:6px;animation:shrink 1.8s linear forwards}
+@keyframes wig{50%{letter-spacing:4px}}@keyframes shrink{to{width:0}}
 </style>
 </head>
 <body>
 <div id="gba">
   <div id="screen"><canvas id="c3" style="position:absolute;inset:0;width:100%;height:100%;display:none"></canvas><canvas id="c" width="720" height="480"></canvas><div id="banner"></div><div id="panel"></div><button id="mbtn" title="Menu">☰</button><div id="stick"><i></i></div>
-<div id="hud"><div id="team"></div><button id="runBtn">RUN</button><div id="hint">Tap a move to attack</div><div id="moves"></div><div id="orbBtn"><span>◓</span><small></small></div></div><div id="toast"></div></div>
+<div id="hud"><div id="team"></div><button id="runBtn">RUN</button><div id="hint"></div><div id="moves"></div><div id="orbBtn"><span>◓</span><small></small></div></div><div id="toast"></div><div id="dodge"><b></b><span>⟵ swipe to dodge ⟶</span><i class="bar"></i></div></div>
   <div id="box" class="hide"></div>
   <div id="dpad"><button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button></div>
   <div class="label hint2" id="howto">Use the arrows to walk · ☰ for menu</div>
@@ -80,7 +84,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.10.2',BUILT='19 Nov 2026 21:15';
+const VERSION='0.11.1',BUILT='19 Nov 2026 21:20';
 document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -218,7 +222,9 @@ function bar(x,y,m,showNum){g.save();g.shadowColor='#0003';g.shadowBlur=6;g.shad
   g.fillStyle=gr;if(p>0){g.beginPath();g.roundRect(x+7,y+14,Math.max(4,84*p),4,2);g.fill()}
   if(showNum){g.fillStyle='#667';g.font='7px system-ui,sans-serif';g.fillText(m.hp+' / '+m.maxhp,x+60,y+26)}}
 
-function render(){S.anim++;const use3=(S.scene==='town'||S.scene==='battle')&&!!T3;cv.style.visibility='visible';document.getElementById('c3').style.display=use3?'block':'none';g.clearRect(0,0,240,160);g.imageSmoothingEnabled=true;
+function fitCanvas(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2),w=Math.round(r.width*d),h=Math.round(r.height*d);if(w&&h&&(cv.width!==w||cv.height!==h)){cv.width=w;cv.height=h}}
+function render(){S.anim++;const use3=(S.scene==='town'||S.scene==='battle')&&!!T3;cv.style.visibility='visible';document.getElementById('c3').style.display=use3?'block':'none';fitCanvas();g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cv.width,cv.height);const K=cv.width/240,LH=cv.height/K;
+  if(use3)g.setTransform(K,0,0,K,0,0);else{g.fillStyle=S.scene==='title'?'#bfe0ff':S.scene==='lab'?'#e9dcc0':'#cfeaff';g.fillRect(0,0,cv.width,cv.height);g.setTransform(K,0,0,K,0,(LH-160)/2*K)}g.imageSmoothingEnabled=true;
   if(S.scene==='title'){let gr=g.createLinearGradient(0,0,0,160);gr.addColorStop(0,'#8ec5ff');gr.addColorStop(1,'#e0f0ff');g.fillStyle=gr;g.fillRect(0,0,240,160);
     g.fillStyle='#fff9';[[40,30],[180,22],[120,45]].forEach(([cx,cy],k)=>{const o=(S.anim/8+k*60)%280-20;g.beginPath();g.ellipse(o,cy,16,6,0,0,7);g.fill()});
     g.fillStyle='#6fcf6f';g.beginPath();g.ellipse(120,150,170,55,0,0,7);g.fill();
@@ -344,7 +350,7 @@ const MAPS={
  shack:{name:'Dock Shack',indoor:1,rows:["XXXXXXXXX","XMK...KMX","X.......X","X..CC...X","X.......X","XXXXEXXXX"],out:['saltmere',11,4],
   npcs:[{x:6,y:3,c:'#78909c',gift:1,talk:'Old Captain Bento: A trainer heading out to sea? Take these orbs, I have plenty.'}]},
  home:{name:'Home',indoor:1,rows:["XXXXXXXXX","XKK...BBX","X.......X","X..CC...X","X.......X","XXXXEXXXX"],out:['maplewick',3,7],
-  npcs:[{x:2,y:3,c:'#d97b7b',talk:"Mom: Off on an adventure? Don't forget to come home for dinner!"}]},
+  npcs:[{x:2,y:3,c:'#d97b7b',talk:"Mom: Off on an adventure? Don't forget to come home for dinner!"},{x:6,y:3,c:'#ffb300',face:'l',tutor:1,talk:''}]},
  lab:{name:'Lab',indoor:1,rows:["XXXXXXXXX","XMMK.KMMX","X.......X","X.CC....X","X.......X","XXXXEXXXX"],out:['maplewick',10,7],
   npcs:[{x:4,y:2,c:'#eeeeee',heal:1,talk:'PROF. ALDER: Let me patch up your team!'}]},
  bhouse:{name:'House',indoor:1,rows:["XXXXXXXXX","XK....BBX","X.......X","X...CC..X","X.......X","XXXXEXXXX"],out:['brookhaven',2,5],
@@ -415,9 +421,27 @@ function drawWorld(){stepAnim();
 function enterMap(id,x,y){M=MAPS[id];S.map=id;S.px=x;S.py=y;S.mv=null;{const b=(MAPS[id].rows[y+1]||'')[x];S.follow=b&&!WALL.includes(b)?[x,y+1]:[x,y]}if(T3)T3.build(id);else S.banner={s:M.name,t:110};showBanner(M.name)}
 function goTown(){S.scene='town';box.className='hide';S.busy=false;dpad.style.visibility='visible'}
 async function healAll(){S.party.forEach(m=>{m.hp=m.maxhp;m.atkMod=1});S.orbs=Math.max(S.orbs,5);await say(`Your team is fully healed! Orbs topped up to ${S.orbs}.`)}
-async function talk(n){S.busy=true;n.face={u:'d',d:'u',l:'r',r:'l'}[S.face];
+async function talk(n){S.busy=true;n.face={u:'d',d:'u',l:'r',r:'l'}[S.face];if(n.tutor){await tutorial(n);return}
   if(n.team&&!S.beaten.includes(n.id)){await trainerBattle(n);return}
   await say(n.team?(n.post):n.talk);if(n.heal)await healAll();if(n.gift&&!S.beaten.includes('gift_'+S.map)){S.beaten.push('gift_'+S.map);S.orbs+=5;await say(`${S.player} received 5 CATCH ORBS!`)}else if(n.gift)await say('Captain Bento: Come back if the sea is kind to you.');save();goTown()}
+async function tutorial(n){
+  const c=await say('Cousin Dina: Hi! Want me to show you how everything works?',[{label:'📖 Full tutorial',v:'all'},{label:'⚔️ Practice battle',v:'fight'},{label:'❓ Dodging only',v:'dodge'},{label:'No thanks',v:0}]);
+  if(!c){goTown();return}
+  if(c==='all'){
+    await say('🕹 WALKING: hold the arrows below the screen to walk. Walk into people to talk, into doors to go inside, and onto the red mat to leave.');
+    await say('☰ MENU: the round button in the corner shows your Team, the Wildlingdex and Save. Your game also saves after every battle.');
+    await say('🌿 TALL GRASS hides wild Wildlings. Trainers on the routes challenge you when they spot you. Heal at the Lab, the Inns or with Prof. Alder.')}
+  if(c==='all'||c==='dodge'||c==='fight'){
+    await say('⚔️ ATTACKING: swipe an attack card ← LEFT or RIGHT →. The enemy dodges to one side — your hit only lands if you swipe the same way it dodges!');
+    await say('🛡 DEFENDING: when the enemy attacks, "Swipe to dodge" flashes. Swipe anywhere on the screen ← or →. Guess the opposite side of its attack and it misses!');
+    await say('💡 Moves like Growl or Harden need no aim — just tap them. Tap a portrait to switch Wildlings.')}
+  if(c==='all')await say('◓ CATCHING: in wild battles, weaken a Wildling, then tap the red-and-white orb. The weaker it is, the easier the catch.');
+  if(c==='all'||c==='fight'){const ok=await say('Cousin Dina: Ready for a practice battle? Nothing is lost if you faint.',[{label:"Let's go!",v:1},{label:'Maybe later',v:0}]);
+    if(ok){const keep=S.party.map(m=>({hp:m.hp,lv:m.lv,maxhp:m.maxhp,atk:m.atk,def:m.def,spd:m.spd}));dpad.style.visibility='hidden';S.wildFrom=[n.x,n.y];
+      const won=await battleLoop({name:'Cousin Dina',team:[['Pibbit',3]],practice:1});S.wildFrom=null;
+      S.party.forEach((m,i)=>{if(keep[i])Object.assign(m,keep[i]);m.hp=m.maxhp});if(S.map!=='home')enterMap('home',5,3);
+      await say(won?'Cousin Dina: Nicely done! Come back any time to practise.':'Cousin Dina: Good try! Practice makes perfect — try again any time.')}}
+  goTown()}
 async function trainerBattle(n){S.busy=true;dpad.style.visibility='hidden';n.alert=true;await wait(600);n.alert=false;
   await say(`${n.name}: ${n.pre}`);S.wildFrom=[n.x,n.y];const won=await battleLoop(n);S.wildFrom=null;
   if(won){S.beaten.push(n.id);S.coins+=n.prize;await say(`${n.name}: ${n.post}`);await say(`${S.player} got ${n.prize} coins!`);
@@ -563,10 +587,10 @@ function init3d(THREE){
       const pick=[S.face,...'udlr'.split('').filter(x=>x!==S.face)].find(ok);if(pick)S.face=pick}const d=DV[S.face];const px=S.px+.5,pz=S.py+.5;stage={d,px,pz,ally:[px+d[0]*1.0,pz+d[1]*1.0],foe:[px+d[0]*2.6,pz+d[1]*2.6]};if(S.wildFrom){stage.foe=[S.wildFrom[0]+.5-d[0]*.9,S.wildFrom[1]+.5-d[1]*.9]}}
     if(!battle)stage=null;
     if(lead){follower.visible=true;follower.set(lead.name,stage?1.05:.75);
-      const fx=stage?stage.ally[0]:S.follow[0]+.5,fz=stage?stage.ally[1]:S.follow[1]+.5;follower.position.x+=(fx-follower.position.x)*.15;follower.position.z+=(fz-follower.position.z)*.15;
+      const dm=stage?(S.dodgeMe||0)*.8:0;const fx=stage?stage.ally[0]-stage.d[1]*dm:S.follow[0]+.5,fz=stage?stage.ally[1]+stage.d[0]*dm:S.follow[1]+.5;follower.position.x+=(fx-follower.position.x)*.15;follower.position.z+=(fz-follower.position.z)*.15;
       follower.position.y=Math.abs(Math.sin(t*(S.mv?13:3)))*(S.mv?.06:.03);
       if(S.hit===lead&&S.shake>0)follower.position.x+=Math.sin(t*80)*.05;follower.children[0].material.opacity=lead.hp<=0&&battle?.35:1}else follower.visible=false;
-    if(stage&&S.wild&&!S.wild.caught){foe.visible=true;foe.set(S.wild.name,S.wild.hp>0?1.15:Math.max(.01,foe.children[0].scale.x*.9));foe.position.set(stage.foe[0]+(S.hit===S.wild&&S.shake>0?Math.sin(t*80)*.06:0),Math.abs(Math.sin(t*3))*.03,stage.foe[1]);foe.children[0].visible=!S.inOrb}else foe.visible=false;
+    if(stage&&S.wild&&!S.wild.caught){foe.visible=true;foe.set(S.wild.name,S.wild.hp>0?1.15:Math.max(.01,foe.children[0].scale.x*.9));foe.userData.dg=(foe.userData.dg||0)+((S.dodgeFoe||0)*.8-(foe.userData.dg||0))*.25;foe.position.set(stage.foe[0]+(S.hit===S.wild&&S.shake>0?Math.sin(t*80)*.06:0)-stage.d[1]*foe.userData.dg,Math.abs(Math.sin(t*3))*.03,stage.foe[1]+stage.d[0]*foe.userData.dg);foe.children[0].visible=!S.inOrb}else foe.visible=false;
     if(S.inOrb&&stage){if(!lastInOrb)orbT=t;const k=Math.min(1,(t-orbT)/.45);orb.visible=true;
       const a=[stage.px,stage.pz],b=stage.foe;orb.position.set(a[0]+(b[0]-a[0])*k,.15+Math.sin(k*Math.PI)*1.1+(k>=1?0:.4*(1-k)),a[1]+(b[1]-a[1])*k);orb.rotation.z=S.wobble&&k>=1?Math.sin(t*12)*.4:t*10*(1-k)}else orb.visible=false;lastInOrb=S.inOrb;
     // camera
@@ -587,14 +611,23 @@ function toast(t){box.className='hide';return new Promise(res=>{const el=documen
   let done=false;const fin=()=>{if(done)return;done=true;el.className='';el.onclick=null;res()};el.onclick=fin;setTimeout(fin,Math.min(2200,700+t.length*22))})}
 function hudChoice(me,tr){return new Promise(res=>{const hud=document.getElementById('hud'),mv=document.getElementById('moves'),orb=document.getElementById('orbBtn'),team=document.getElementById('team'),run=document.getElementById('runBtn'),hint=document.getElementById('hint');
   const end=v=>{hud.className='';res(v)};
-  mv.innerHTML='';me.moves.forEach(m=>{const d=document.createElement('div');d.className='mv';d.style.background=TC[MOVES[m].type];d.innerHTML=`${m}<small>${MOVES[m].type}${MOVES[m].pow?' · '+MOVES[m].pow:''}</small>`;mv.appendChild(d);flick(d,()=>end({t:'move',mv:m}))});
+  mv.innerHTML='';me.moves.forEach(m=>{const d=document.createElement('div');d.className='mv';d.style.background=TC[MOVES[m].type];d.innerHTML=`${m}<small>${MOVES[m].type}${MOVES[m].pow?' · '+MOVES[m].pow:''}</small>`;mv.appendChild(d);if(MOVES[m].pow)flick(d,sd=>end({t:'move',mv:m,side:sd}),true);else flick(d,()=>end({t:'move',mv:m}))});
   orb.querySelector('small').textContent=S.orbs;orb.classList.toggle('off',!!tr||!S.orbs);orb.onpointerdown=null;if(!tr&&S.orbs)flick(orb,()=>end({t:'orb'}));else orb.onpointerdown=e=>{hint.textContent=tr?"You can't catch a trainer's Wildling!":'No orbs left!'};
   team.innerHTML='';S.party.forEach((m,i)=>{const im=document.createElement('img');im.src=sprite(m.name);im.className=(m===me?'cur':'')+(m.hp<=0?' ko':'');im.title=m.name;
     im.onclick=()=>{if(m!==me&&m.hp>0)end({t:'swap',i})};team.appendChild(im)});
   run.style.display=tr?'none':'';run.onclick=()=>end({t:'run'});
-  hint.textContent=S.party.length>1?'Tap a move to attack · tap a portrait to switch':'Tap a move to attack';hud.className='on'})}
-function flick(el,fire){el.onpointerdown=null;el.onclick=e=>{e.preventDefault();if(el.classList.contains('fly'))return;el.classList.add('fly');el.style.transform='translateY(-120px) scale(.6)';
-  setTimeout(()=>{el.classList.remove('fly');el.style.transform='';fire()},300)}}
+  hint.textContent=S.party.length>1?'Swipe an attack ← or → to aim where the enemy will dodge':'Swipe an attack ← or → to aim where the enemy will dodge';hud.className='on'})}
+function flick(el,fire,sideways){el.onclick=null;el.onpointerdown=e=>{e.preventDefault();el.setPointerCapture(e.pointerId);const x0=e.clientX,y0=e.clientY;el.classList.add('drag');
+  el.onpointermove=ev=>{el.style.transform=`translate(${ev.clientX-x0}px,${(ev.clientY-y0)*.4}px) rotate(${(ev.clientX-x0)/8}deg) scale(1.06)`};
+  el.onpointerup=ev=>{el.onpointermove=el.onpointerup=null;el.classList.remove('drag');const dx=ev.clientX-x0,dy=ev.clientY-y0,h=document.getElementById('hint');
+    if(sideways){if(Math.abs(dx)>40){const sd=dx<0?'l':'r';el.classList.add('fly');el.style.transform=`translate(${dx*3}px,-80px) rotate(${dx/4}deg) scale(.6)`;setTimeout(()=>{el.classList.remove('fly');el.style.transform='';fire(sd)},300)}
+      else{el.style.transform='';h.textContent='Swipe the move ← LEFT or RIGHT → to aim'}}
+    else{if(dy<-30||Math.abs(dx)<12&&Math.abs(dy)<12){el.classList.add('fly');el.style.transform='translateY(-120px) scale(.6)';setTimeout(()=>{el.classList.remove('fly');el.style.transform='';fire()},300)}else el.style.transform=''}}}}
+function dodgePrompt(d){return new Promise(res=>{const el=document.getElementById('dodge'),sc=document.getElementById('screen');el.className='on';el.querySelector('b').textContent=`${d.name}, dodge!`;
+  let x0=null,done=false;const fin=v=>{if(done)return;done=true;el.className='';sc.removeEventListener('pointerdown',dn);sc.removeEventListener('pointerup',up);removeEventListener('keydown',kd);res(v)};
+  const dn=e=>{x0=e.clientX},up=e=>{if(x0===null)return;const dx=e.clientX-x0;x0=null;if(Math.abs(dx)>30)fin(dx<0?'l':'r')};
+  const kd=e=>{if(e.key==='ArrowLeft')fin('l');if(e.key==='ArrowRight')fin('r')};
+  sc.addEventListener('pointerdown',dn);sc.addEventListener('pointerup',up);addEventListener('keydown',kd);setTimeout(()=>fin(null),1800)})}
 function ask(t){return new Promise(res=>{box.className='';box.innerHTML='<div>'+t+'</div><input id="nm" maxlength="10" autocomplete="off"><div id="menu"><button id="ok">OK</button></div>';
   const i=document.getElementById('nm');i.focus();const go=()=>{const v=i.value.trim();if(v)res(v)};document.getElementById('ok').onclick=go;i.onkeydown=e=>{if(e.key==='Enter')go()}})}
 
@@ -647,12 +680,18 @@ function dmg(a,d,mv){const m=MOVES[mv];if(!m.pow)return{d:0,e:1};
   const e=TY(d.type).reduce((x,t)=>x*((EFF[m.type]||{})[t]||1),1),stab=TY(a.type).includes(m.type)?1.5:1,crit=Math.random()<.0625?1.5:1;
   const base=((2*a.lv/5+2)*m.pow*(a.atk*a.atkMod)/d.def)/50+2;
   return{d:Math.max(1,Math.floor(base*e*stab*crit*(.85+Math.random()*.15))),e,crit:crit>1}}
-async function useMove(a,d,mv,mine){const who=mine?a.name:'Wild '+a.name;
+async function useMove(a,d,mv,mine,side){const who=mine?a.name:'Wild '+a.name;
   await say(`${who} used ${mv}!`);
   if(Math.random()*100>MOVES[mv].acc){await say('But it missed!');return}
   if(MOVES[mv].buff){a.def=Math.ceil(a.def*1.25);await say(`${who}'s defense rose!`);return}
   if(MOVES[mv].debuff){d.atkMod=Math.max(.5,d.atkMod*.8);await say(`${mine?'Wild '+d.name:d.name}'s attack fell!`);return}
-  const r=dmg(a,d,mv);S.hit=d;S.shake=14;S.flash=3;d.hp=Math.max(0,d.hp-r.d);await wait(300);
+  const SD=x=>x==='l'?-1:1;
+  if(mine){const dodge=Math.random()<.5?'l':'r';S.dodgeFoe=SD(dodge);await wait(380);
+    if(side&&side!==dodge){await say(`${d.name} dodged ${dodge==='l'?'left':'right'} — you aimed ${side==='l'?'left':'right'}!`);S.dodgeFoe=0;return}}
+  else{const aim=Math.random()<.5?'l':'r';const pd=await dodgePrompt(d);S.dodgeMe=pd?SD(pd):0;await wait(300);
+    if(pd&&pd!==aim){await say(`${d.name} dodged! The attack went ${aim==='l'?'left':'right'}.`);S.dodgeMe=0;return}
+    if(!pd)await say('Too slow to dodge!')}
+  const r=dmg(a,d,mv);S.hit=d;S.shake=14;S.flash=3;d.hp=Math.max(0,d.hp-r.d);await wait(300);S.dodgeFoe=0;S.dodgeMe=0;
   if(r.crit)await say('A critical hit!');if(r.e>1)await say("It's super effective!");else if(r.e<1)await say("It's not very effective...")}
 
 async function battleLoop(tr){
@@ -669,9 +708,9 @@ async function battleLoop(tr){
     const ch=await hudChoice(me,tr),act={move:'f',orb:'o',swap:'h',run:'r'}[ch.t];
     if(act==='r'){await say('Got away safely!');break}
     if(act==='h'){me=S.party[ch.i];S.lead=me;await say(`Go, ${me.name}!`);await useMove(w,me,pick(w),false)}
-    if(act==='f'){const mv=ch.mv;
-      if(me.spd>=w.spd){await useMove(me,w,mv,true);if(w.hp>0)await useMove(w,me,pick(w),false)}
-      else{await useMove(w,me,pick(w),false);if(me.hp>0)await useMove(me,w,mv,true)}}
+    if(act==='f'){const mv=ch.mv,sd=ch.side;
+      if(me.spd>=w.spd){await useMove(me,w,mv,true,sd);if(w.hp>0)await useMove(w,me,pick(w),false)}
+      else{await useMove(w,me,pick(w),false);if(me.hp>0)await useMove(me,w,mv,true,sd)}}
     if(act==='o'){S.orbs--;await say(`${S.player} threw a CATCH ORB!`);S.inOrb=true;
       const rate=(3*w.maxhp-2*w.hp)/(3*w.maxhp);let shakes=0;S.wobble=true;
       for(let i=0;i<3;i++){await wait(650);if(Math.random()<Math.pow(rate,.6)*0.9+.05)shakes++;else break}
@@ -686,7 +725,7 @@ async function battleLoop(tr){
       S.wild=null;S.lead=null;return true}
     if(me.hp<=0){await say(`${me.name} fainted!`);
       if(alive().length){await swap(true);continue}
-      await say(`${S.player} has no Wildlings left... and hurried back to Maplewick.`);S.party.forEach(m=>m.hp=m.maxhp);enterMap('maplewick',10,7);break}}
+      if(tr&&tr.practice){await say('Practice over!');break}await say(`${S.player} has no Wildlings left... and hurried back to Maplewick.`);S.party.forEach(m=>m.hp=m.maxhp);enterMap('maplewick',10,7);break}}
   S.wild=null;S.inOrb=false;S.lead=null;return false}
 function pick(m){return m.moves[Math.floor(Math.random()*m.moves.length)]}
 // held-direction input: continuous, no OS long-press
