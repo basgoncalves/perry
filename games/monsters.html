@@ -129,7 +129,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.20.0',BUILT='20 Nov 2026 00:15';
+const VERSION='0.21.0',BUILT='20 Nov 2026 00:35';
 document.getElementById('ver').textContent=`v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -566,6 +566,7 @@ Object.assign(MAPS,{
  dojo:{name:'Training Dojo',indoor:1,rows:["XXXXXXXXX","XK.....KX","X.......X","X.C...C.X","X.......X","XXXXEXXXX"],out:['brookhaven',11,10],npcs:[{x:4,y:1,c:'#d9843a',dojo:1,talk:''}]}
 });
 
+MAPS.cabin={name:'My Cabin',indoor:1,rows:["XXXXXXXXX","XBB...KKX","X.......X","X..CC...X","X.......X","XXXXEXXXX"],out:['maplewick',7,7]};
 Object.values(MAPS).forEach(m=>{m.bld=m.bld||[];m.npcs=m.npcs||[]});
 const WALL='TWXKBCMf#';
 MAPS.maplewick.pool=MAPS.brookhaven.pool=['Pibbit','Pibbit','Pebblor','Mothwisp','Hootle','Coralisk'];MAPS.maplewick.lv=MAPS.brookhaven.lv=[3,5];MAPS.route1.pool=['Pibbit','Pebblor','Mothwisp','Hootle','Hootle','Coralisk','Fumepot','Lincendo','Platymind','Venibri'];MAPS.route1.lv=[4,6];
@@ -591,9 +592,9 @@ const regionIn=(x,y)=>MAPS.world.regions.find(c=>x>=c.ox&&x<c.ox+c.w&&y>=c.oy&&y
 const regionAt=(x,y)=>regionIn(x,y)||MAPS.world.regions.map(c=>[Math.max(c.ox-x,0,x-c.ox-c.w+1)+Math.max(c.oy-y,0,y-c.oy-c.h+1),c]).sort((a,b)=>a[0]-b[0])[0][1];
 const regName=(x,y)=>{const r=regionIn(x,y);return r?r.m.name:'The Wildlands'};
 let M=MAPS.maplewick;
-function blocked(x,y){if(x<0||y<0||y>=M.rows.length||x>=M.rows[0].length)return true;const c=M.rows[y][x];
+function blocked(x,y){if(x<0||y<0||y>=M.rows.length||x>=M.rows[0].length)return true;const c=M.rows[y][x];if(c==='W'&&S.camps.some(q=>q.k==='bridge'&&q.map===S.map&&q.x===x&&q.y===y))return false;
   if(WALL.includes(c))return true;if(M.bld.some(b=>x>=b.x&&x<b.x+b.w&&y>=b.y&&y<b.y+b.h))return true;
-  if(S.camps.some(c=>c.map===S.map&&c.x===x&&c.y===y))return true;
+  if(S.camps.some(c=>c.k!=='bridge'&&c.map===S.map&&c.x===x&&c.y===y))return true;
   return NP().some(n=>n.x===x&&n.y===y)}
 function seed(x,y){return ((x*73856093)^(y*19349663))>>>0}
 const RR=(x,y,w,h,r,f)=>{g.fillStyle=f;g.beginPath();g.roundRect(x,y,w,h,r);g.fill()};
@@ -718,22 +719,34 @@ function move(dir){if(S.scene!=='town'||S.busy||S.mv||panel.className)return;
   const b=M.bld.find(b=>b.door[0]===nx&&b.door[1]===ny);if(b){enterMap(...b.to);
     if(['lab','inn'].includes(b.to[0])&&S.party.some(m=>m.hp<m.maxhp)){S.busy=true;(async()=>{await wait(300);await say(b.to[0]==='lab'?'PROF. ALDER: Welcome back! Let me patch up your team.':'Innkeeper Lia: Rest up, traveller!');await healAll();save();goTown()})()}
     return}
-  const cp=S.camps.find(c=>c.map===S.map&&c.x===nx&&c.y===ny);if(cp){useCamp(cp);return}
-  if(!M.indoor&&(M.rows[ny]||'')[nx]==='T'){const k=S.map+nx+','+ny,now=Date.now();if(now-(CHOP[k]||0)>45000){CHOP[k]=now;S.bag.wood++;showBanner('+1 🪵 Wood')}return}
+  const cp=S.camps.find(c=>c.k!=='bridge'&&c.map===S.map&&c.x===nx&&c.y===ny);if(cp){useCamp(cp);return}
+  if(!M.indoor&&(M.rows[ny]||'')[nx]==='T'){chopTree(nx,ny);return}
   if(blocked(nx,ny))return;
   S.trail=[[S.px,S.py],...(S.trail||[])].slice(0,3);S.follow=S.trail[0];S.mv={fx:S.px,fy:S.py,t:performance.now(),done:()=>afterStep()};S.px=nx;S.py=ny}
 const CHOP={};const ITEM={wood:'🪵 Wood',stone:'🪨 Stone',fiber:'🌾 Fiber',berry:'🫐 Berry'};
-const RECIPE={fire:{name:'🔥 Campfire',cost:{wood:3,stone:2},info:'Warm up beside it: heals your team by 40%.'},tent:{name:'⛺ Tent',cost:{wood:4,fiber:4},info:'Rest inside: full heal and saves your game.'}};
+const RECIPE={fire:{name:'🔥 Campfire',cost:{wood:3,stone:2},info:'Warm up beside it: heals your team by 40%.'},tent:{name:'⛺ Tent',cost:{wood:4,fiber:4},info:'Rest inside: full heal and saves your game.'},
+  fence:{name:'🚧 Fence',cost:{wood:2},info:'Blocks one tile. Tap it to remove. Build as many as you like.',multi:1},bridge:{name:'🌉 Bridge',cost:{wood:3},info:'Face water and place it to walk across. Build as many as you like.',multi:1,water:1},
+  cabin:{name:'🏠 Cabin',cost:{wood:15,stone:8},info:'Your own little house. Go inside to rest: full heal and save.'}};
 const canMake=k=>Object.entries(RECIPE[k].cost).every(([i,n])=>S.bag[i]>=n);
 function showBag(){const ft=DVV[S.face]||[0,1],tx=S.px+ft[0],ty=S.py+ft[1],spot=!M.indoor&&!blocked(tx,ty)&&!(M.warps&&M.warps[tx+','+ty]);
+  const okSpot=k=>RECIPE[k].water?(!M.indoor&&(M.rows[ty]||'')[tx]==='W'&&!S.camps.some(c=>c.map===S.map&&c.x===tx&&c.y===ty)):spot;
   panel.innerHTML=`<h3>🎒 Bag<button class="x">‹ Menu</button></h3><div class="card"><div style="flex:1">${Object.keys(ITEM).map(k=>`${ITEM[k]} × <b>${S.bag[k]}</b>`).join(' &nbsp; ')}</div>${S.bag.berry?'<button class="lead" data-eat="1">Eat berry</button>':''}</div>`+
-   Object.keys(RECIPE).map(k=>{const r=RECIPE[k];return `<div class="card"><div style="flex:1"><div class="n">${r.name}</div><div class="s">${Object.entries(r.cost).map(([i,n])=>`${n} ${ITEM[i]}`).join(' + ')}<br>${r.info}</div></div><button class="lead" data-mk="${k}" ${canMake(k)&&spot?'':'disabled style="opacity:.4"'}>Place</button></div>`}).join('')+
-   `<div class="card"><div class="s">Walk into trees for wood. Tall grass gives fiber and berries. Stones turn up on open ground and sand. ${M.indoor?'You can only camp outdoors.':spot?'It will be placed on the tile in front of you.':'The tile in front of you is blocked — face open ground to place.'}</div></div>`;
+   Object.keys(RECIPE).map(k=>{const r=RECIPE[k];return `<div class="card"><div style="flex:1"><div class="n">${r.name}</div><div class="s">${Object.entries(r.cost).map(([i,n])=>`${n} ${ITEM[i]}`).join(' + ')}<br>${r.info}</div></div><button class="lead" data-mk="${k}" ${canMake(k)&&okSpot(k)?'':'disabled style="opacity:.4"'}>Place</button></div>`}).join('')+
+   `<div class="card"><div class="s">Tap a tree to chop it down (+3 wood). Tall grass gives fiber and berries. Stones turn up on open ground and sand. ${M.indoor?'You can only camp outdoors.':spot?'It will be placed on the tile in front of you.':'The tile in front of you is blocked — face open ground to place.'}</div></div>`;
   panel.querySelector('.x').onclick=()=>{S.busy=false;openMenu()};
   const e=panel.querySelector('[data-eat]');if(e)e.onclick=()=>{const m=S.party.find(q=>q.hp>0&&q.hp<q.maxhp)||S.party[0];S.bag.berry--;m.hp=Math.min(m.maxhp,m.hp+20);showBanner(`${m.name} +20 HP`);showBag()};
-  panel.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{const k=b.dataset.mk;if(!canMake(k)||!spot)return;Object.entries(RECIPE[k].cost).forEach(([i,n])=>S.bag[i]-=n);
-    S.camps=S.camps.filter(c=>c.k!==k);S.camps.push({map:S.map,x:tx,y:ty,k});if(T3)T3.build(S.map);save();closePanel();showBanner(RECIPE[k].name+' placed')})}
-async function useCamp(c){S.busy=true;const fire=c.k==='fire';
+  panel.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{const k=b.dataset.mk;if(!canMake(k)||!okSpot(k))return;Object.entries(RECIPE[k].cost).forEach(([i,n])=>S.bag[i]-=n);
+    if(!RECIPE[k].multi)S.camps=S.camps.filter(c=>c.k!==k);S.camps.push({map:S.map,x:tx,y:ty,k});if(T3)T3.build(S.map);save();closePanel();showBanner(RECIPE[k].name+' placed')})}
+function setTile(x,y,ch){const put=(r,i)=>r.slice(0,i)+ch+r.slice(i+1);M.rows[y]=put(M.rows[y],x);if(M.chunks){const c=M.chunks.find(c=>x>=c.ox&&x<c.ox+c.w&&y>=c.oy&&y<c.oy+c.h);if(c)c.m.rows[y-c.oy]=put(c.m.rows[y-c.oy],x-c.ox);if(T3&&T3.refresh)T3.refresh(x,y)}}
+function applyCuts(){const W=MAPS.world;(S.cut||[]).forEach(([x,y])=>{if((W.rows[y]||'')[x]==='T'){const put=(r,i)=>r.slice(0,i)+'.'+r.slice(i+1);W.rows[y]=put(W.rows[y],x);const c=W.chunks.find(c=>x>=c.ox&&x<c.ox+c.w&&y>=c.oy&&y<c.oy+c.h);if(c)c.m.rows[y-c.oy]=put(c.m.rows[y-c.oy],x-c.ox)}})}
+async function chopTree(x,y){if(S.busy)return;const W=M.rows[0].length,H=M.rows.length;if(!M.chunks||x<=0||y<=0||x>=W-1||y>=H-1){showBanner('This old tree is too thick to cut');return}
+  S.busy=true;S.path=null;S.pathEnd=null;S.dest=null;showBanner('🪓 Chop… chop…');await wait(650);setTile(x,y,'.');(S.cut=S.cut||[]).push([x,y]);S.bag.wood+=3;showBanner('🌲 Timber! +3 🪵 Wood');save();S.busy=false}
+async function useCamp(c){S.busy=true;
+  if(c.k==='fence'){const a=await say('A wooden fence.',[{label:'🔨 Remove (get wood back)',v:1},{label:'Leave',v:0}]);if(a){S.camps=S.camps.filter(q=>q!==c);S.bag.wood+=2;if(T3)T3.build(S.map)}save();goTown();return}
+  if(c.k==='cabin'){const a=await say('Your cabin. Smoke curls from the chimney.',[{label:'🚪 Go inside',v:1},{label:'🔨 Demolish (materials back)',v:2},{label:'Leave',v:0}]);
+    if(a===1){MAPS.cabin.out=['world',c.x,c.y+1];enterMap('cabin',4,4);S.party.forEach(m=>{m.hp=m.maxhp;m.atkMod=1});save();await say('Home sweet home. You rest a while — your team is fully healed and the game is saved.')}
+    if(a===2){S.camps=S.camps.filter(q=>q!==c);Object.entries(RECIPE.cabin.cost).forEach(([i,n])=>S.bag[i]+=n);if(T3)T3.build(S.map)}save();goTown();return}
+  const fire=c.k==='fire';
   const a=await say(fire?'The campfire crackles warmly.':'Your tent. It looks cosy.',[{label:fire?'🔥 Warm up':'😴 Rest',v:1},{label:'🎒 Pack up',v:2},{label:'Leave',v:0}]);
   if(a===1){if(fire){S.party.forEach(m=>m.hp=Math.min(m.maxhp,m.hp+Math.ceil(m.maxhp*.4)));await say('Your team warms up by the fire and recovers some HP.')}
     else{S.flash=12;S.party.forEach(m=>{m.hp=m.maxhp;m.atkMod=1});save();await say('You rest in the tent... Your team is fully healed and the game is saved.')}}
@@ -878,6 +891,11 @@ function init3d(THREE){
         [0,1,2].forEach(i=>{const l=cyl(.05,.05,.5,'#5b3d24',X,.08,Z,6);l.rotation.z=Math.PI/2;l.rotation.y=i*Math.PI/3;world.add(l)});
         const f=new THREE.Mesh(new THREE.ConeGeometry(.17,.5,7),new THREE.MeshBasicMaterial({color:'#ff9f43'}));f.position.set(X,.36,Z);const f2=new THREE.Mesh(new THREE.ConeGeometry(.09,.3,7),new THREE.MeshBasicMaterial({color:'#ffe082'}));f2.position.set(X,.3,Z);
         const L=new THREE.PointLight('#ff9a3c',6,5);L.position.set(X,.7,Z);world.add(f,f2,L);fires.push([f,f2,L])}
+      else if(c.k==='fence'){[-.4,0,.4].forEach(o=>world.add(cyl(.045,.05,.6,'#8a6238',X+o,.3,Z,6)));world.add(box(.95,.07,.05,'#a87a48',X,.45,Z),box(.95,.07,.05,'#a87a48',X,.22,Z))}
+      else if(c.k==='bridge'){for(let i=0;i<5;i++)world.add(box(.94,.06,.17,i%2?'#a87a48':'#9a6e40',X,.06,Z-.4+i*.2));world.add(box(.05,.05,1,'#6b4423',X-.47,.12,Z),box(.05,.05,1,'#6b4423',X+.47,.12,Z))}
+      else if(c.k==='cabin'){world.add(box(.92,.7,.86,'#9a6e40',X,.35,Z));for(let i=0;i<4;i++)world.add(box(.94,.03,.88,'#7a5230',X,.12+i*.17,Z));
+        const shp=new THREE.Shape();shp.moveTo(-.56,0);shp.lineTo(.56,0);shp.lineTo(0,.5);shp.closePath();const rg=new THREE.ExtrudeGeometry(shp,{depth:1.04,bevelEnabled:false});rg.translate(0,0,-.52);const rf=sh(new THREE.Mesh(rg,mat('#7a3b2e')));rf.rotation.y=Math.PI/2;rf.position.set(X,.7,Z);world.add(rf);
+        world.add(box(.26,.42,.04,'#4a2f1a',X,.21,Z+.44),box(.18,.16,.04,'#ffd98a',X+.28,.42,Z+.44,{emissive:'#b8862a'}),box(.12,.3,.12,'#6b5a52',X+.25,1.05,Z-.1))}
       else{const t=sh(new THREE.Mesh(new THREE.ConeGeometry(.62,.95,4),mat('#c96f3a')));t.rotation.y=Math.PI/4;t.position.set(X,.47,Z);world.add(t);
         const dr=new THREE.Mesh(new THREE.ConeGeometry(.2,.55,3),mat('#3a2418'));dr.position.set(X,.28,Z+.33);dr.rotation.x=-.5;world.add(dr);world.add(cyl(.015,.015,.25,'#eee',X,1,Z,5))}});
     (m.npcs||[]).filter(vis).forEach(n=>{const p=person(n.c);p.userData.n=n;npcs.push(p);world.add(p)});
@@ -929,10 +947,12 @@ function init3d(THREE){
     R.render(scene,cam)}
   const ray=new THREE.Raycaster(),gp0=new THREE.Plane(new THREE.Vector3(0,1,0),0);
   const mk3=new THREE.Mesh(new THREE.RingGeometry(.22,.34,24),new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.85,depthTest:false}));mk3.rotation.x=-Math.PI/2;mk3.renderOrder=15;mk3.visible=false;scene.add(mk3);
+  const refresh=(x,y)=>{if(!wc)return;const i=chunkG.findIndex(g=>{const c=g.userData.c;return x>=c.ox&&x<c.ox+c.w&&y>=c.oy&&y<c.oy+c.h});if(i<0)return;const old=chunkG[i],c=old.userData.c;
+    grassSets=grassSets.filter(q=>q.G!==old);const g=buildStatic(c.m);g.position.set(c.ox,0,c.oy);g.userData.c=c;wc.remove(old);old.traverse(o=>{if(o.geometry&&!blobG.includes(o.geometry)&&o.geometry!==coneG)o.geometry.dispose();if(o.material&&o.material.map&&o.isMesh&&!o.isInstancedMesh)o.material.map.dispose()});wc.add(g);chunkG[i]=g;wcGrass=grassSets};
   const pick=(cx,cy)=>{const r=cv3.getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1),cam);const q=new THREE.Vector3();return ray.ray.intersectPlane(gp0,q)?[Math.floor(q.x),Math.floor(q.z)]:null};
   const project=(x,z,h)=>{const v=new THREE.Vector3(x+.5,h,z+.5).project(cam),r=cv3.getBoundingClientRect();return[r.left+(v.x+1)/2*r.width,r.top+(1-v.y)/2*r.height]};
   const mark=d=>{mk3.visible=!!d;if(d){mk3.position.set(d[0]+.5,.03,d[1]+.5);const k=1+Math.sin(performance.now()/150)*.12;mk3.scale.set(k,k,k)}};
-  return{build,draw:()=>{mark(S.scene==='town'?S.dest:null);draw()},pick,project}}
+  return{build,draw:()=>{mark(S.scene==='town'?S.dest:null);draw()},pick,project,refresh}}
 
 // ---- Dialog helpers ----
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1006,7 +1026,7 @@ function ask(t){return new Promise(res=>{box.className='';box.innerHTML='<div>'+
 
 // ---- Start menu, team, dex, save ----
 const SAVE='wildlings-save';
-function save(){try{localStorage.setItem(SAVE,JSON.stringify({player:S.player,party:S.party,orbs:S.orbs,px:S.px,py:S.py,seen:S.seen,caught:S.caught,coins:S.coins,beaten:S.beaten,badges:S.badges,map:S.map,partners:S.partners,bag:S.bag,camps:S.camps}));return true}catch{return false}}
+function save(){try{localStorage.setItem(SAVE,JSON.stringify({player:S.player,party:S.party,orbs:S.orbs,px:S.px,py:S.py,seen:S.seen,caught:S.caught,coins:S.coins,beaten:S.beaten,badges:S.badges,map:S.map,partners:S.partners,bag:S.bag,camps:S.camps,cut:S.cut||[]}));return true}catch{return false}}
 function load(){try{return JSON.parse(localStorage.getItem(SAVE))}catch{return null}}
 function closePanel(){panel.className='';panel.innerHTML='';S.busy=false}
 function openMenu(){if(S.scene!=='town'||S.busy)return;S.busy=true;panel.className='on';
@@ -1032,7 +1052,7 @@ addEventListener('keydown',e=>{if(['Escape','m','M'].includes(e.key)||(e.key==='
 async function start(){
   S.scene='title';const sv=load();
   const pickT=await say('Welcome, trainer!',[{label:'▶ New game',v:'n'},{label:'⟳ Continue',v:'c',disabled:!sv}]);
-  if(pickT==='c'){Object.assign(S,{player:sv.player,party:sv.party,orbs:sv.orbs,seen:sv.seen||[],caught:sv.caught||[],coins:sv.coins||0,beaten:sv.beaten||[],badges:sv.badges||[],partners:sv.partners||[],bag:Object.assign({wood:0,stone:0,fiber:0,berry:0},sv.bag),camps:(sv.camps||[]).map(c=>OFF[c.map]?{...c,map:'world',x:c.x+OFF[c.map][0],y:c.y+OFF[c.map][1]}:c),face:'d'});enterMap(MAPS[sv.map]?sv.map:'maplewick',MAPS[sv.map]?sv.px:10,MAPS[sv.map]?sv.py:7);
+  if(pickT==='c'){Object.assign(S,{player:sv.player,party:sv.party,orbs:sv.orbs,seen:sv.seen||[],caught:sv.caught||[],coins:sv.coins||0,beaten:sv.beaten||[],badges:sv.badges||[],partners:sv.partners||[],bag:Object.assign({wood:0,stone:0,fiber:0,berry:0},sv.bag),cut:sv.cut||[],camps:(sv.camps||[]).map(c=>OFF[c.map]?{...c,map:'world',x:c.x+OFF[c.map][0],y:c.y+OFF[c.map][1]}:c),face:'d'});applyCuts();enterMap(MAPS[sv.map]?sv.map:'maplewick',MAPS[sv.map]?sv.px:10,MAPS[sv.map]?sv.py:7);
     await say(`Welcome back, ${S.player}!`);goTown();return}
   S.scene='lab';S.pick=-1;
   await say('PROF. ALDER: Welcome to the world of WILDLINGS — creatures living in every meadow, river and ember-field.');
@@ -1130,7 +1150,7 @@ const DIRS=[['u',0,-1],['d',0,1],['l',-1,0],['r',1,0]];
 function pathStep(){if(!S.path&&!S.pathEnd)return;if(S.busy||S.scene!=='town'||panel.className){S.path=null;S.pathEnd=null;S.dest=null;return}if(S.mv)return;
   if(S.path&&S.path.length){const d=S.path.shift(),px=S.px,py=S.py;move(d);if(S.px===px&&S.py===py){S.path=null;S.pathEnd=null;S.dest=null}return}
   S.path=null;S.dest=null;if(S.pathEnd){const d=S.pathEnd;S.pathEnd=null;move(d)}}
-function interactAt(x,y){if(NP().some(n=>n.x===x&&n.y===y))return[x,y];if(M.signs&&M.signs[x+','+y])return[x,y];if(S.camps.some(c=>c.map===S.map&&c.x===x&&c.y===y))return[x,y];
+function interactAt(x,y){if(NP().some(n=>n.x===x&&n.y===y))return[x,y];if(M.signs&&M.signs[x+','+y])return[x,y];if(S.camps.some(c=>c.k!=='bridge'&&c.map===S.map&&c.x===x&&c.y===y))return[x,y];
   const b=M.bld.find(b=>x>=b.x&&x<b.x+b.w&&y>=b.y&&y<b.y+b.h);if(b)return[b.door[0],b.door[1],1];if(!M.indoor&&(M.rows[y]||'')[x]==='T')return[x,y];return null}
 function goTo(tx,ty,it){const W=M.rows[0].length,H=M.rows.length,key=(x,y)=>y*W+x,prev=new Map([[key(S.px,S.py),null]]),q=[[S.px,S.py]];
   while(q.length){const[cx,cy]=q.shift();for(const[d,dx,dy]of DIRS){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=W||ny>=H||prev.has(key(nx,ny))||blocked(nx,ny))continue;
