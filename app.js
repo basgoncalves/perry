@@ -274,7 +274,7 @@ function answer(raw){
   if(/\b(time is it|the time|what'?s the date|today'?s date|what day is)\b/.test(q))return new Date().toLocaleString('en-GB',{weekday:'long',hour:'2-digit',minute:'2-digit',day:'numeric',month:'long'});
   if(/\b(weather|temperature|rain|raining|forecast|umbrella|sunny|cold outside|hot outside)\b/.test(q))return weather(q);
   // Anything that isn't plainly about the user's own money goes to the general brain.
-  if(!FIN.test(q))return brain.think(raw.replace(/^(hey |ok )?perry[, ]*/i,'').trim(), financeContext());
+  if(!FIN.test(q)){window.wakeBrain&&window.wakeBrain();return brain.think(raw.replace(/^(hey |ok )?perry[, ]*/i,'').trim(), financeContext());}
   if(/^help$|what can you do/.test(q))return "Try:\n• How much did I spend this month?\n• Spending on groceries last month\n• Am I over budget?\n• How's my portfolio?\n• How are my goals?\n• If I invest 200 a month for 20 years?\n• Compare investment options";
   const inv=q.match(/(\d[\d.,]*)\D+(?:a |per |each )?month\D+(\d+)\s*year/);
   if(inv){const mo=num(inv[1]),y=+inv[2];return `Investing ${eur(mo)} a month for ${y} years (${eur(mo*12*y)} paid in) could grow to roughly:\n`+
@@ -330,7 +330,7 @@ function listen(){if(!SR){setLive(false);say('Voice input is not supported in th
     else if(live){if(++silent>=3){setLive(false);say('Live mode off — I heard nothing, my lord.',true)}else setTimeout(listen,300)}};
   try{r.start()}catch{rec=null}}
 $('#live').onclick=()=>{if(live){setLive(false);speechSynthesis&&speechSynthesis.cancel();say('Live mode off, my lord.',true);return}
-  setLive(true);say(brain.smartReady()?'Live mode on, my lord. Talk to me — say "stop" when you are done.':'Live mode on, my lord. Tip: turn on Smart Perry in Settings for real conversation. Say "stop" to end.')};
+  setLive(true);window.wakeBrain&&window.wakeBrain();say(brain.smartReady()?'Live mode on, my lord. Talk to me — say "stop" when you are done.':'Live mode on, my lord. Tip: turn on Smart Perry in Settings for real conversation. Say "stop" to end.')};
 $('#mic').onclick=listen;$('#core').onclick=listen;
 
 /* ---------- boot ---------- */
@@ -393,5 +393,7 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
     .catch(e=>{st.textContent='Could not load: '+e.message;box.checked=false;S.settings.smart=false;save()})};
   box.checked=!!S.settings.smart;
   box.onchange=()=>{S.settings.smart=box.checked;save();if(box.checked)go();else st.textContent='Off. Reload the page to free the memory.'};
-  if(S.settings.smart)go();
+  // Don't load the model at start-up (slow, ~1.6 GB of memory). Load it the first time it's needed.
+  window.wakeBrain=()=>{if(S.settings.smart&&!brain.smartReady()&&!st.textContent.startsWith('Loading'))go()};
+  if(S.settings.smart)st.textContent='On — loads the first time you ask a general question or tap LIVE.';
 })();
