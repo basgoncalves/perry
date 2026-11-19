@@ -9,7 +9,7 @@
 input{-webkit-user-select:text;user-select:text}
 button{touch-action:manipulation}
 body{margin:0;height:100vh;overflow:hidden;background:radial-gradient(circle at 30% 20%,#2c2f4a,#12131c);color:#1d2233;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh}
-#gba{width:min(100vw,480px);height:100vh;max-height:100vh;display:flex;flex-direction:column;background:linear-gradient(160deg,#7b6cf0,#4b3fb0);border-radius:28px;padding:14px;box-shadow:0 20px 50px #0009,inset 0 1px 0 #fff4}
+#gba{position:relative;width:min(100vw,480px);height:100vh;max-height:100vh;display:flex;flex-direction:column;background:linear-gradient(160deg,#7b6cf0,#4b3fb0);border-radius:28px;padding:14px;box-shadow:0 20px 50px #0009,inset 0 1px 0 #fff4}
 #screen{border-radius:16px;flex:1 1 auto;min-height:200px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 3px #0003,0 4px 14px #0005;background:#000}
 canvas{width:100%;height:100%;display:block;position:relative}
 #box{position:relative;margin-top:10px;height:132px;flex:none;overflow:auto;background:#ffffffee;border-radius:16px;padding:10px 14px;font-size:clamp(13px,3.8vw,16px);line-height:1.4;box-shadow:0 6px 18px #0004;animation:pop .18s ease-out}
@@ -73,6 +73,13 @@ input:focus{border-color:#5b4fd8}
 @keyframes wig{50%{letter-spacing:4px}}@keyframes shrink{to{width:0}}
 .tgt{position:absolute;width:56px;height:56px;border-radius:50%;border:0;background:radial-gradient(circle,#fff 20%,#e53935 22%,#e53935 45%,#fff 47%,#fff 65%,#e53935 67%);box-shadow:0 4px 10px #0004}
 .meter{position:relative;height:26px;border-radius:13px;background:#d5d8ee;margin:26px 0}.meter .zone{position:absolute;left:38%;width:24%;top:0;bottom:0;background:#3ddc84;border-radius:8px}.meter .mk{position:absolute;top:-6px;width:6px;height:38px;margin-left:-3px;background:#2b2f5c;border-radius:3px}
+#devBtn{position:absolute;left:14px;bottom:30px;border:0;border-radius:999px;padding:7px 12px;font:800 11px system-ui;background:#ffd166;color:#4b3fb0;box-shadow:0 3px 10px #0004;z-index:20}
+#devBtn.act{background:#ff6b6b;color:#fff}
+#dev{position:absolute;inset:0;background:#000a;z-index:30;display:none;align-items:center;justify-content:center;border-radius:28px}#dev.on{display:flex}
+#dev .sheet{width:88%;max-height:88%;overflow:auto;background:#fff;border-radius:18px;padding:14px;font:14px system-ui;color:#1d2233}
+#dev h3{margin:0 0 8px;display:flex;justify-content:space-between}#dev label{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid #eee;font-weight:600}
+#dev input{width:22px;height:22px;margin:0;padding:0}#dev .acts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+#dev .acts button,#dev select{font:600 13px system-ui;border:0;border-radius:10px;padding:9px;background:#eef0ff;color:#2b2f5c}#dev select{width:100%;margin-top:6px}
 </style>
 </head>
 <body>
@@ -81,12 +88,13 @@ input:focus{border-color:#5b4fd8}
 <div id="hud"><div id="team"></div><button id="runBtn">RUN</button><div id="hint"></div><div id="moves"></div><div id="orbBtn"><span>◓</span><small></small></div></div><div id="toast"></div><div id="dodge"><b></b><span>⟵ swipe to dodge ⟶</span><i class="bar"></i></div></div>
   <div id="box" class="hide"></div>
   <div id="dpad"><button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button></div>
+  <button id="devBtn">🛠 DEV</button><div id="dev"><div class="sheet"></div></div>
   <div class="label hint2" id="howto">Use the arrows to walk · ☰ for menu</div>
   <div class="label" id="ver">WILDLINGS</div>
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.13.0',BUILT='19 Nov 2026 22:00';
+const VERSION='0.13.1',BUILT='19 Nov 2026 21:55';
 document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -598,7 +606,7 @@ async function trainerBattle(n){S.busy=true;dpad.style.visibility='hidden';n.ale
   if(won){S.beaten.push(n.id);S.coins+=n.prize;await say(`${n.name}: ${n.post}`);await say(`${S.player} got ${n.prize} coins!`);if(n.champ)await say('🏆 You are the new WILDLINGS CHAMPION! Thank you for playing — the world stays open to explore.');
     if(n.badge){S.badges.push(n.badge);await say(`${S.player} received the ${n.badge.toUpperCase()} BADGE! 🏅`)}}
   save();goTown()}
-function lookFor(){for(const n of M.npcs||[]){if(!n.team||S.beaten.includes(n.id))continue;const d={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]}[n.face];
+function lookFor(){if(DEV.notr)return false;for(const n of M.npcs||[]){if(!n.team||S.beaten.includes(n.id))continue;const d={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]}[n.face];
   for(let i=1;i<=n.sight;i++){const x=n.x+d[0]*i,y=n.y+d[1]*i;if(x===S.px&&y===S.py){
     const tx=S.px-d[0],ty=S.py-d[1];S.face={u:'d',d:'u',l:'r',r:'l'}[n.face];
     (async()=>{S.busy=true;n.alert=true;await wait(500);n.alert=false;
@@ -639,7 +647,7 @@ async function afterStep(){const c=M.rows[S.py][S.px],w=M.warps&&M.warps[S.px+',
   if(!M.indoor&&!w){const r=Math.random();if(c==='G'&&r<.2){S.bag.fiber++;showBanner('+1 🌾 Fiber')}else if(c==='G'&&r<.3){S.bag.berry++;showBanner('+1 🫐 Berry')}else if((c==='.'||c==='s')&&r<.07){S.bag.stone++;showBanner('+1 🪨 Stone')}}
   if(w){enterMap(...w);return}if(c==='E'&&M.out){enterMap(...M.out);S.face='d';return}
   if(lookFor())return;
-  if(c==='G'&&Math.random()<.15){S.busy=true;dpad.style.visibility='hidden';S.flash=8;await wait(400);await battleLoop();save();goTown()}}
+  if(c==='G'&&!DEV.noenc&&Math.random()<.15){S.busy=true;dpad.style.visibility='hidden';S.flash=8;await wait(400);await battleLoop();save();goTown()}}
 const KEYS={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',w:'u',s:'d',a:'l',d:'r'};
 addEventListener('keydown',e=>{const k=KEYS[e.key];if(k){e.preventDefault();if(!e.repeat)press(k)}});
 addEventListener('keyup',e=>{const k=KEYS[e.key];if(k)release(k)});
@@ -873,7 +881,9 @@ function dmg(a,d,mv){const m=MOVES[mv];if(!m.pow)return{d:0,e:1};
   const e=TY(d.type).reduce((x,t)=>x*((EFF[m.type]||{})[t]||1),1),stab=TY(a.type).includes(m.type)?1.5:1,crit=Math.random()<.0625?1.5:1;
   const base=((2*a.lv/5+2)*m.pow*(a.atk*a.atkMod)/d.def)/50+2;
   return{d:Math.max(1,Math.floor(base*e*stab*crit*(.85+Math.random()*.15))),e,crit:crit>1}}
-async function useMove(a,d,mv,mine,side){const who=mine?a.name:'Wild '+a.name;
+async function useMove(a,d,mv,mine,side){if(!mine&&DEV.god){await say(`${a.name} attacks, but ${d.name} takes no damage (dev).`);return}
+  if(mine&&DEV.kill){await say(`${a.name} used ${mv}! (auto-KO)`);S.hit=d;S.shake=14;S.flash=3;d.hp=0;await wait(300);return}
+const who=mine?a.name:'Wild '+a.name;
   await say(`${who} used ${mv}!`);
   if(Math.random()*100>MOVES[mv].acc){await say('But it missed!');return}
   if(MOVES[mv].buff){a.def=Math.ceil(a.def*1.25);await say(`${who}'s defense rose!`);return}
@@ -909,7 +919,7 @@ async function battleLoop(tr){
     if(act==='o'){S.orbs--;await say(`${S.player} threw a CATCH ORB!`);S.inOrb=true;
       const rate=(3*w.maxhp-2*w.hp)/(3*w.maxhp);let shakes=0;S.wobble=true;
       for(let i=0;i<3;i++){await wait(650);if(Math.random()<Math.pow(rate,.6)*0.9+.05)shakes++;else break}
-      S.wobble=false;
+      S.wobble=false;if(DEV.catch)shakes=3;
       if(shakes===3){w.caught=true;S.party.push(w);mark('caught',w.name);await say(`Gotcha! ${w.name} was caught!`);
         await say(`${w.name} joined ${S.player}'s team. Team size: ${S.party.length}.`);break}
       S.inOrb=false;await say(['Oh no! It broke free!','Argh! Almost had it!','Shoot! So close!'][Math.min(shakes,2)]);
@@ -940,6 +950,27 @@ addEventListener('blur',()=>release());
 setInterval(()=>{document.getElementById('mbtn').style.display=S.scene==='town'?'block':'none'},250);
 (function holdLoop(){if(S.hold&&!S.mv&&!S.busy&&S.scene==='town')move(S.hold);requestAnimationFrame(holdLoop)})();
 addEventListener('contextmenu',e=>e.preventDefault());addEventListener('selectstart',e=>{if(e.target.tagName!=='INPUT')e.preventDefault()});
+// ---- Dev mode ----
+const DEV=(()=>{try{return JSON.parse(localStorage.getItem('wildlings-dev'))||{}}catch{return{}}})();
+function devOpen(){const el=document.getElementById('dev'),sh=el.firstChild,T=[['god','🛡 God mode — my Wildlings take no damage'],['kill','💥 Auto-kill — my attacks always KO'],['catch','◓ Auto-catch — orbs never fail'],['noenc','🌿 No wild encounters'],['notr','🙈 Trainers ignore me']];
+  const free=S.scene==='town'&&!S.busy;
+  sh.innerHTML=`<h3>🛠 Dev mode <button id="devX" style="border:0;background:#5b4fd8;color:#fff;border-radius:999px;padding:4px 12px;font-weight:700">✕</button></h3>`+T.map(([k,l])=>`<label>${l}<input type="checkbox" data-k="${k}" ${DEV[k]?'checked':''}></label>`).join('')+
+   `<div class="acts"><button data-a="heal">❤️ Restore team</button><button data-a="lv">⬆️ Lead +5 levels</button><button data-a="orbs">◓ +20 orbs</button><button data-a="mats">🪵 +10 materials</button><button data-a="badges">🏅 All badges</button><button data-a="coins">💰 +1000 coins</button></div>
+   <select id="devTp" ${free?'':'disabled'}><option value="">🚀 Teleport to…${free?'':' (not during battle/dialog)'}</option>${Object.entries(MAPS).filter(([k,m])=>!m.indoor).map(([k,m])=>`<option value="${k}">${m.name}</option>`).join('')}</select><div id="devMsg" style="margin-top:8px;font-size:12px;color:#667"></div>`;
+  const msg=t=>sh.querySelector('#devMsg').textContent=t,upd=()=>{localStorage.setItem('wildlings-dev',JSON.stringify(DEV));document.getElementById('devBtn').classList.toggle('act',Object.values(DEV).some(Boolean))};
+  sh.querySelectorAll('[data-k]').forEach(c=>c.onchange=()=>{DEV[c.dataset.k]=c.checked;upd()});
+  sh.querySelector('#devX').onclick=()=>el.className='';
+  sh.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a;if(!S.party.length&&(a==='heal'||a==='lv')){msg('Start a game first.');return}
+    if(a==='heal'){S.party.forEach(m=>{m.hp=m.maxhp;m.atkMod=1});msg('Team restored.')}
+    if(a==='lv'){const m=S.lead||S.party[0],n=mk(m.name,m.lv+5);Object.assign(m,n,{xp:0});mark('seen',m.name);mark('caught',m.name);msg(`${m.name} is now Lv ${m.lv}.`)}
+    if(a==='orbs'){S.orbs+=20;msg('Orbs: '+S.orbs)}
+    if(a==='mats'){Object.keys(S.bag).forEach(k=>S.bag[k]+=10);msg('Materials added.')}
+    if(a==='badges'){S.badges=['River','Mind','Ember','Thorn','Frost','Storm'];msg('All 6 badges granted.')}
+    if(a==='coins'){S.coins+=1000;msg('Coins: '+S.coins)}
+    if(S.player)save()});
+  sh.querySelector('#devTp').onchange=e=>{const k=e.target.value;if(!k||!(S.scene==='town'&&!S.busy))return;const m=MAPS[k];enterMap(k,Math.floor(m.rows[0].length/2),4);save();el.className=''};
+  el.className='on'}
+document.getElementById('devBtn').onclick=devOpen;document.getElementById('devBtn').classList.toggle('act',Object.values(DEV).some(Boolean));
 start();
 </script>
 </body>
