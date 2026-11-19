@@ -22,7 +22,7 @@ canvas{width:100%;height:100%;display:block;position:relative}
 #menu button .t{font-size:.75em;opacity:.7;font-weight:500}
 input{font:inherit;padding:6px 10px;border:2px solid #c9cdf5;border-radius:10px;width:100%;outline:none;margin-top:4px}
 input:focus{border-color:#5b4fd8}
-#dpad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,44px);gap:4px;justify-content:center;margin-top:12px;visibility:hidden}
+#dpad{touch-action:none;-webkit-user-select:none;user-select:none;display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,44px);gap:4px;justify-content:center;margin-top:12px;visibility:hidden}
 #dpad button{font-size:17px;background:#ffffff22;color:#fff;border:0;border-radius:14px;touch-action:manipulation;box-shadow:inset 0 1px 0 #fff3,0 2px 6px #0003}
 #dpad button:active{background:#ffffff44;transform:scale(.95)}
 #dpad [data-d=u]{grid-area:1/2}#dpad [data-d=l]{grid-area:2/1}#dpad [data-d=r]{grid-area:2/3}#dpad [data-d=d]{grid-area:3/2}
@@ -55,7 +55,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.8.0',BUILT='19 Nov 2026 21:00';
+const VERSION='0.8.1',BUILT='19 Nov 2026 21:05';
 document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -361,11 +361,13 @@ async function afterStep(){const c=M.rows[S.py][S.px],w=M.warps&&M.warps[S.px+',
   if(w){enterMap(...w);return}if(c==='E'&&M.out){enterMap(...M.out);S.face='d';return}
   if(lookFor())return;
   if(c==='G'&&Math.random()<.15){S.busy=true;dpad.style.visibility='hidden';S.flash=8;await wait(400);await battleLoop();save();goTown()}}
-addEventListener('keydown',e=>{const k={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',w:'u',s:'d',a:'l',d:'r'}[e.key];if(k){e.preventDefault();move(k)}});
+const KEYS={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',w:'u',s:'d',a:'l',d:'r'};
+addEventListener('keydown',e=>{const k=KEYS[e.key];if(k){e.preventDefault();if(!e.repeat)press(k)}});
+addEventListener('keyup',e=>{const k=KEYS[e.key];if(k)release(k)});
 
 // ---- 3D overworld (three.js, bundled locally) ----
 let T3=null;
-function stepAnim(){if(S.mv){const k=Math.min(1,(performance.now()-S.mv.t)/170);S.dx=S.mv.fx+(S.px-S.mv.fx)*k;S.dy=S.mv.fy+(S.py-S.mv.fy)*k;if(k>=1){const f=S.mv.done;S.mv=null;f()}}else{S.dx=S.px;S.dy=S.py}}
+function stepAnim(){if(S.mv){const k=Math.min(1,(performance.now()-S.mv.t)/170);S.dx=S.mv.fx+(S.px-S.mv.fx)*k;S.dy=S.mv.fy+(S.py-S.mv.fy)*k;if(k>=1){const f=S.mv.done;S.mv=null;f();if(S.hold&&!S.busy&&S.scene==='town')move(S.hold)}}else{S.dx=S.px;S.dy=S.py}}
 function showBanner(t){const b=document.getElementById('banner');b.textContent=t;b.classList.remove('on');void b.offsetWidth;b.classList.add('on')}
 import('./three.module.min.js').then(THREE=>{try{T3=init3d(THREE);if(S.map)T3.build(S.map)}catch(e){console.warn('3D unavailable',e);T3=null}}).catch(e=>console.warn(e));
 function init3d(THREE){
@@ -590,7 +592,15 @@ async function battleLoop(tr){
       await say(`${S.player} has no Wildlings left... and hurried back to Maplewick.`);S.party.forEach(m=>m.hp=m.maxhp);enterMap('maplewick',10,7);break}}
   S.wild=null;S.inOrb=false;S.lead=null;return false}
 function pick(m){return m.moves[Math.floor(Math.random()*m.moves.length)]}
-dpad.querySelectorAll('button[data-d]').forEach(b=>{let t;const go=()=>move(b.dataset.d);b.onpointerdown=e=>{e.preventDefault();go();t=setInterval(go,180)};b.onpointerup=b.onpointerleave=()=>clearInterval(t)});
+// held-direction input: continuous, no OS long-press
+const press=d=>{S.hold=d;move(d)},release=d=>{if(!d||S.hold===d)S.hold=null};
+dpad.querySelectorAll('button[data-d]').forEach(b=>{const d=b.dataset.d;
+  b.addEventListener('touchstart',e=>{e.preventDefault();press(d)},{passive:false});
+  b.addEventListener('touchend',e=>{e.preventDefault();release(d)},{passive:false});b.addEventListener('touchcancel',()=>release(d));
+  b.addEventListener('mousedown',e=>{e.preventDefault();press(d)});b.addEventListener('mouseup',()=>release(d));b.addEventListener('mouseleave',()=>release(d))});
+dpad.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0],el=document.elementFromPoint(t.clientX,t.clientY),d=el&&el.dataset&&el.dataset.d;if(d&&d!==S.hold)press(d)},{passive:false});
+addEventListener('blur',()=>release());
+(function holdLoop(){if(S.hold&&!S.mv&&!S.busy&&S.scene==='town')move(S.hold);requestAnimationFrame(holdLoop)})();
 addEventListener('contextmenu',e=>e.preventDefault());addEventListener('selectstart',e=>{if(e.target.tagName!=='INPUT')e.preventDefault()});
 start();
 </script>
