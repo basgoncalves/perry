@@ -91,6 +91,17 @@ input:focus{border-color:#5b4fd8}
 #side.on{display:flex;animation:pop .12s}#side b{font:800 clamp(14px,4.4vw,19px) system-ui;text-align:center;padding:0 10px}
 #side .sb{display:flex;gap:12px;width:90%}#side button{flex:1;border:0;border-radius:18px;padding:22px 6px;font:800 clamp(15px,4.6vw,20px) system-ui;background:#ffffffee;color:#2b2f5c;box-shadow:0 6px 16px #0006}
 #side button:active{background:#ffd166}#side .bar{width:60%;height:6px;border-radius:9px;background:#fff}
+#dexBtn{position:absolute;right:14px;bottom:30px;border:0;border-radius:999px;padding:7px 12px;font:800 11px system-ui;background:#fff;color:#4b3fb0;box-shadow:0 3px 10px #0004;z-index:20}
+#dex{position:absolute;inset:0;background:#000a;z-index:30;display:none;align-items:center;justify-content:center;border-radius:28px}#dex.on{display:flex}
+#dex .sheet{width:92%;height:90%;overflow:auto;background:linear-gradient(160deg,#f6f7ff,#e3e6ff);border-radius:18px;padding:12px;font:13px system-ui;color:#1d2233}
+#dex h3{margin:0 0 8px;display:flex;justify-content:space-between;align-items:center}#dex h3 button{border:0;background:#5b4fd8;color:#fff;border-radius:999px;padding:4px 12px;font-weight:700}
+.dx{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.dx button{position:relative;border:0;background:#fff;border-radius:12px;padding:5px 2px;font:600 9.5px system-ui;color:#1d2233;box-shadow:0 2px 8px #2b2f5c14}
+.dx img{width:100%;max-width:56px;display:block;margin:0 auto}.dx .no{display:block;color:#889;font-size:8.5px}
+.cb{position:absolute;top:4px;right:4px;width:13px;height:13px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7ee8f5,#1565c0);border:2px solid #ffd54f}
+.dd img{width:120px;height:120px;background:#fff;border-radius:18px;display:block;margin:0 auto 6px;box-shadow:0 2px 10px #2b2f5c22}
+.dd .row{background:#fff;border-radius:12px;padding:8px 10px;margin-top:6px}.dd .row b{display:block;font-size:11px;color:#5b4fd8;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
+.sbar{display:grid;grid-template-columns:34px 1fr 26px;gap:6px;align-items:center;font-size:11px}.sbar i{display:block;height:7px;border-radius:9px;background:#5b4fd8}
+.evo{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.evo button{border:0;background:#eef0ff;border-radius:10px;padding:3px 6px;font:600 10px system-ui}.evo img{width:38px;height:38px;margin:0;display:block;background:none;box-shadow:none}
 </style>
 </head>
 <body>
@@ -99,13 +110,13 @@ input:focus{border-color:#5b4fd8}
 <div id="hud"><div id="team"></div><button id="runBtn">RUN</button><div id="hint"></div><div id="moves"></div><div id="orbBtn"><span>◓</span><small></small></div></div><div id="toast"></div><div id="side"><b></b><div class="sb"><button data-s="l">◀ LEFT</button><button data-s="r">RIGHT ▶</button></div><i class="bar"></i></div><div id="dodge"><b></b><span>⟵ swipe to dodge ⟶</span><i class="bar"></i></div></div>
   <div id="box" class="hide"></div>
   <div id="dpad"><button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button></div>
-  <button id="devBtn">🛠 DEV</button><div id="dev"><div class="sheet"></div></div>
+  <button id="dexBtn">📖 DEX</button><div id="dex"><div class="sheet"></div></div><button id="devBtn">🛠 DEV</button><div id="dev"><div class="sheet"></div></div>
   <div class="label hint2" id="howto">Use the arrows to walk · ☰ for menu</div>
   <div class="label" id="ver">WILDLINGS</div>
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.14.0',BUILT='19 Nov 2026 22:20';
+const VERSION='0.14.1',BUILT='19 Nov 2026 22:10';
 document.getElementById('ver').textContent=`WILDLINGS · v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -997,6 +1008,28 @@ addEventListener('blur',()=>release());
 setInterval(()=>{document.getElementById('mbtn').style.display=S.scene==='town'?'block':'none'},250);
 (function holdLoop(){if(S.hold&&!S.mv&&!S.busy&&S.scene==='town')move(S.hold);requestAnimationFrame(holdLoop)})();
 addEventListener('contextmenu',e=>e.preventDefault());addEventListener('selectstart',e=>{if(e.target.tagName!=='INPUT')e.preventDefault()});
+// ---- Wildlingdex overlay ----
+const DEXN=Object.keys(SP),dexNo=n=>'#'+String(DEXN.indexOf(n)+1).padStart(2,'0');
+const baseOf=n=>{while(SP[n].from)n=SP[n].from;return n};
+function dexWhere(n){const b=baseOf(n),out=[];for(const m of Object.values(MAPS)){if(m.indoor||!m.rows.some(r=>r.includes('G')))continue;
+    const pool=m.pool||(m.name==='Route 1'?['Pibbit','Pebblor','Mothwisp','Hootle','Coralisk','Fumepot','Lincendo','Platymind','Venibri']:['Pibbit','Pebblor','Mothwisp','Hootle','Coralisk']);if(pool.includes(b)||pool.includes(n))out.push(m.name)}return out}
+function dexList(){const el=document.getElementById('dex'),sh=el.firstChild;
+  sh.innerHTML=`<h3>📖 Wildlingdex <span style="font-size:11px;color:#667">${S.caught.length}/${DEXN.length} caught</span><button id="dexX">✕</button></h3><div class="dx">`+DEXN.map(n=>`<button data-n="${n}">${S.caught.includes(n)?'<i class="cb"></i>':''}<img src="${sprite(n)}"><span class="no">${dexNo(n)}</span>${n}</button>`).join('')+'</div>';
+  sh.querySelector('#dexX').onclick=()=>el.className='';sh.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>dexShow(b.dataset.n));el.className='on';sh.scrollTop=el._y||0}
+function dexShow(n){const el=document.getElementById('dex'),sh=el.firstChild,s=SP[n];el._y=sh.scrollTop;
+  const chain=[];let c=baseOf(n);while(c){chain.push(c);c=SP[c].evo&&SP[c].evo[0]}
+  const weak=Object.keys(TC).filter(t=>TY(s.type).reduce((x,d)=>x*((EFF[t]||{})[d]||1),1)>1),res=Object.keys(TC).filter(t=>TY(s.type).reduce((x,d)=>x*((EFF[t]||{})[d]||1),1)<1);
+  const pl=a=>a.map(k=>`<span class="pill" style="background:${TC[k]}">${k}</span>`).join('')||'—',wh=dexWhere(n);
+  const mvl=m=>`${m} <span style="color:#889">(${MOVES[m].type}${MOVES[m].pow?' · '+MOVES[m].pow:' · status'})</span>`;
+  sh.innerHTML=`<h3>${dexNo(n)} ${n}<button id="dexB">‹ All</button></h3><div class="dd"><img src="${sprite(n)}"><div style="text-align:center">${pills(s.type)} ${S.caught.includes(n)?'<span class="pill" style="background:#1565c0">● caught</span>':S.seen.includes(n)?'<span class="pill" style="background:#889">seen</span>':'<span class="pill" style="background:#bbb">not seen yet</span>'}</div>
+   <div class="row"><b>Base stats</b>${[['HP','hp'],['ATK','atk'],['DEF','def'],['SPD','spd']].map(([l,k])=>`<div class="sbar">${l}<span style="background:#e6e8f5;border-radius:9px"><i style="width:${Math.min(100,s[k]/95*100)}%"></i></span>${s[k]}</div>`).join('')}</div>
+   <div class="row"><b>Evolution</b><div class="evo">${chain.length>1?chain.map((c,i)=>`${i?`<span>→ Lv ${SP[chain[i-1]].evo[1]} →</span>`:''}<button data-n="${c}"><img src="${sprite(c)}">${c}</button>`).join(''):'Does not evolve'}</div></div>
+   <div class="row"><b>Starting moves</b>${s.moves.map(mvl).join('<br>')}</div>
+   <div class="row"><b>Learns by level</b>${Object.entries(s.learn||{}).map(([l,m])=>`Lv ${l}: ${mvl(m)}`).join('<br>')||'—'}</div>
+   <div class="row"><b>Weak to</b>${pl(weak)}<b style="margin-top:6px">Resists</b>${pl(res)}</div>
+   <div class="row"><b>Where to find</b>${wh.length?wh.join(' · '):SP[n].from?'Evolve '+SP[n].from+(dexWhere(SP[n].from).length?'':' (or raise a starter)'):'Starter from Prof. Alder'}</div></div>`;
+  sh.scrollTop=0;sh.querySelector('#dexB').onclick=dexList;sh.querySelectorAll('.evo [data-n]').forEach(b=>b.onclick=()=>dexShow(b.dataset.n))}
+document.getElementById('dexBtn').onclick=()=>{document.getElementById('dex')._y=0;dexList()};
 // ---- Dev mode ----
 const DEV=(()=>{try{return JSON.parse(localStorage.getItem('wildlings-dev'))||{}}catch{return{}}})();
 function devOpen(){const el=document.getElementById('dev'),sh=el.firstChild,T=[['god','🛡 God mode — my Wildlings take no damage'],['kill','💥 Auto-kill — my attacks always KO'],['catch','◓ Auto-catch — orbs never fail'],['noenc','🌿 No wild encounters'],['notr','🙈 Trainers ignore me']];
