@@ -258,21 +258,29 @@ const WMO={0:'clear sky',1:'mainly clear',2:'partly cloudy',3:'overcast',45:'fog
 function here(){return new Promise(ok=>{if(!navigator.geolocation)return ok(null);
   navigator.geolocation.getCurrentPosition(p=>ok({lat:p.coords.latitude,lon:p.coords.longitude,name:''}),()=>ok(null),{timeout:8000,maximumAge:6e5})})}
 async function weather(q){try{
-  const city=(q.match(/\bin ([a-zà-ÿ .'-]+?)(?: today| tomorrow| now| this week)?\??$/)||[])[1];let loc=null;
+  const tmq=/tomorrow/.test(q);q=q.replace(/\s*tomorrow\s*/,' ').trim();const city=(q.match(/\bin ([a-zà-ÿ .'-]+?)(?: today| tomorrow| now| this week)?\??$/)||[])[1];let loc=null;
   if(city){const g=await (await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&name='+encodeURIComponent(city))).json();
-    const r=g.results&&g.results[0];if(r)loc={lat:r.latitude,lon:r.longitude,name:r.name}}
+    const r=g.results&&g.results[0];if(r){loc={lat:r.latitude,lon:r.longitude,name:r.name};LASTCITY=r.name}}
   loc??=await here();if(!loc)return "I need your location for the weather, my lord — allow location, or ask e.g. \"weather in Vienna\".";
   const d=await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=2`)).json();
-  const tm=/tomorrow/.test(q),i=tm?1:0,c=d.current,dl=d.daily,w=WMO[dl.weather_code[i]]||'mixed weather',where=loc.name?` in ${loc.name}`:'';
+  const tm=tmq,i=tm?1:0,c=d.current,dl=d.daily,w=WMO[dl.weather_code[i]]||'mixed weather',where=loc.name?` in ${loc.name}`:'';
   return tm?`Tomorrow${where}: ${w}, ${Math.round(dl.temperature_2m_min[1])} to ${Math.round(dl.temperature_2m_max[1])}°C, ${dl.precipitation_probability_max[1]}% chance of rain, my lord.`
     :`Right now${where} it's ${Math.round(c.temperature_2m)}°C (feels like ${Math.round(c.apparent_temperature)}°C), ${WMO[c.weather_code]||w}. Today ${Math.round(dl.temperature_2m_min[0])} to ${Math.round(dl.temperature_2m_max[0])}°C, ${dl.precipitation_probability_max[0]}% chance of rain.`+(dl.precipitation_probability_max[0]>=50?' Take an umbrella, my lord.':'')
 }catch(e){return "I couldn't reach the weather service, my lord."}}
+let LAST='',LASTCITY='';
 function answer(raw){
   const q=raw.toLowerCase().replace(/^(hey |ok )?perry[, ]*/,'').trim();const m=monthFrom(q);
   if(/daddy'?s home/.test(q))return "Welcome home, my lord. Session restore runs on the desktop Perry — open it on your PC with Ctrl+Alt+P. Here, all financial systems are online.";
   if(!q||/^(hi|hello|hey|yo)\W*$/.test(q))return "At your service, my lord. Ask me anything — the weather, a question, an idea — or about your money.";
   if(/\b(time is it|the time|what'?s the date|today'?s date|what day is)\b/.test(q))return new Date().toLocaleString('en-GB',{weekday:'long',hour:'2-digit',minute:'2-digit',day:'numeric',month:'long'});
-  if(/\b(weather|temperature|rain|raining|forecast|umbrella|sunny|cold outside|hot outside)\b/.test(q))return weather(q);
+  // Follow-ups: "in Toronto", "and tomorrow?", "what about Paris" right after a weather answer stay on weather.
+  const follow=LAST==='weather'&&/^(and |what about |how about |ok |now )?(in [a-zà-ÿ .'-]+|tomorrow|today|there|[a-zà-ÿ'-]+( [a-zà-ÿ'-]+)?)\??$/.test(q)&&!FIN.test(q);
+  if(follow||/\b(weather|temperature|rain|raining|forecast|umbrella|sunny|cold outside|hot outside)\b/.test(q)){LAST='weather';
+    let w=q.replace(/^(and |what about |how about |ok |now )/,'');if(follow&&!/^in |tomorrow|today|there/.test(w))w='in '+w;
+    if(/\bthere\b/.test(w)&&LASTCITY)w=w.replace(/\bthere\b/,'in '+LASTCITY);
+    if(follow&&!/\bin /.test(w)&&LASTCITY)w=w.replace(/\?$/,'')+' in '+LASTCITY;
+    return weather(w)}
+  LAST='';
   // Anything that isn't plainly about the user's own money goes to the general brain.
   if(!FIN.test(q)){window.wakeBrain&&window.wakeBrain();return brain.think(raw.replace(/^(hey |ok )?perry[, ]*/i,'').trim(), financeContext());}
   if(/^help$|what can you do/.test(q))return "Try:\n• How much did I spend this month?\n• Spending on groceries last month\n• Am I over budget?\n• How's my portfolio?\n• How are my goals?\n• If I invest 200 a month for 20 years?\n• Compare investment options";
