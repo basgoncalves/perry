@@ -129,7 +129,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.24.0',BUILT='20 Nov 2026 14:30';
+const VERSION='0.24.1',BUILT='20 Nov 2026 15:50';
 document.getElementById('ver').textContent=`v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -581,8 +581,8 @@ const OFF={};(()=>{const L=[['brookhaven',0,0],['route1',0,12],['maplewick',0,32
   const gen=(x,y)=>{if(x<=0||y<=0||x>=W-1||y>=H-1)return'T';if(y>=12+OY&&x>=15+OX&&x<52+OX+vnoise(x/4,y/4,9)*7)return'W';
     const n=vnoise(x/6,y/6,1),n2=vnoise(x/4,y/4,2),h=hsh(x,y,3),north=y<OY,south=y>OY+12&&x>=52+OX;
     if(north){if(h<.07)return'R';if(n>.68)return h<.6?'T':'.';if(n<.2&&vnoise(x/3,y/3,5)<.45)return'W';if(vnoise(x/5,y/5,11)>.72)return'F';if(n2>.74)return'G';return h>.985?'b':'.'}
-    if(south){if(n>.5)return h<.78?'T':(h>.97?'b':'.');if(n<.16&&vnoise(x/3,y/3,5)<.4)return'W';if(vnoise(x/5,y/5,11)>.66)return'F';if(n2>.7)return'G';return h<.03?'R':h>.985?'b':'.'}
-    if(n>.6)return h<.72?'T':'.';if(n<.17&&vnoise(x/3,y/3,5)<.4)return'W';if(vnoise(x/5,y/5,11)>.76)return'F';if(n2>.7)return'G';return h<.04?'T':h<.06?'R':h>.985?'b':'.'};
+    if(south){if(n>.5)return h<.58?'T':(h>.97?'b':'.');if(n<.16&&vnoise(x/3,y/3,5)<.4)return'W';if(vnoise(x/5,y/5,11)>.66)return'F';if(n2>.7)return'G';return h<.03?'R':h>.985?'b':'.'}
+    if(n>.6)return h<.6?'T':'.';if(n<.17&&vnoise(x/3,y/3,5)<.4)return'W';if(vnoise(x/5,y/5,11)>.76)return'F';if(n2>.7)return'G';return h<.04?'T':h<.06?'R':h>.985?'b':'.'};
   wm.regions.forEach(r=>{for(let y=0;y<r.h;y++)for(let x=0;x<r.w;x++){const gx=r.ox+x,gy=r.oy+y;if((x===0||y===0||x===r.w-1||y===r.h-1)&&g[gy][gx]==='T'){const c=gen(gx,gy);g[gy][gx]=c==='W'?'.':c}}});
   for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]==='#')g[y][x]=gen(x,y);
   // landmarks
@@ -660,7 +660,13 @@ function drawWorld(){stepAnim();
   if(S.banner&&S.banner.t>0){S.banner.t--;g.globalAlpha=Math.min(1,S.banner.t/20);RR(70,6,100,16,8,'#ffffffe0');g.fillStyle='#2b2f5c';g.font='700 8px system-ui,sans-serif';g.textAlign='center';g.fillText(S.banner.s,120,17);g.textAlign='left';g.globalAlpha=1}}
 function freeSpot(x,y){if(!blocked(x,y))return[x,y];const seen=new Set([x+','+y]),q=[[x,y]];while(q.length){const[cx,cy]=q.shift();for(const[dx,dy]of[[0,1],[1,0],[-1,0],[0,-1]]){const nx=cx+dx,ny=cy+dy,k=nx+','+ny;
     if(seen.has(k)||ny<0||nx<0||ny>=M.rows.length||nx>=M.rows[0].length)continue;seen.add(k);if(!blocked(nx,ny)&&!(M.warps&&M.warps[k]))return[nx,ny];q.push([nx,ny])}}return[x,y]}
-function enterMap(id,x,y){if(OFF[id]){x+=OFF[id][0];y+=OFF[id][1];id='world'}S.path=null;S.pathEnd=null;S.dest=null;M=MAPS[id];S.map=id;[x,y]=freeSpot(x,y);S.px=x;S.py=y;S.mv=null;{const b=(MAPS[id].rows[y+1]||'')[x];S.follow=b&&!WALL.includes(b)?[x,y+1]:[x,y];S.trail=[S.follow,S.follow,S.follow]}if(T3)T3.build(id);else S.banner={s:M.name,t:110};{S.reg=M.chunks?regName(x,y):null;showBanner(S.reg||M.name)}}
+function openSpot(x,y){const W=M.rows[0].length,H=M.rows.length,small=new Set(),K=(a,b)=>b*W+a;
+  const big=(sx,sy)=>{const seen=new Set([K(sx,sy)]),q=[[sx,sy]];while(q.length&&seen.size<160){const[cx,cy]=q.shift();for(const[dx,dy]of[[0,1],[1,0],[-1,0],[0,-1]]){const nx=cx+dx,ny=cy+dy,k=K(nx,ny);if(seen.has(k)||blocked(nx,ny))continue;seen.add(k);q.push([nx,ny])}}
+    if(seen.size>=160)return true;seen.forEach(k=>small.add(k));return false};
+  if(big(x,y))return[x,y];const vis=new Set([K(x,y)]),q=[[x,y]];
+  while(q.length){const[cx,cy]=q.shift();for(const[dx,dy]of[[0,1],[1,0],[-1,0],[0,-1]]){const nx=cx+dx,ny=cy+dy,k=K(nx,ny);if(nx<1||ny<1||nx>=W-1||ny>=H-1||vis.has(k))continue;vis.add(k);
+      if(!blocked(nx,ny)&&!small.has(k)&&big(nx,ny))return[nx,ny];q.push([nx,ny])}}return[x,y]}
+function enterMap(id,x,y){if(OFF[id]){x+=OFF[id][0];y+=OFF[id][1];id='world'}S.path=null;S.pathEnd=null;S.dest=null;M=MAPS[id];S.map=id;[x,y]=freeSpot(x,y);if(M.chunks)[x,y]=openSpot(x,y);S.px=x;S.py=y;S.mv=null;{const b=(MAPS[id].rows[y+1]||'')[x];S.follow=b&&!WALL.includes(b)?[x,y+1]:[x,y];S.trail=[S.follow,S.follow,S.follow]}if(T3)T3.build(id);else S.banner={s:M.name,t:110};{S.reg=M.chunks?regName(x,y):null;showBanner(S.reg||M.name)}}
 function goTown(){S.scene='town';box.className='hide';S.busy=false;dpad.style.visibility='visible'}
 async function healAll(){S.party.forEach(m=>{m.hp=m.maxhp;m.atkMod=1});S.orbs=Math.max(S.orbs,5);await say(`Your team is fully healed! Orbs topped up to ${S.orbs}.`)}
 // ---- v0.12: partners, dojo mini-games ----
@@ -1000,10 +1006,11 @@ function init3d(THREE){
   const mk3=new THREE.Mesh(new THREE.RingGeometry(.22,.34,24),new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.85,depthTest:false}));mk3.rotation.x=-Math.PI/2;mk3.renderOrder=15;mk3.visible=false;scene.add(mk3);
   const refresh=(x,y)=>{if(!wc)return;const g=chunkG.find(g=>{const c=g.userData.c;return x>=c.ox&&x<c.ox+c.w&&y>=c.oy&&y<c.oy+c.h});if(!g||!g.userData.built)return;const old=g.children[0];
     grassSets=grassSets.filter(q=>q.G!==old);old.traverse(o=>{if(o.geometry&&!blobG.includes(o.geometry)&&o.geometry!==coneG&&o.geometry!==dotG)o.geometry.dispose();if(o.material&&o.material.map&&o.isMesh&&!o.isInstancedMesh)o.material.map.dispose()});g.remove(old);g.add(buildStatic(g.userData.c.m));wcGrass=grassSets};
+  const pmk=new THREE.Mesh(new THREE.RingGeometry(.3,.4,28),new THREE.MeshBasicMaterial({color:'#ffd166',transparent:true,opacity:.9,depthTest:false}));pmk.rotation.x=-Math.PI/2;pmk.renderOrder=14;scene.add(pmk);
   const pick=(cx,cy)=>{const r=cv3.getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1),cam);const q=new THREE.Vector3();return ray.ray.intersectPlane(gp0,q)?[Math.floor(q.x),Math.floor(q.z)]:null};
   const project=(x,z,h)=>{const v=new THREE.Vector3(x+.5,h,z+.5).project(cam),r=cv3.getBoundingClientRect();return[r.left+(v.x+1)/2*r.width,r.top+(1-v.y)/2*r.height]};
   const mark=d=>{mk3.visible=!!d;if(d){mk3.position.set(d[0]+.5,.03,d[1]+.5);const k=1+Math.sin(performance.now()/150)*.12;mk3.scale.set(k,k,k)}};
-  return{build,draw:()=>{mark(S.scene==='town'?S.dest:null);draw()},pick,project,refresh}}
+  return{build,draw:()=>{mark(S.scene==='town'?S.dest:null);pmk.visible=S.scene==='town'&&!M.indoor;pmk.position.set(S.dx+.5,.05,S.dy+.5);draw()},pick,project,refresh}}
 
 // ---- Dialog helpers ----
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
