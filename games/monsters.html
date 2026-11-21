@@ -139,7 +139,7 @@ input:focus{border-color:#5b4fd8}
 </div>
 <script>
 // Wildlings — an original monster-catching demo. All creatures, art and names are original.
-const VERSION='0.26.1',BUILT='21 Nov 2026 22:50';
+const VERSION='0.26.2',BUILT='21 Nov 2026 22:55';
 document.getElementById('ver').textContent=`v${VERSION} · ${BUILT}`;
 const dpad=document.getElementById('dpad');
 const cv=document.getElementById('c'),g=cv.getContext('2d'),box=document.getElementById('box');
@@ -1377,14 +1377,18 @@ function dexShow(n){const el=document.getElementById('dex'),sh=el.firstChild,s=S
   const pl=a=>a.map(k=>`<span class="pill" style="background:${TC[k]}">${k}</span>`).join('')||'—',wh=dexWhere(n);
   const mvl=m=>`${m} <span style="color:#889">(${MOVES[m].type}${MOVES[m].pow?' · '+MOVES[m].pow:' · status'})</span>`;
   sh.innerHTML=`<h3>${dexNo(n)} ${n}<button id="dexB">‹ All</button></h3><div class="dd"><img src="${sprite(n)}"><div style="text-align:center">${pills(s.type)} ${S.caught.includes(n)?'<span class="pill" style="background:#1565c0">● caught</span>':S.seen.includes(n)?'<span class="pill" style="background:#889">seen</span>':'<span class="pill" style="background:#bbb">not seen yet</span>'}</div>
-   <div class="row"><b>Classification</b>${clsOf(n).join(' · ')}</div>
+   <div class="row"><b>Classification</b>${clsOf(n).join(' · ')}</div>${(()=>{const hb=SP[lineBase(n)].parents,mini=k=>`<button data-n="${k}"><img src="${sprite(k)}">${k}</button>`;
+     if(hb){const[a,b]=hb,kid=lineBase(n);return `<div class="row"><b>🧬 Parent tree</b><div style="display:flex;justify-content:center;gap:6px" class="evo">${mini(a)}<span style="align-self:center;font-weight:800">×</span>${mini(b)}</div>
+       <div style="text-align:center;color:#889;font-size:16px;line-height:1">╲ ╱<br>↓</div><div class="evo" style="justify-content:center">${mini(kid)}${SP[kid].evo?`<span>→ Lv ${SP[kid].evo[1]} →</span>${mini(SP[kid].evo[0])}`:''}</div>
+       <div class="s" style="text-align:center;margin-top:4px">Evolved forms of ${a} or ${b} also work as parents.</div></div>`}
+     const ks=BREED.filter(([x,y])=>x===lineBase(n)||y===lineBase(n));return ks.length?`<div class="row"><b>🧬 Breeds into</b>${ks.map(([x,y,k])=>{const o=x===lineBase(n)?y:x;return `<div class="evo" style="margin:3px 0">${mini(lineBase(n))}<span>×</span>${mini(o)}<span>→</span>${mini(k)}</div>`}).join('')}</div>`:''})()}
    <div class="row"><b>Base stats</b>${[['HP','hp'],['ATK','atk'],['DEF','def'],['SPD','spd']].map(([l,k])=>`<div class="sbar">${l}<span style="background:#e6e8f5;border-radius:9px"><i style="width:${Math.min(100,s[k]/95*100)}%"></i></span>${s[k]}</div>`).join('')}</div>
    <div class="row"><b>Evolution</b><div class="evo">${chain.length>1?chain.map((c,i)=>`${i?`<span>→ Lv ${SP[chain[i-1]].evo[1]} →</span>`:''}<button data-n="${c}"><img src="${sprite(c)}">${c}</button>`).join(''):'Does not evolve'}</div></div>
    <div class="row"><b>Starting moves</b>${s.moves.map(mvl).join('<br>')}</div>
    <div class="row"><b>Learns by level</b>${Object.entries(s.learn||{}).map(([l,m])=>`Lv ${l}: ${mvl(m)}`).join('<br>')||'—'}</div>
    <div class="row"><b>Weak to</b>${pl(weak)}<b style="margin-top:6px">Resists</b>${pl(res)}</div>
    <div class="row"><b>Where to find</b>${wh.length?wh.join(' · '):SP[n].from?'Evolve '+SP[n].from+(dexWhere(SP[n].from).length?'':' (or raise a starter)'):(SP[n].parents?'🧬 Breed '+SP[n].parents.join(' × ')+' (☰ → Breeding)':'Starter from Prof. Alder')}</div></div>`;
-  sh.scrollTop=0;sh.querySelector('#dexB').onclick=dexList;sh.querySelectorAll('.evo [data-n]').forEach(b=>b.onclick=()=>dexShow(b.dataset.n))}
+  sh.scrollTop=0;sh.querySelector('#dexB').onclick=dexList;sh.querySelectorAll('.dd [data-n]').forEach(b=>b.onclick=()=>dexShow(b.dataset.n))}
 document.getElementById('dexBtn').onclick=()=>{document.getElementById('dex')._y=0;dexList()};
 // ---- Dev mode ----
 const DEV=(()=>{try{return JSON.parse(localStorage.getItem('wildlings-dev'))||{}}catch{return{}}})();
