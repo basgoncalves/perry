@@ -18,7 +18,7 @@
   <div class="core" id="core" title="Talk to Perry"><img src="perry-head.png" alt="Perry"></div>
   <div>
     <h1>PERRY</h1>
-    <button id="ver" class="ver" title="Click to check for updates">v72 · 21 Nov 2026</button>
+    <button id="ver" class="ver" title="Click to check for updates">v73 · 21 Nov 2026</button>
     <p class="sub" id="status">Online. All systems nominal.</p>
   </div>
   <a class="dl" id="dl" href="https://github.com/basgoncalves/perry/releases/latest/download/PerrySetup.exe" title="Get Perry for Windows"><span class="ico">⬇</span><span><span id="dl-l">Download for Windows</span><small id="dl-s">desktop assistant</small></span></a>
@@ -194,7 +194,41 @@
 
   <!-- BUSINESS PLAN (testing) -->
   <section id="tab-biz" class="tab">
-    <iframe src="biz/plan.html" title="Coaching practice finances" style="width:100%;height:calc(100vh - 180px);border:0;border-radius:12px;background:#fff"></iframe>
+    <div class="biznav" id="biznav" role="group" aria-label="Biz views">
+      <button data-v="book" class="on">Bookings</button><button data-v="acc">Accountant</button><button data-v="plan">Financial plan</button>
+    </div>
+    <div id="biz-book"><iframe class="bizframe" src="https://basgoncalves.github.io/bgb-health/bookings/?embed=1" title="BGB bookings"></iframe></div>
+    <div id="biz-acc" hidden>
+      <div class="card" id="acc-login">
+        <h2>BGB accountant</h2>
+        <p class="sub">Sign in with the BGB admin Google account to open the books. Your bookings and ledger stay in the BGB database; only admins can read them.</p>
+        <button class="pill-btn" id="acc-google">Continue with Google</button>
+      </div>
+      <div id="acc-main" hidden>
+        <div class="card"><h2>BGB books · this year</h2><div class="acc-kpis" id="acc-kpis"></div><div id="acc-vat"></div><p class="sub" style="margin-top:8px">Estimates only, not tax advice. Confirmed bookings count as income once they've happened.</p></div>
+        <div class="card acc-chat">
+          <h2>Ask your accountant</h2>
+          <div class="acc-log" id="acc-log" aria-live="polite"></div>
+          <form id="acc-form" class="acc-form"><input id="acc-q" placeholder="e.g. add expense 29 software Canva" autocomplete="off" aria-label="Ask the accountant"><button class="send" aria-label="Send">➤</button></form>
+          <div class="chips" id="acc-chips">
+            <button>How much did I earn this month?</button><button>How much should I set aside?</button><button>Estimate my tax</button><button>Upcoming bookings</button><button>Next deadlines</button><button>VAT limit</button><button>What can I deduct?</button><button data-q="export csv">Export CSV</button>
+          </div>
+        </div>
+        <div class="card"><h2>Ledger · latest entries</h2><div id="acc-ledger"></div></div>
+        <details class="card"><summary><h2 style="display:inline">Tax settings</h2></summary>
+          <div class="acc-set">
+            <label for="acc-split">Your share of profit (%)<input id="acc-split" type="number" min="0" max="100"></label>
+            <label for="acc-salB">Your yearly salary, taxable (€)<input id="acc-salB" type="number" min="0"></label>
+            <label for="acc-salG">Gwen's other yearly income (€)<input id="acc-salG" type="number" min="0"></label>
+            <label for="acc-svsB">Your SVS status<select id="acc-svsB"><option value="gewerbe">Trade licence (minimum contributions)</option><option value="neue">New self-employed</option></select></label>
+            <label for="acc-svsG">Gwen's SVS status<select id="acc-svsG"><option value="neue">New self-employed</option><option value="gewerbe">Trade licence</option></select></label>
+          </div>
+          <p class="sub">Saved on this device only.</p>
+        </details>
+      </div>
+      <p class="sub" id="acc-note" role="status"></p>
+    </div>
+    <div id="biz-plan" hidden><iframe class="bizframe" src="biz/plan.html" title="Financial plan"></iframe></div>
   </section>
 
   <!-- OFFICE -->
@@ -274,6 +308,8 @@
   <button data-tab="set">⚙<span>Settings</span></button>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="accountant.js"></script>
 <script src="market.js"></script>
 <script src="office.js"></script>
 <script src="dogs.js"></script>

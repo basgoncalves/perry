@@ -1,7 +1,7 @@
 name: Supabase keep-alive
 on:
   schedule:
-    - cron: "17 6 * * 1"   # every Monday ~07:17 Vienna time
+    - cron: "17 6 * * *"   # every day ~07:17 Vienna time
   workflow_dispatch:
 jobs:
   ping:
@@ -12,3 +12,9 @@ jobs:
           curl -fsS -X POST "https://gfzqvaumziuiwfrwhhes.supabase.co/rest/v1/rpc/ping" \
             -H "apikey: sb_publishable_NxmiKUulD7hNH6CkUsEwIA_ki8EDWyC" \
             -H "Content-Type: application/json" -d '{}'
+      - name: Log a keep-alive visit (real table write)
+        run: |
+          curl -fsS -X POST "https://gfzqvaumziuiwfrwhhes.supabase.co/rest/v1/page_views" \
+            -H "apikey: sb_publishable_NxmiKUulD7hNH6CkUsEwIA_ki8EDWyC" \
+            -H "Content-Type: application/json" -H "Prefer: return=minimal" \
+            -d '{"page":"keepalive","source":"github-action","device":"desktop"}'
