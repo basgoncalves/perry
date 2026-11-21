@@ -18,7 +18,7 @@
   <div class="core" id="core" title="Talk to Perry"><img src="perry-head.png" alt="Perry"></div>
   <div>
     <h1>PERRY</h1>
-    <button id="ver" class="ver" title="Click to check for updates">v70 · 20 Nov 2026</button>
+    <button id="ver" class="ver" title="Click to check for updates">v71 · 21 Nov 2026</button>
     <p class="sub" id="status">Online. All systems nominal.</p>
   </div>
   <a class="dl" id="dl" href="https://github.com/basgoncalves/perry/releases/latest/download/PerrySetup.exe" title="Get Perry for Windows"><span class="ico">⬇</span><span><span id="dl-l">Download for Windows</span><small id="dl-s">desktop assistant</small></span></a>
@@ -216,6 +216,25 @@
       <div class="row"><input id="office-url" placeholder="http://localhost:8765"><button class="btn small" id="office-save">Save</button></div>
     </div>
     <div id="office-rooms"></div>
+    <div class="card dog-room">
+      <h2>Dog trainer's room</h2>
+      <div class="dog-scene">
+        <div class="dog-pic" aria-hidden="true">🐾</div>
+        <div class="dog-trainer" aria-hidden="true"><i class="cap"></i><i class="head"></i><i class="body"></i><i class="whistle"></i></div>
+        <div class="dog-pup" aria-hidden="true"><i class="tail"></i></div>
+        <div class="dog-papers" aria-hidden="true"></div>
+        <button class="dog-desk" id="dog-desk" aria-expanded="false" aria-controls="dog-breeds" aria-label="Open the trainer's dog breed notes"></button>
+        <i class="dog-leg" style="left:calc(50% - 60px)"></i><i class="dog-leg" style="left:calc(50% + 82px)"></i>
+      </div>
+      <p class="hint" id="dog-hint">Tap the desk to see the trainer's dog breed notes.</p>
+      <div id="dog-breeds" hidden>
+        <h3>Breed picker · <span id="dog-count">50</span> breeds</h3>
+        <input id="dog-search" placeholder="Search breeds" aria-label="Search breeds">
+        <div class="row"><select id="dog-group" aria-label="Group"></select><select id="dog-size" aria-label="Size"></select></div>
+        <div id="dog-list" class="dog-list"></div>
+        <div id="dog-detail" class="dog-detail" hidden></div>
+      </div>
+    </div>
   </section>
 
   <!-- GAMES -->
@@ -257,6 +276,7 @@
 
 <script src="market.js"></script>
 <script src="office.js"></script>
+<script src="dogs.js"></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>
