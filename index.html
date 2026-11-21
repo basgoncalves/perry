@@ -18,7 +18,7 @@
   <div class="core" id="core" title="Talk to Perry"><img src="perry-head.png" alt="Perry"></div>
   <div>
     <h1>PERRY</h1>
-    <button id="ver" class="ver" title="Click to check for updates">v76 · 21 Nov 2026</button>
+    <button id="ver" class="ver" title="Click to check for updates">v77 · 21 Nov 2026</button>
     <p class="sub" id="status">Online. All systems nominal.</p>
   </div>
   <a class="dl" id="dl" href="https://github.com/basgoncalves/perry/releases/latest/download/PerrySetup.exe" title="Get Perry for Windows"><span class="ico">⬇</span><span><span id="dl-l">Download for Windows</span><small id="dl-s">desktop assistant</small></span></a>
@@ -197,7 +197,7 @@
     <div class="biznav" id="biznav" role="group" aria-label="Biz views">
       <button data-v="book" class="on">Bookings</button><button data-v="acc">Accountant</button><button data-v="plan">Financial plan</button>
     </div>
-    <div id="biz-book"><iframe class="bizframe" src="https://basgoncalves.github.io/bgb-health/bookings/?embed=1" title="BGB bookings"></iframe></div>
+    <div id="biz-book"><iframe class="bizframe" data-src="https://basgoncalves.github.io/bgb-health/bookings/?embed=1" title="BGB bookings"></iframe></div>
     <div id="biz-acc" hidden>
       <div class="card" id="acc-login">
         <h2>BGB accountant</h2>
@@ -228,7 +228,7 @@
       </div>
       <p class="sub" id="acc-note" role="status"></p>
     </div>
-    <div id="biz-plan" hidden><iframe class="bizframe" src="biz/plan.html" title="Financial plan"></iframe></div>
+    <div id="biz-plan" hidden><iframe class="bizframe" data-src="biz/plan.html" title="Financial plan"></iframe></div>
   </section>
 
   <!-- OFFICE -->

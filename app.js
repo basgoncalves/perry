@@ -68,6 +68,7 @@ function show(t){
   if(FINT.includes(t))lastFin=t;const fn=document.getElementById('finnav');if(fn){fn.hidden=!FINT.includes(t);fn.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.f===t))}
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t||(b.dataset.group||'').split(' ').includes(t)));
   document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+t));
+  document.querySelectorAll('#tab-'+t+' iframe[data-src]').forEach(f=>{if(!f.src)f.src=f.dataset.src});
   render();
   window.renderMarket?.();
 }
@@ -422,3 +423,6 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
   window.wakeBrain=()=>{if(S.settings.smart&&!brain.smartReady()&&!st.textContent.startsWith('Loading'))go()};
   if(S.settings.smart)st.textContent='On — loads the first time you ask a general question or tap LIVE.';
 })();
+
+// always open on Home unless a #tab link was used
+if(!location.hash||!document.getElementById('tab-'+location.hash.slice(1)))show('home');
