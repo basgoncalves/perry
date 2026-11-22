@@ -18,7 +18,7 @@
   <div class="core" id="core" title="Talk to Perry"><img src="perry-head.png" alt="Perry"></div>
   <div>
     <h1>PERRY</h1>
-    <button id="ver" class="ver" title="Click to check for updates">v79 · 22 Nov 2026</button>
+    <button id="ver" class="ver" title="Click to check for updates">v80 · 22 Nov 2026</button>
     <p class="sub" id="status">Online. All systems nominal.</p>
   </div>
   <a class="dl" id="dl" href="https://github.com/basgoncalves/perry/releases/latest/download/PerrySetup.exe" title="Get Perry for Windows"><span class="ico">⬇</span><span><span id="dl-l">Download for Windows</span><small id="dl-s">desktop assistant</small></span></a>
@@ -273,6 +273,60 @@
         <p class="hint" id="news-note"></p>
       </div>
     </div>
+    </div>
+    <div class="card news-room">
+      <h2>Cyber security desk</h2>
+      <div class="news-scene">
+        <div class="cyber-screen" aria-hidden="true"><i></i></div>
+        <div class="news-writer cyber-analyst" aria-hidden="true"><i class="hat"></i><i class="head"></i><i class="body"></i></div>
+        <div class="cyber-laptop" aria-hidden="true"></div>
+        <button class="news-desk" id="cyber-desk" aria-expanded="false" aria-controls="cyber-panel" aria-label="Open this week's cyber incidents on the globe"></button>
+        <i class="dog-leg" style="left:calc(50% - 60px)"></i><i class="dog-leg" style="left:calc(50% + 82px)"></i>
+      </div>
+      <p class="hint" id="cyber-hint">Tap the desk for this week's cyber incidents.</p>
+      <div id="cyber-panel" hidden>
+        <h3 id="cyber-date">Loading…</h3>
+        <canvas id="cyber-globe" class="news-globe" aria-label="Globe coloured by reported cyber incidents. Drag to turn, tap a country."></canvas>
+        <p class="sub" id="cyber-globe-fail" hidden>The 3D globe could not start on this device; the lists below still work.</p>
+        <p class="hint" style="text-align:center;margin-top:0">Drag to turn · pinch to zoom · tap a country</p>
+        <div id="cyber-pick" hidden></div>
+        <div id="cyber-legend" class="news-legend"></div>
+        <h3>Top stories</h3>
+        <div id="cyber-top"></div>
+        <div id="cyber-countries"></div>
+        <p class="hint" id="cyber-note"></p>
+        <h3>Security flaws under attack now</h3>
+        <div id="cyber-kev"></div>
+        <div class="row"><button class="btn small ghost" id="cyber-kev-refresh">Check for newer</button></div>
+        <p class="hint" id="cyber-kev-note"></p>
+      </div>
+    </div>
+    <div class="card news-room">
+      <h2>Flight tracker desk</h2>
+      <div class="news-scene">
+        <div class="fly-radar" aria-hidden="true"><i></i></div>
+        <div class="news-writer fly-controller" aria-hidden="true"><i class="hat"></i><i class="head"></i><i class="body"></i></div>
+        <div class="fly-plane" aria-hidden="true">✈</div>
+        <button class="news-desk" id="fly-desk" aria-expanded="false" aria-controls="fly-panel" aria-label="Open the live flight tracker"></button>
+        <i class="dog-leg" style="left:calc(50% - 60px)"></i><i class="dog-leg" style="left:calc(50% + 82px)"></i>
+      </div>
+      <p class="hint" id="fly-hint">Tap the desk to track live flights.</p>
+      <div id="fly-panel" hidden>
+        <div class="row"><select id="fly-city" aria-label="City"></select><button class="btn small ghost" id="fly-near">Near me</button></div>
+        <p class="sub" id="fly-status">Loading…</p>
+        <canvas id="fly-globe" class="news-globe" aria-label="Globe with live aircraft. Drag to turn, tap an aircraft."></canvas>
+        <p class="sub" id="fly-globe-fail" hidden>The 3D globe could not start on this device; the list below still works.</p>
+        <p class="hint" style="text-align:center;margin-top:0">Drag to turn · pinch to zoom · tap an aircraft</p>
+        <div class="news-legend fly-legend">
+          <div class="news-key"><i class="news-dot" style="background:#40d9ff"></i><span>Above 30,000 ft</span><i class="news-dot" style="background:#3ee59a"></i><span>10,000 to 30,000 ft</span></div>
+          <div class="news-key"><i class="news-dot" style="background:#ffc24a"></i><span>Below 10,000 ft</span><i class="news-dot" style="background:#8094a8"></i><span>On the ground</span></div>
+        </div>
+        <div id="fly-pick" hidden></div>
+        <p class="sub" id="fly-fail" hidden>The free flight feeds may be busy or blocked on this network. It retries every 15 seconds; you can also open <a class="news-src" href="https://globe.airplanes.live/" target="_blank" rel="noopener">the airplanes.live map</a>.</p>
+        <div id="fly-list"></div>
+        <p class="hint">Live positions from community ADS-B receivers (airplanes.live, adsb.lol, OpenSky), refreshed every 15 seconds while this desk is open.</p>
+      </div>
+    </div>
     <div class="card dog-room">
       <h2>Dog trainer's room</h2>
       <div class="dog-scene">
@@ -336,7 +390,9 @@
 <script src="market.js"></script>
 <script src="office.js"></script>
 <script src="dogs.js"></script>
+<script src="globe.js"></script>
 <script src="news.js"></script>
+<script src="flights.js"></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>

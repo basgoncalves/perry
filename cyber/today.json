@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-22",
+  "label": "Week to Sunday 22 November 2026",
+  "compiled": "Compiled 22 Nov 2026 from published incident reports; this is not a live attack feed.",
+  "legend": {
+    "red": "Confirmed major breach or disruptive attack reported this week",
+    "yellow": "Smaller incident, attempted attack or unconfirmed claim",
+    "green": "Good news: arrests, fixes or takedowns",
+    "none": "No reported incident found"
+  },
+  "top": [
+    {"s": "red", "t": "FBI investigates a breach of its criminal information database", "d": "The apparent breach follows tech outages that hit banking and air traffic control the week before.", "src": "Morning Star", "url": "https://morningstaronline.co.uk/article/world-brief-64"},
+    {"s": "red", "t": "Nearly nine million Peach Aviation customer records leaked", "d": "The Japanese airline confirmed the leak on 20 November after an attack on its outside email service provider.", "src": "igor'sLAB", "url": "https://www.igorslab.de/en/leakwatch-cw-47-2026-airline-passenger-data-theft-malware-developer-packages-hardware-leaks/"},
+    {"s": "yellow", "t": "Europe's month of cyberattacks: 16 incidents mapped", "d": "Industry group DigitalEurope counted 16 incidents between 18 October and 18 November, 11 of them cyberattacks, including supermarket freezers switched to defrost.", "src": "Euronews", "url": "https://www.euronews.com/2026/11/22/hot-freezers-lost-gps-and-fake-bombs-europes-month-of-cyberattacks"},
+    {"s": "yellow", "t": "Ransomware gang lists Nvidia; Nvidia sees no breach", "d": "The Gentlemen group put Nvidia on its leak site. Nvidia says its investigation found no sign its systems were compromised.", "src": "Latest in Cyber", "url": "https://latestincyber.substack.com/p/cyberattack-sunday-nov-15th-21st"},
+    {"s": "green", "t": "Europol takes down malware infrastructure", "d": "235 servers and 257 domains linked to the Gootloader, CastleRAT and StealC malware were taken offline.", "src": "Black Arrow Cyber", "url": "https://www.blackarrowcyber.com/blog/threat-briefing-20-november-2026"}
+  ],
+  "countries": {
+    "840": {"s": "red", "d": "The FBI is investigating an apparent breach of its criminal information database.", "src": "Morning Star", "url": "https://morningstaronline.co.uk/article/world-brief-64"},
+    "392": {"s": "red", "d": "Peach Aviation confirmed that 8,997,106 customer records leaked after an attack on its email service provider.", "src": "igor'sLAB", "url": "https://www.igorslab.de/en/leakwatch-cw-47-2026-airline-passenger-data-theft-malware-developer-packages-hardware-leaks/"},
+    "112": {"s": "red", "d": "A ransomware attack on a Belarusian cloud firm disrupted businesses for days.", "src": "Black Arrow Cyber", "url": "https://www.blackarrowcyber.com/blog/threat-briefing-20-november-2026"},
+    "124": {"s": "yellow", "d": "Bell Canada reported the theft of enterprise telecom-circuit customer data; it said no credentials were taken and services were unaffected.", "src": "Security Boulevard", "url": "https://securityboulevard.com/2026/11/daily-ot-security-news-november-22-2026/"},
+    "231": {"s": "yellow", "d": "Ethiopian Airlines' ShebaMiles loyalty programme reported a data breach.", "src": "KonBriefing", "url": "https://konbriefing.com/en-topics/cyber-attacks.html"},
+    "578": {"s": "yellow", "d": "A suspected attempted cyberattack on an energy company was reported on 17 November.", "src": "KonBriefing", "url": "https://konbriefing.com/en-topics/cyber-attacks.html"},
+    "276": {"s": "yellow", "d": "This month shops lost frozen food to the freezer hacks, a military drone maker was hit through a hijacked software update, and personal data of senior German officials was published.", "src": "Euronews", "url": "https://www.euronews.com/2026/11/22/hot-freezers-lost-gps-and-fake-bombs-europes-month-of-cyberattacks"},
+    "250": {"s": "yellow", "d": "Several blood banks were hit in this month's refrigeration attacks. French agencies blamed Iran's Revolutionary Guards for a similar hack in October.", "src": "Business Standard / Reuters", "url": "https://www.business-standard.com/amp/world-news/uk-finds-fix-for-fridge-and-freezer-vulnerability-after-european-hacks-126112200094_1.html"},
+    "380": {"s": "yellow", "d": "Shops threw away spoiled food after the freezer hacks, and personal data of senior Italian officials was published.", "src": "Euronews", "url": "https://www.euronews.com/2026/11/22/hot-freezers-lost-gps-and-fake-bombs-europes-month-of-cyberattacks"},
+    "528": {"s": "yellow", "d": "Shops threw away spoiled food after this month's freezer hacks, and personal data of senior Dutch officials was published.", "src": "Euronews", "url": "https://www.euronews.com/2026/11/22/hot-freezers-lost-gps-and-fake-bombs-europes-month-of-cyberattacks"},
+    "056": {"s": "yellow", "d": "Shops threw away spoiled meat and frozen food after this month's freezer hacks.", "src": "Euronews", "url": "https://www.euronews.com/2026/11/22/hot-freezers-lost-gps-and-fake-bombs-europes-month-of-cyberattacks"},
+    "752": {"s": "yellow", "d": "Shops threw away spoiled meat and frozen food after this month's freezer hacks.", "src": "Euronews", "url": "https://www.euronews.com/2026/11/22/hot-freezers-lost-gps-and-fake-bombs-europes-month-of-cyberattacks"},
+    "642": {"s": "yellow", "d": "Espionage malware was found in government email, and shops were hit by this month's freezer hacks.", "src": "Euronews", "url": "https://www.euronews.com/2026/11/22/hot-freezers-lost-gps-and-fake-bombs-europes-month-of-cyberattacks"},
+    "356": {"s": "yellow", "d": "The LockBit5 ransomware group claimed to have targeted travel firm Yatra; the claim is unconfirmed.", "src": "SharkStriker", "url": "https://sharkstriker.com/blog/data-breaches-in-november-2026/"},
+    "826": {"s": "green", "d": "A British cybersecurity operation fixed the flaw in commercial fridges and freezers that was used in the European hacks.", "src": "Business Standard / Reuters", "url": "https://www.business-standard.com/amp/world-news/uk-finds-fix-for-fridge-and-freezer-vulnerability-after-european-hacks-126112200094_1.html"},
+    "804": {"s": "green", "d": "Ukrainian police and the FBI arrested four suspected members of a ransomware gang linked to more than $40.5 million in ransoms.", "src": "Latest in Cyber", "url": "https://latestincyber.substack.com/p/cyberattack-sunday-nov-15th-21st"}
+  }
+}
