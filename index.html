@@ -18,7 +18,7 @@
   <div class="core" id="core" title="Talk to Perry"><img src="perry-head.png" alt="Perry"></div>
   <div>
     <h1>PERRY</h1>
-    <button id="ver" class="ver" title="Click to check for updates">v78 · 21 Nov 2026</button>
+    <button id="ver" class="ver" title="Click to check for updates">v79 · 22 Nov 2026</button>
     <p class="sub" id="status">Online. All systems nominal.</p>
   </div>
   <a class="dl" id="dl" href="https://github.com/basgoncalves/perry/releases/latest/download/PerrySetup.exe" title="Get Perry for Windows"><span class="ico">⬇</span><span><span id="dl-l">Download for Windows</span><small id="dl-s">desktop assistant</small></span></a>
@@ -250,6 +250,29 @@
       <div class="row"><input id="office-url" placeholder="http://localhost:8765"><button class="btn small" id="office-save">Save</button></div>
     </div>
     <div id="office-rooms"></div>
+    <div class="card news-room">
+      <h2>Journalist's desk</h2>
+      <div class="news-scene">
+        <div class="news-board" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="news-ball" aria-hidden="true"></div>
+        <div class="news-writer" aria-hidden="true"><i class="hat"></i><i class="head"></i><i class="body"></i><i class="paper"></i></div>
+        <button class="news-desk" id="news-desk" aria-expanded="false" aria-controls="news-panel" aria-label="Open today's news on the globe"></button>
+        <i class="dog-leg" style="left:calc(50% - 60px)"></i><i class="dog-leg" style="left:calc(50% + 82px)"></i>
+      </div>
+      <p class="hint" id="news-hint">Tap the desk for today's news on the globe.</p>
+      <div id="news-panel" hidden>
+        <h3 id="news-date">Loading…</h3>
+        <canvas id="news-globe" class="news-globe" aria-label="Globe coloured by today's news. Drag to turn, tap a country."></canvas>
+        <p class="sub" id="news-globe-fail" hidden>The 3D globe could not start on this device; the lists below still work.</p>
+        <p class="hint" style="text-align:center;margin-top:0">Drag to turn · pinch to zoom · tap a country</p>
+        <div id="news-pick" hidden></div>
+        <div id="news-legend" class="news-legend"></div>
+        <h3>Top stories</h3>
+        <div id="news-top"></div>
+        <div id="news-countries"></div>
+        <p class="hint" id="news-note"></p>
+      </div>
+    </div>
     <div class="card dog-room">
       <h2>Dog trainer's room</h2>
       <div class="dog-scene">
@@ -313,6 +336,7 @@
 <script src="market.js"></script>
 <script src="office.js"></script>
 <script src="dogs.js"></script>
+<script src="news.js"></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>
