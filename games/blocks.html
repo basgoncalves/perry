@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Block Roll</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,sans-serif;color:#fff;
+ background:radial-gradient(circle at 50% 55%,#b866f5,#6a4ce8 75%);touch-action:none;user-select:none}
+#c{position:fixed;inset:0}
+.top{position:fixed;top:10px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:8px;z-index:2}
+.pill{border:3px solid #fff;border-radius:999px;padding:6px 18px;font-weight:800;font-size:17px;background:#7c4fe0}
+.btn{background:#8e63ee;border:0;border-radius:12px;color:#fff;font-size:20px;width:44px;height:44px;font-weight:800;box-shadow:0 4px 0 #5a3cc0}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #5a3cc0}
+.pad{position:fixed;bottom:16px;right:16px;display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:4px;z-index:2}
+.pad .btn{width:56px;height:56px;font-size:24px}
+#msg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:3;background:#0006}
+#msg .box{background:#7c4fe0;border:3px solid #fff;border-radius:20px;padding:22px 28px;text-align:center}
+#msg h2{margin:0 0 10px}
+#msg button{margin:6px;width:auto;padding:0 18px}
+#ver{position:fixed;top:64px;left:0;right:0;text-align:center;font-size:12px;opacity:.8;padding:0 12px}
+#lvls{position:fixed;bottom:16px;left:12px;display:flex;gap:6px;z-index:2}
+#lvls .btn{width:36px;height:36px;font-size:15px}
+#lvls .btn.on{background:#f5a42a;box-shadow:0 4px 0 #b06d10}
+#lvls .btn:disabled{opacity:.4}
+</style></head><body>
+<canvas id="c"></canvas>
+<div class="top"><button class="btn" id="undo" title="Undo">↶</button><div class="pill">Level <span id="ln">1</span> | Moves <span id="mv">0</span></div><button class="btn" id="rst" title="Restart">⟲</button></div>
+<div id="lvls"></div>
+<div class="pad">
+ <span></span><button class="btn" data-d="up">▲</button><span></span>
+ <button class="btn" data-d="left">◀</button><span></span><button class="btn" data-d="right">▶</button>
+ <span></span><button class="btn" data-d="down">▼</button><span></span>
+</div>
+<div id="msg"><div class="box"><h2 id="mt"></h2><div id="mb"></div><div id="mbtns"></div></div></div>
+<div id="ver"></div>
+<script type="module">
+const VERSION='1.0.0';
+document.getElementById('ver').textContent='Block Roll v'+VERSION+' · swipe or use arrows · stand upright in the green hole · orange tiles break if you stand on them';
+const LEVELS=[["ooo.......","oSoooo....","ooooooooo.",".ooooooooo",".....ooGoo","......ooo."],["......ooo..","oooo..oGo..","oSoooooooo.","oooo...xxoo","..oo...xxoo","..oooooxx..","...ooo....."],["ooo...........","oSoooo........","ooooxo..ooo...","...oxooooxo...","...oxxx..xoo..","......xxxxoooo","..........oGoo","..........ooo."],["oooo........","oSooxxxxoo..","ooooxxxxoo..","........ooo.","........ooG.","........ooo."],["oooooo.....","oSooooxx...","ooooooxx...","......xx...","......xx...","......xx...","oooo..xx...","oGooxxoooo.","ooooxxxooo.","..oxxxxxo..","..xxxxxx..."]];
+import * as THREE from './three.module.min.js';
+const cv=document.getElementById('c');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});R.setPixelRatio(Math.min(2,devicePixelRatio));
+const scene=new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xffffff,0x8866cc,1.1));
+const sun=new THREE.DirectionalLight(0xffffff,1.4);sun.position.set(-4,10,6);scene.add(sun);
+const cam=new THREE.OrthographicCamera(-1,1,1,-1,0.1,200);
+let board=new THREE.Group();scene.add(board);
+const blockMat=new THREE.MeshStandardMaterial({color:0x3aa8ff,roughness:.4});
+const block=new THREE.Mesh(new THREE.BoxGeometry(.98,1.96,.98),blockMat);
+const pivot=new THREE.Group();scene.add(pivot);pivot.add(block);
+const save=k=>{try{return JSON.parse(localStorage.getItem('blockroll')||'{}')}catch(e){return{}}};
+let prog=save();prog.best=prog.best||1;
+const persist=()=>{try{localStorage.setItem('blockroll',JSON.stringify(prog))}catch(e){}};
+let L=0,g,st,moves=0,hist=[],busy=false,over=false,goal;
+const at=(x,y)=>(g[y]||'')[x]||'.';
+const cells=s=>s.o==='U'?[[s.x,s.y]]:s.o==='X'?[[s.x,s.y],[s.x+1,s.y]]:[[s.x,s.y],[s.x,s.y+1]];
+function step(s,dx,dy){const{x,y,o}=s;
+ if(o==='U'){if(dx)return{x:dx>0?x+1:x-2,y,o:'X'};return{x,y:dy>0?y+1:y-2,o:'Z'}}
+ if(o==='X'){if(dx)return{x:dx>0?x+2:x-1,y,o:'U'};return{x,y:y+dy,o}}
+ if(dy)return{x,y:dy>0?y+2:y-1,o:'U'};return{x:x+dx,y,o}}
+function placeBlock(s){pivot.position.set(0,0,0);pivot.rotation.set(0,0,0);
+ const c=cells(s);let cx=0,cz=0;c.forEach(([x,y])=>{cx+=x;cz+=y});cx/=c.length;cz/=c.length;
+ block.position.set(cx,s.o==='U'?1:.5,cz);block.rotation.set(0,0,s.o==='X'?Math.PI/2:0);if(s.o==='Z')block.rotation.set(Math.PI/2,0,0)}
+function build(){scene.remove(board);board=new THREE.Group();scene.add(board);
+ const geo=new THREE.BoxGeometry(.96,.3,.96);
+ const mats={o:new THREE.MeshStandardMaterial({color:0xe6e6f2}),x:new THREE.MeshStandardMaterial({color:0xf5a42a}),G:new THREE.MeshStandardMaterial({color:0x35ef9f,emissive:0x0f6b45})};
+ let mx=0,my=g.length;
+ g.forEach((r,y)=>{mx=Math.max(mx,r.length);[...r].forEach((ch,x)=>{if(ch==='.')return;const k=ch==='S'?'o':ch;
+  const m=new THREE.Mesh(k==='G'?new THREE.BoxGeometry(.96,.1,.96):geo,mats[k]);m.position.set(x,k==='G'?-.1:-.15,y);m.userData={x,y};board.add(m);
+  const e=new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry),new THREE.LineBasicMaterial({color:0x222233}));e.position.copy(m.position);board.add(e)})});
+ const cx=(mx-1)/2,cz=(my-1)/2;cam.position.set(cx-9,14,cz+12);cam.lookAt(cx,0,cz);
+ resize(Math.max(mx,my))}
+let span=10;
+function resize(s){if(s)span=s;const w=innerWidth,h=innerHeight,a=w/h,z=span*.42+1;
+ const vw=a<1?z:z*a,vh=a<1?z/a:z;cam.left=-vw;cam.right=vw;cam.top=vh;cam.bottom=-vh;cam.updateProjectionMatrix();R.setSize(w,h)}
+addEventListener('resize',()=>resize());
+function load(i){L=i;g=LEVELS[i];g.forEach((r,y)=>{const x=r.indexOf('S');if(x>=0)st={x,y,o:'U'};const gx=r.indexOf('G');if(gx>=0)goal={x:gx,y}});
+ moves=0;hist=[];over=false;busy=false;block.visible=true;build();placeBlock(st);ui();hideMsg()}
+function ui(){document.getElementById('ln').textContent=L+1;document.getElementById('mv').textContent=moves;
+ const d=document.getElementById('lvls');d.innerHTML='';LEVELS.forEach((_,i)=>{const b=document.createElement('button');b.className='btn'+(i===L?' on':'');b.textContent=i+1;b.disabled=i+1>prog.best;b.onclick=()=>load(i);d.appendChild(b)})}
+function tween(ms,fn){return new Promise(r=>{const t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/ms);fn(k);if(k<1)requestAnimationFrame(f);else r()};requestAnimationFrame(f)})}
+async function move(dx,dy){if(busy||over)return;busy=true;
+ const n=step(st,dx,dy);
+ // roll animation around the leading bottom edge
+ const c=cells(st);const xs=c.map(a=>a[0]),ys=c.map(a=>a[1]);
+ const ex=dx>0?Math.max(...xs)+.5:dx<0?Math.min(...xs)-.5:0,ez=dy>0?Math.max(...ys)+.5:dy<0?Math.min(...ys)-.5:0;
+ const wp=block.getWorldPosition(new THREE.Vector3()),wq=block.quaternion.clone();
+ pivot.position.set(dx?ex:wp.x,0,dy?ez:wp.z);pivot.rotation.set(0,0,0);pivot.updateMatrixWorld();
+ block.position.copy(pivot.worldToLocal(wp.clone()));block.quaternion.copy(wq);
+ await tween(170,k=>{const a=k*Math.PI/2;pivot.rotation.set(dy*a,0,-dx*a)});
+ hist.push(st);st=n;moves++;placeBlock(st);ui();
+ const off=cells(st).some(([x,y])=>at(x,y)==='.');
+ const brk=st.o==='U'&&at(st.x,st.y)==='x';
+ if(off||brk){over=true;if(brk)board.children.forEach(m=>{if(m.userData&&m.userData.x===st.x&&m.userData.y===st.y)m.visible=false});
+  await tween(500,k=>{block.position.y-=k*.25});block.visible=false;
+  showMsg(brk?'Tile cracked!':'You fell off!',brk?'Orange tiles can’t hold the block standing up.':'',[['Try again',()=>load(L)],['Undo',undo]])}
+ else if(st.o==='U'&&st.x===goal.x&&st.y===goal.y){over=true;await tween(500,k=>{block.position.y=1-k*2.2});block.visible=false;
+  if(L+2>prog.best&&L+1<LEVELS.length)prog.best=L+2;persist();
+  const last=L===LEVELS.length-1;showMsg(last?'All 5 levels done! 🎉':'Level '+(L+1)+' cleared!','in '+moves+' moves',last?[['Play again',()=>load(0)]]:[['Next level',()=>load(L+1)],['Replay',()=>load(L)]])}
+ busy=false}
+function undo(){if(busy||!hist.length)return;st=hist.pop();moves++;over=false;block.visible=true;build();placeBlock(st);ui();hideMsg()}
+function showMsg(t,b,btns){document.getElementById('mt').textContent=t;document.getElementById('mb').textContent=b;const d=document.getElementById('mbtns');d.innerHTML='';
+ btns.forEach(([l,f])=>{const e=document.createElement('button');e.className='btn';e.textContent=l;e.onclick=f;d.appendChild(e)});document.getElementById('msg').style.display='flex'}
+function hideMsg(){document.getElementById('msg').style.display='none'}
+const SCR={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+document.querySelectorAll('.pad .btn').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();screenMove(SCR[b.dataset.d][0],SCR[b.dataset.d][1])}));
+addEventListener('keydown',e=>{const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right'}[e.key];if(m){e.preventDefault();screenMove(SCR[m][0],SCR[m][1])}});
+document.getElementById('undo').onclick=undo;document.getElementById('rst').onclick=()=>load(L);
+// swipe: screen directions mapped to the isometric board axes
+let sp=null;cv.addEventListener('pointerdown',e=>sp=[e.clientX,e.clientY]);
+cv.addEventListener('pointerup',e=>{if(!sp)return;const dx=e.clientX-sp[0],dy=e.clientY-sp[1];sp=null;if(Math.hypot(dx,dy)<25)return;
+screenMove(dx,dy)});
+function screenMove(dx,dy){
+ const o=new THREE.Vector3(0,0,0).project(cam),ax=new THREE.Vector3(1,0,0).project(cam).sub(o),az=new THREE.Vector3(0,0,1).project(cam).sub(o);
+ const v=[dx,-dy];const best=[[1,0,ax.x,ax.y],[-1,0,-ax.x,-ax.y],[0,1,az.x,az.y],[0,-1,-az.x,-az.y]].map(([a,b,sx,sy])=>[a,b,(v[0]*sx+v[1]*sy)/Math.hypot(sx,sy)]).sort((p,q)=>q[2]-p[2])[0];
+ move(best[0],best[1])}
+(function loop(){R.render(scene,cam);requestAnimationFrame(loop)})();
+load(Math.min(prog.best,LEVELS.length)-1);
+</script></body></html>
