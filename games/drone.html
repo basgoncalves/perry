@@ -6,9 +6,9 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,sans-serif;color:#fff;background:#111;touch-action:none;user-select:none}
 #c{position:fixed;inset:0;width:100%;height:100%}
-.hud{position:fixed;top:8px;left:8px;right:8px;display:flex;flex-wrap:wrap;gap:6px;z-index:2;font-size:13px}
+.hud{position:fixed;top:8px;left:8px;right:8px;display:flex;flex-wrap:wrap;gap:4px;z-index:2;font-size:12px}
 .hud div{background:#000a;border-radius:8px;padding:4px 8px;font-variant-numeric:tabular-nums}
-.bar{position:fixed;top:44px;left:8px;right:8px;display:flex;gap:6px;flex-wrap:wrap;z-index:2}
+.bar{position:fixed;top:72px;left:8px;right:8px;display:flex;gap:6px;flex-wrap:wrap;z-index:2}
 select,.b{background:#000b;color:#fff;border:1px solid #fff5;border-radius:8px;padding:6px 8px;font-size:13px}
 .stick{position:fixed;bottom:22px;width:140px;height:140px;border-radius:50%;background:#0006;border:2px solid #fff6;z-index:2}
 .stick i{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:#fffc}
@@ -17,7 +17,7 @@ select,.b{background:#000b;color:#fff;border:1px solid #fff5;border-radius:8px;p
 #msg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#0009;z-index:3}
 #msg .box{background:#1d2633;border:2px solid #fff;border-radius:16px;padding:18px 22px;text-align:center;max-width:320px}
 #attr{position:fixed;bottom:2px;left:0;right:0;text-align:center;font-size:9px;opacity:.7;z-index:2}
-#mini{position:fixed;right:8px;top:84px;z-index:2;font-size:12px;background:#000a;border-radius:8px;padding:6px 8px;max-width:170px}
+#mini{position:fixed;left:8px;right:8px;top:150px;text-align:center;transition:opacity 1s;z-index:2;font-size:12px;background:#000a;border-radius:8px;padding:6px 8px;max-width:170px}
 </style></head><body>
 <canvas id="c"></canvas>
 <div class="hud"><div>ALT <b id="alt">0</b> m</div><div>SPD <b id="spd">0</b> m/s</div><div>HDG <b id="hdg">0</b>°</div><div>🔋 <b id="bat">100</b>%</div><div>⏱ <b id="tm">0.0</b>s</div></div>
@@ -25,19 +25,19 @@ select,.b{background:#000b;color:#fff;border:1px solid #fff5;border-radius:8px;p
  <select id="loc"></select>
  <select id="mode"><option value="free">Free flight</option><option value="rings">Checkpoint run</option><option value="land">Precision landing</option></select>
  <select id="wind"><option value="0">No wind</option><option value="2">Light wind</option><option value="5">Strong wind</option></select>
- <button class="b" id="view">Drone-up</button>
+ <button class="b" id="view">📷 Chase</button>
  <button class="b" id="go">Restart</button>
 </div>
-<div id="mini"></div>
+<div id="mini"></div><div id="tgt" style="position:fixed;bottom:178px;left:50%;transform:translateX(-50%);white-space:nowrap;z-index:2;background:#000a;border-radius:8px;padding:6px 10px;font-weight:700"></div>
 <div class="stick" id="sl"><span>climb / yaw</span><i></i></div>
 <div class="stick" id="sr"><span>forward / sideways</span><i></i></div>
 <div id="msg"><div class="box"><h3 id="mt" style="margin:0 0 8px"></h3><div id="mb"></div><br><button class="b" id="mok">Fly again</button></div></div>
-<div id="attr">Drone Navigator v1.0.0 · Imagery © Esri, Maxar, Earthstar Geographics · keys: W/S climb, A/D yaw, arrows fly</div>
+<div id="attr">Drone Navigator 3D v2.0.0 · Imagery © Esri, Maxar, Earthstar Geographics · keys: W/S climb, A/D yaw, arrows fly</div>
 <script>
 const LOCS=[['Vienna – Stephansplatz',48.20849,16.37208],['Vienna – Schönbrunn',48.18451,16.31221],['Vienna – Prater',48.21662,16.39595],['Vienna – Uni Sport Centre (USZ)',48.2165,16.4113],['Lisbon – Praça do Comércio',38.70757,-9.13657],['Dubrovnik old town',42.64074,18.10886],['New York – Central Park',40.77867,-73.96907],['📍 My location',null,null]];
 const sel=document.getElementById('loc');LOCS.forEach((l,i)=>sel.add(new Option(l[0],i)));
-const cv=document.getElementById('c'),ctx=cv.getContext('2d');
-let W,H,dpr;function size(){dpr=Math.min(2,devicePixelRatio);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}size();addEventListener('resize',size);
+const cv=document.getElementById('c');
+let W=innerWidth,H=innerHeight;
 // web mercator world coords (0..256 at z0)
 const toW=(lat,lon)=>{const s=Math.sin(lat*Math.PI/180);return[(lon+180)/360*256,(.5-Math.log((1+s)/(1-s))/(4*Math.PI))*256]};
 const toLL=(x,y)=>{const n=Math.PI-2*Math.PI*y/256;return[180/Math.PI*Math.atan(Math.sinh(n)),x/256*360-180]};
@@ -54,7 +54,7 @@ function start(lat,lon){const[x,y]=toW(lat,lon);D={x,y,alt:0,vx:0,vy:0,vz:0,h:0,
 function go(){const l=LOCS[sel.value];if(l[1]!=null)return start(l[1],l[2]);
   navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>start(p.coords.latitude,p.coords.longitude),()=>{alert('Location unavailable');sel.value=0;go()}):(sel.value=0,go())}
 sel.onchange=go;document.getElementById('mode').onchange=go;document.getElementById('go').onclick=go;document.getElementById('mok').onclick=go;
-document.getElementById('view').onclick=e=>{droneUp=!droneUp;e.target.textContent=droneUp?'Drone-up':'North-up'};
+document.getElementById('view').onclick=e=>{camMode={chase:'fpv',fpv:'top',top:'chase'}[camMode];e.target.textContent={chase:'📷 Chase',fpv:'📷 FPV',top:'📷 Top'}[camMode]};
 // sticks (mode 2)
 function stick(el,set){const knob=el.querySelector('i');let id=null;
   const mv=e=>{const r=el.getBoundingClientRect();let dx=(e.clientX-r.left-r.width/2)/(r.width/2),dy=(e.clientY-r.top-r.height/2)/(r.height/2);const m=Math.hypot(dx,dy);if(m>1){dx/=m;dy/=m}
@@ -89,42 +89,67 @@ function best(t){const k='drone-best-'+sel.value;let b=+(localStorage.getItem(k)
 function end(t,b){over=true;document.getElementById('mt').textContent=t;document.getElementById('mb').textContent=b;document.getElementById('msg').style.display='flex'}
 function hideMsg(){document.getElementById('msg').style.display='none'}
 function beep(){try{const a=new AudioContext(),o=a.createOscillator();o.frequency.value=880;o.connect(a.destination);o.start();o.stop(a.currentTime+.12)}catch(e){}}
-function info(extra){const m=mission.mode;document.getElementById('mini').textContent=extra||(m==='free'?'Free flight. Push the left stick up to take off. Max 120 m (EU limit).':m==='rings'?'Fly through the 6 numbered rings in order at the right height, then land back on the H.':'Fly to the orange target and land within 3 m of its centre.')}
-// render
-function draw(){ctx.fillStyle='#223';ctx.fillRect(0,0,W,H);
-  const camAlt=Math.max(D.alt,8)+25;// higher = wider view
-  const mppx=camAlt/220;// metres per screen pixel
-  const u=mpu();const scale=u/mppx;// screen px per world unit
-  const zf=Math.log2(scale/1),z=Math.min(19,Math.max(3,Math.ceil(zf)));const ts=256*scale/2**z;// screen size of a tile
-  const rot=droneUp?-D.h*Math.PI/180:0;
-  ctx.save();ctx.translate(W/2,H*.58);ctx.rotate(rot);
-  const R=Math.hypot(W,H)/ts+1,cx=D.x*2**z/256,cy=D.y*2**z/256;
-  for(let i=Math.floor(cx-R);i<=cx+R;i++)for(let j=Math.floor(cy-R);j<=cy+R;j++){if(j<0||j>=2**z)continue;const n=2**z,ii=((i%n)+n)%n;const t=tile(z,ii,j);
-    const sx=(i-cx)*ts,sy=(j-cy)*ts;if(t.complete&&t.naturalWidth)ctx.drawImage(t,sx,sy,ts+.6,ts+.6);else{const p=tile(z-1,ii>>1,j>>1);if(p.complete&&p.naturalWidth)ctx.drawImage(p,(ii&1)*128,(j&1)*128,128,128,sx,sy,ts+.6,ts+.6)}}
-  const S=(x,y)=>[(x-D.x)*scale,(y-D.y)*scale];
-  // home pad
-  pad(...S(D.hx,D.hy),2.5/mppx,'#fff','H');
-  if(mission.pad)pad(...S(mission.pad.x,mission.pad.y),3/mppx,'#ff8c1a','●');
-  mission.rings.forEach((r,i)=>{if(i<mission.idx)return;const[x,y]=S(r.x,r.y);const cur=i===mission.idx;
-    ctx.strokeStyle=cur?'#39f':'#39f6';ctx.lineWidth=cur?4:2;ctx.beginPath();ctx.arc(x,y,6/mppx,0,7);ctx.stroke();
-    ctx.save();ctx.translate(x,y);ctx.rotate(-rot);ctx.fillStyle='#fff';ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText((i+1)+(cur?` · ${r.alt.toFixed(0)} m`:''),0,-6/mppx-6);ctx.restore()});
-  ctx.restore();
-  // shadow + drone (screen space)
-  const ox=W/2,oy=H*.58,sh=D.alt*1.2;ctx.fillStyle='#0006';ctx.beginPath();ctx.ellipse(ox+sh*.4,oy+sh*.6,22,22,0,0,7);ctx.fill();
-  ctx.save();ctx.translate(ox,oy);ctx.rotate(droneUp?0:D.h*Math.PI/180);const sc=1+D.alt/250;ctx.scale(sc,sc);
-  ctx.strokeStyle='#ddd';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-16,-16);ctx.lineTo(16,16);ctx.moveTo(16,-16);ctx.lineTo(-16,16);ctx.stroke();
-  const spin=performance.now()/30;[[-16,-16],[16,-16],[-16,16],[16,16]].forEach(([x,y],i)=>{ctx.fillStyle=D.flying?'#fff5':'#fff9';ctx.beginPath();ctx.ellipse(x,y,11,D.flying?11:3,D.flying?0:spin*0+i,0,7);ctx.fill()});
-  ctx.fillStyle='#333';ctx.fillRect(-8,-10,16,20);ctx.fillStyle='#e33';ctx.fillRect(-8,-10,16,5);ctx.restore();
-  // pointers to target / home
-  const tgt=mission.mode==='rings'&&mission.idx<mission.rings.length?mission.rings[mission.idx]:mission.pad&&mission.mode==='land'?mission.pad:{x:D.hx,y:D.hy};
-  const dist=Math.hypot(tgt.x-D.x,tgt.y-D.y)*u;
-  if(dist>4){let ang=Math.atan2(tgt.x-D.x,-(tgt.y-D.y))+rot;ctx.save();ctx.translate(ox,oy);ctx.rotate(ang);ctx.fillStyle='#39f';ctx.beginPath();ctx.moveTo(0,-62);ctx.lineTo(-9,-46);ctx.lineTo(9,-46);ctx.fill();ctx.restore();
-    ctx.fillStyle='#fff';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText(dist.toFixed(0)+' m',ox,oy+56)}
-  // compass
-  ctx.save();ctx.translate(W-30,H*.58-120);ctx.rotate(rot);ctx.fillStyle='#000a';ctx.beginPath();ctx.arc(0,0,18,0,7);ctx.fill();ctx.fillStyle='#e33';ctx.beginPath();ctx.moveTo(0,-15);ctx.lineTo(-5,0);ctx.lineTo(5,0);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillText('N',0,12);ctx.restore();
+function info(extra){const mi=document.getElementById('mini');mi.style.opacity=1;clearTimeout(info.t);info.t=setTimeout(()=>mi.style.opacity=0,7000);const m=mission.mode;document.getElementById('mini').textContent=extra||(m==='free'?'Free flight. Push the left stick up to take off. Max 120 m (EU limit).':m==='rings'?'Fly through the 6 numbered rings in order at the right height, then land back on the H.':'Fly to the orange target and land within 3 m of its centre.')}
+// ---------- 3D render ----------
+let T=null,scene,cam,R3,droneM,props=[],groundNear,groundFar,ringMeshes=[],padMeshes=[],org=null,camMode='chase';
+const loader={};
+function texFor(z,x,y){const k=z+'/'+x+'/'+y;if(loader[k])return loader[k];const t=new T.TextureLoader();t.setCrossOrigin('anonymous');
+  const tx=t.load(`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`,t2=>{t2.userData.ok=true});tx.colorSpace=T.SRGBColorSpace;tx.anisotropy=8;loader[k]=tx;
+  const ks=Object.keys(loader);if(ks.length>500){loader[ks[0]].dispose();delete loader[ks[0]]}return tx}
+// metres relative to origin: east = +x, north = -z
+function wm(x,y){return[(x-org.x)*org.u,(y-org.y)*org.u]}
+function makeGround(z,n,yoff){const g=new T.Group();g.userData={z,n,cx:null,cy:null,yoff};scene.add(g);return g}
+function updGround(g){const{z,n}=g.userData,N=2**z;const cx=Math.floor(D.x*N/256),cy=Math.floor(D.y*N/256);
+  if(cx===g.userData.cx&&cy===g.userData.cy)return;g.userData.cx=cx;g.userData.cy=cy;
+  while(g.children.length){const m=g.children.pop();m.geometry.dispose();m.material.dispose()}
+  const tw=256/N*org.u,h=(n-1)/2;
+  for(let i=-h;i<=h;i++)for(let j=-h;j<=h;j++){const tx=cx+i,ty=cy+j;if(ty<0||ty>=N)continue;
+    const m=new T.Mesh(new T.PlaneGeometry(tw,tw),new T.MeshBasicMaterial({map:texFor(z,((tx%N)+N)%N,ty)}));
+    const[x,y]=wm((tx+.5)*256/N,(ty+.5)*256/N);m.rotation.x=-Math.PI/2;m.position.set(x,g.userData.yoff,y);g.add(m)}}
+function buildDrone(){const g=new T.Group(),dark=new T.MeshStandardMaterial({color:0x2b2f36,roughness:.5}),light=new T.MeshStandardMaterial({color:0xdddddd});
+  g.add(new T.Mesh(new T.BoxGeometry(.22,.09,.32),dark));const nose=new T.Mesh(new T.BoxGeometry(.1,.06,.05),new T.MeshStandardMaterial({color:0xe33}));nose.position.set(0,0,-.18);g.add(nose);
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>{const arm=new T.Mesh(new T.BoxGeometry(.03,.03,.3),dark);arm.position.set(sx*.13,0,sz*.13);arm.rotation.y=sx*sz>0?-Math.PI/4:Math.PI/4;g.add(arm);
+    const p=new T.Mesh(new T.CylinderGeometry(.11,.11,.005,16),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.35}));p.position.set(sx*.23,.05,sz*.23);g.add(p);props.push(p);
+    const mo=new T.Mesh(new T.CylinderGeometry(.025,.025,.05,8),light);mo.position.set(sx*.23,.02,sz*.23);g.add(mo)});
+  g.scale.setScalar(3);// a little oversized so it reads on screen
+  return g}
+function mission3d(){ringMeshes.forEach(m=>scene.remove(m));padMeshes.forEach(m=>scene.remove(m));ringMeshes=[];padMeshes=[];
+  const padM=(x,y,r,col,txt)=>{const c=document.createElement('canvas');c.width=c.height=128;const q=c.getContext('2d');q.fillStyle=col;q.beginPath();q.arc(64,64,62,0,7);q.fill();q.fillStyle='#222';q.font='bold 70px system-ui';q.textAlign='center';q.textBaseline='middle';q.fillText(txt,64,68);
+    const m=new T.Mesh(new T.CircleGeometry(r,32),new T.MeshBasicMaterial({map:new T.CanvasTexture(c),transparent:true}));const[a,b]=wm(x,y);m.rotation.x=-Math.PI/2;m.position.set(a,.05,b);scene.add(m);padMeshes.push(m)};
+  padM(D.hx,D.hy,2.5,'#ffffff','H');if(mission.mode==='land'&&mission.pad)padM(mission.pad.x,mission.pad.y,3,'#ff8c1a','●');
+  mission.rings.forEach((r,i)=>{const g=new T.Group();const m=new T.Mesh(new T.TorusGeometry(6,.35,10,40),new T.MeshStandardMaterial({color:0x3399ff,emissive:0x113366}));g.add(m);
+    const pole=new T.Mesh(new T.CylinderGeometry(.15,.15,r.alt-6),new T.MeshBasicMaterial({color:0x3399ff,transparent:true,opacity:.3}));pole.position.y=-(r.alt-6)/2-6;g.add(pole);
+    const c=document.createElement('canvas');c.width=128;c.height=64;const q=c.getContext('2d');q.fillStyle='#fff';q.font='bold 48px system-ui';q.textAlign='center';q.fillText(i+1,64,50);
+    const sp=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(c)}));sp.scale.set(6,3,1);sp.position.y=8.5;g.add(sp);
+    const[a,b]=wm(r.x,r.y);g.position.set(a,r.alt,b);g.rotation.y=Math.random()*Math.PI;scene.add(g);ringMeshes.push(g)})}
+function init3d(THREE){T=THREE;R3=new T.WebGLRenderer({canvas:cv,antialias:true});R3.setPixelRatio(Math.min(2,devicePixelRatio));R3.setSize(W,H);
+  scene=new T.Scene();scene.background=new T.Color(0x9cc8ef);scene.fog=new T.Fog(0x9cc8ef,900,4500);
+  {const base=new T.Mesh(new T.PlaneGeometry(40000,40000),new T.MeshBasicMaterial({color:0x5d7a4a}));base.rotation.x=-Math.PI/2;base.position.y=-.6;scene.add(base);window._base=base}scene.add(new T.HemisphereLight(0xffffff,0x667755,1.2));const sun=new T.DirectionalLight(0xffffff,1.2);sun.position.set(30,60,20);scene.add(sun);
+  cam=new T.PerspectiveCamera(65,W/H,.1,8000);droneM=buildDrone();scene.add(droneM);
+  addEventListener('resize',()=>{R3.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()})}
+let lastMission=null;
+function draw(){if(!T)return;
+  if(!org||lastMission!==mission){org={x:D.hx,y:D.hy,u:mpu()};lastMission=mission;
+    if(groundNear){scene.remove(groundNear);scene.remove(groundFar)}groundFar=makeGround(14,9,-.3);groundNear=makeGround(17,11,0);mission3d()}
+  updGround(groundFar);updGround(groundNear);[groundFar,groundNear].forEach(g=>g.children.forEach(m=>m.visible=!!m.material.map.userData.ok));_base.position.x=wm(D.x,D.y)[0];_base.position.z=wm(D.x,D.y)[1];
+  const[x,z]=wm(D.x,D.y),hr=D.h*Math.PI/180;
+  droneM.position.set(x,D.alt+.3,z);droneM.rotation.set(0,0,0);droneM.rotation.y=-hr;
+  // tilt with velocity
+  const fwdV=Math.sin(hr)*D.vx-Math.cos(hr)*D.vy,sideV=Math.cos(hr)*D.vx+Math.sin(hr)*D.vy;droneM.rotateX(-fwdV*.025);droneM.rotateZ(-sideV*.025);
+  props.forEach(p=>p.scale.set(1,1,1)),props.forEach((p,i)=>p.rotation.y+=D.flying?1.2:0);
+  ringMeshes.forEach((g,i)=>{g.visible=i>=mission.idx;g.children[0].material.emissive.setHex(i===mission.idx?0x2266ff:0x112244)});
+  const fx=Math.sin(hr),fz=-Math.cos(hr);
+  if(camMode==='fpv'){cam.position.set(x+fx*.6,D.alt+.35,z+fz*.6);cam.lookAt(x+fx*20,D.alt-2,z+fz*20)}
+  else if(camMode==='top'){cam.position.set(x,D.alt+60,z+.01);cam.lookAt(x,D.alt,z)}
+  else{const back=9,up=4;const tx=x-fx*back,tz=z-fz*back,ty=Math.max(1.5,D.alt+up);cam.position.lerp(new T.Vector3(tx,ty,tz),.12);cam.lookAt(x,D.alt+1,z)}
+  droneM.visible=camMode!=='fpv';
+  R3.render(scene,cam);
+  // HUD: target arrow + distance
+  const u=mpu();const tgt=mission.mode==='rings'&&mission.idx<mission.rings.length?mission.rings[mission.idx]:mission.pad&&mission.mode==='land'?mission.pad:{x:D.hx,y:D.hy};
+  const dist=Math.hypot(tgt.x-D.x,tgt.y-D.y)*u,bear=(Math.atan2(tgt.x-D.x,-(tgt.y-D.y))*180/Math.PI+360)%360,rel=((bear-D.h+540)%360)-180;
+  const tg=document.getElementById('tgt');tg.innerHTML=`<span style="display:inline-block;transform:rotate(${rel}deg)">⬆</span> ${dist.toFixed(0)} m`+(tgt.alt?` · ring at ${tgt.alt.toFixed(0)} m`:'');
   document.getElementById('alt').textContent=D.alt.toFixed(1);document.getElementById('spd').textContent=Math.hypot(D.vx,D.vy).toFixed(1);
   document.getElementById('hdg').textContent=D.h.toFixed(0);document.getElementById('bat').textContent=D.bat.toFixed(0);document.getElementById('tm').textContent=D.t.toFixed(1)}
-function pad(x,y,r,col,txt){ctx.fillStyle=col+'';ctx.globalAlpha=.85;ctx.beginPath();ctx.arc(x,y,Math.max(r,8),0,7);ctx.fill();ctx.globalAlpha=1;ctx.fillStyle='#222';ctx.font='bold '+Math.max(10,r*1.1)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,x,y);ctx.textBaseline='alphabetic'}
-let last=performance.now();(function loop(t){const dt=Math.min(.05,(t-last)/1000);last=t;if(D){physics(dt);draw()}requestAnimationFrame(loop)})(last);
+let last=performance.now();import('./three.module.min.js').then(init3d).catch(e=>alert('3D not available: '+e));(function loop(t){const dt=Math.min(.05,(t-last)/1000);last=t;if(D){physics(dt);draw()}requestAnimationFrame(loop)})(last);
 go();
 </script></body></html>
