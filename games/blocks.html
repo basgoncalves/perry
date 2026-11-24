@@ -71,7 +71,7 @@ function build(){scene.remove(board);board=new THREE.Group();scene.add(board);
  const cx=(mx-1)/2,cz=(my-1)/2;cam.position.set(cx-9,14,cz+12);cam.lookAt(cx,0,cz);
  resize(Math.max(mx,my))}
 let span=10;
-function resize(s){if(s)span=s;const w=innerWidth,h=innerHeight,a=w/h,z=span*.42+1;
+function resize(s){if(s)span=s;const w=innerWidth,h=innerHeight,a=w/h,z=span*.5+1;
  const vw=a<1?z:z*a,vh=a<1?z/a:z;cam.left=-vw;cam.right=vw;cam.top=vh;cam.bottom=-vh;cam.updateProjectionMatrix();R.setSize(w,h)}
 addEventListener('resize',()=>resize());
 function load(i){L=i;g=LEVELS[i];g.forEach((r,y)=>{const x=r.indexOf('S');if(x>=0)st={x,y,o:'U'};const gx=r.indexOf('G');if(gx>=0)goal={x:gx,y}});
