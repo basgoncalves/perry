@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Bus Rush</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,sans-serif;color:#fff;background:#2c3e50;touch-action:none;user-select:none}
+#c{position:fixed;inset:0;width:100%;height:100%}
+.top{position:fixed;top:8px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:8px;z-index:2}
+.pill{background:#1e2b38;border:2px solid #fff;border-radius:999px;padding:5px 16px;font-weight:800}
+.btn{background:#f39c12;border:0;border-radius:12px;color:#fff;font-weight:800;font-size:16px;min-width:40px;height:40px;padding:0 12px;box-shadow:0 4px 0 #a96a07}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #a96a07}
+.btn:disabled{opacity:.35}
+#lvls{position:fixed;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:6px;z-index:2}
+#lvls .on{background:#27ae60;box-shadow:0 4px 0 #17703d}
+#msg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#0008;z-index:3}
+#msg .box{background:#1e2b38;border:3px solid #fff;border-radius:18px;padding:20px 26px;text-align:center}
+#msg h2{margin:0 0 8px}#msg .btn{margin:6px}
+#ver{position:fixed;top:56px;left:0;right:0;text-align:center;font-size:11px;opacity:.75;z-index:2;padding:0 10px}
+</style></head><body>
+<canvas id="c"></canvas>
+<div class="top"><div class="pill">Level <span id="ln">1</span> · <span id="left">0</span> waiting</div><button class="btn" id="rst">⟲</button></div>
+<div id="ver"></div>
+<div id="lvls"></div>
+<div id="msg"><div class="box"><h2 id="mt"></h2><div id="mb"></div><div id="mbtns"></div></div></div>
+<script>
+const VERSION='1.0.0';
+document.getElementById('ver').textContent='Bus Rush v'+VERSION+' · tap a bus to drive it out the way it faces · it parks in a bay and loads its colour · don\'t fill every bay';
+const COLORS=['#e74c3c','#3498db','#2ecc71','#f1c40f','#9b59b6','#e67e22','#1abc9c'];
+// level settings: grid size, buses, colours, bays
+const LV=[{w:5,h:5,n:5,c:3,bays:4,seed:11},{w:6,h:6,n:8,c:4,bays:4,seed:23},{w:6,h:7,n:11,c:5,bays:4,seed:37},{w:7,h:7,n:14,c:5,bays:5,seed:41},{w:7,h:8,n:18,c:6,bays:5,seed:59}];
+const DIRS={N:[0,-1],S:[0,1],E:[1,0],W:[-1,0]};
+function rng(s){return()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff}}
+const cellsOf=b=>{const out=[];const[dx,dy]=DIRS[b.d];for(let i=0;i<b.len;i++)out.push([b.x-dx*i,b.y-dy*i]);return out};// x,y = front cell
+function pathClear(b,buses,W,H){const[dx,dy]=DIRS[b.d];let x=b.x+dx,y=b.y+dy;
+  while(x>=0&&y>=0&&x<W&&y<H){if(buses.some(o=>o!==b&&!o.gone&&cellsOf(o).some(([a,c])=>a===x&&c===y)))return false;x+=dx;y+=dy}return true}
+function gen(cfg){
+  for(let tries=0;tries<500;tries++){const r=rng(cfg.seed+tries*7919),W=cfg.w,H=cfg.h,buses=[],occ=new Set;
+    let guard=0;while(buses.length<cfg.n&&guard++<4000){const d='NSEW'[Math.floor(r()*4)],len=r()<.35?3:2,x=Math.floor(r()*W),y=Math.floor(r()*H);
+      const b={x,y,d,len};const cs=cellsOf(b);if(cs.some(([a,c])=>a<0||c<0||a>=W||c>=H||occ.has(a+','+c)))continue;
+      cs.forEach(([a,c])=>occ.add(a+','+c));buses.push(b)}
+    if(buses.length<cfg.n)continue;
+    // find an exit order (greedy, randomised)
+    const order=[];const tmp=buses.map(b=>({...b}));let ok=true;
+    while(order.length<tmp.length){const free=tmp.filter(b=>!b.gone&&pathClear(b,tmp,W,H));if(!free.length){ok=false;break}
+      const pick=free[Math.floor(r()*free.length)];pick.gone=true;order.push(tmp.indexOf(pick))}
+    if(!ok)continue;
+    // need some blocking to be interesting: at least a third of buses initially blocked
+    const blocked=tmp.length-buses.filter(b=>pathClear(b,buses,W,H)).length;if(blocked<Math.ceil(cfg.n/3))continue;
+    // colours: assign, guaranteeing every colour appears
+    buses.forEach((b,i)=>b.col=i<cfg.c?i:Math.floor(r()*cfg.c));
+    // shuffle colours across buses
+    for(let i=buses.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[buses[i].col,buses[j].col]=[buses[j].col,buses[i].col]}
+    // passenger queue: groups in exit order, neighbouring groups lightly interleaved (always solvable with >=3 bays)
+    let q=[];order.forEach(i=>{const b=buses[i];for(let k=0;k<b.len*2;k++)q.push(b.col)});
+    for(let i=0;i<q.length-1;i++)if(r()<.25){[q[i],q[i+1]]=[q[i+1],q[i]]}
+    return{W,H,buses,queue:q,bays:cfg.bays}}
+  throw new Error('level gen failed')}
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let prog;try{prog=JSON.parse(localStorage.getItem('busrush')||'{}')}catch(e){prog={}}prog.best=prog.best||1;
+const persist=()=>{try{localStorage.setItem('busrush',JSON.stringify(prog))}catch(e){}};
+let L=0,lvl,bays,anims=[],over=false,lay={};
+function load(i){L=i;lvl=gen(LV[i]);lvl.buses.forEach(b=>{b.gone=false;b.ax=0;b.ay=0;b.shake=0});bays=Array(lvl.bays).fill(null);anims=[];over=false;hide();ui();layout()}
+function ui(){document.getElementById('ln').textContent=L+1;document.getElementById('left').textContent=lvl.queue.length;
+  const d=document.getElementById('lvls');d.innerHTML='';LV.forEach((_,i)=>{const b=document.createElement('button');b.className='btn'+(i===L?' on':'');b.textContent=i+1;b.disabled=i+1>prog.best;b.onclick=()=>load(i);d.appendChild(b)})}
+function layout(){const w=innerWidth,h=innerHeight,dpr=Math.min(2,devicePixelRatio);cv.width=w*dpr;cv.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  const top=80,qH=60,bayH=90,bottom=64;const availH=h-top-qH-bayH-bottom-20;
+  const s=Math.floor(Math.min((w-24)/lvl.W,availH/lvl.H));
+  lay={s,qy:top+28,by:top+qH+10,gx:(w-s*lvl.W)/2,gy:top+qH+bayH+16,w,h,bayW:Math.min(70,(w-20)/lvl.bays-8)}}
+addEventListener('resize',()=>lvl&&layout());
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function drawBus(cx,cy,len,dir,col,s,load,cap){ctx.save();ctx.translate(cx,cy);ctx.rotate({N:0,E:Math.PI/2,S:Math.PI,W:-Math.PI/2}[dir]);
+  const bw=s*.78,bh=s*len-s*.18;ctx.fillStyle='#0004';rr(-bw/2+3,-bh/2+4,bw,bh,s*.18);ctx.fill();
+  ctx.fillStyle=COLORS[col];rr(-bw/2,-bh/2,bw,bh,s*.18);ctx.fill();
+  ctx.fillStyle='#dff3ff';rr(-bw/2+bw*.14,-bh/2+s*.1,bw*.72,s*.22,4);ctx.fill();// windscreen at front
+  ctx.fillStyle='#fff6';for(let i=1;i<len*2;i++){rr(-bw/2+bw*.12,-bh/2+s*.38+i*(bh-s*.5)/(len*2)-4,bw*.76,3,2);ctx.fill()}
+  if(cap){ctx.rotate(-{N:0,E:Math.PI/2,S:Math.PI,W:-Math.PI/2}[dir]);ctx.fillStyle='#fff';ctx.font='bold '+Math.round(s*.3)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(load+'/'+cap,0,0)}
+  ctx.restore()}
+function person(x,y,col,r){ctx.fillStyle=COLORS[col];ctx.beginPath();ctx.arc(x,y-r*.9,r*.55,0,7);ctx.fill();rr(x-r*.6,y-r*.3,r*1.2,r*1.3,r*.4);ctx.fill()}
+function draw(t){const{s,gx,gy,w,h}=lay;ctx.clearRect(0,0,w,h);
+  // queue
+  ctx.fillStyle='#ffffff14';rr(8,lay.qy-26,w-16,52,14);ctx.fill();
+  const r=11;const n=Math.min(lvl.queue.length,Math.floor((w-40)/(r*2.2)));
+  for(let i=0;i<n;i++)person(24+i*r*2.2,lay.qy+8,lvl.queue[i],r);
+  ctx.fillStyle='#fff';ctx.font='bold 11px system-ui';ctx.fillText('▲ next',16,lay.qy+30);
+  // bays
+  const bw=lay.bayW,tot=lvl.bays*(bw+8)-8,bx0=(w-tot)/2;
+  bays.forEach((b,i)=>{const x=bx0+i*(bw+8);ctx.strokeStyle='#fff8';ctx.setLineDash([6,5]);ctx.lineWidth=2;rr(x,lay.by,bw,84,10);ctx.stroke();ctx.setLineDash([]);
+    if(b)drawBus(x+bw/2,lay.by+42,b.len,'N',b.col,Math.min(bw*.95,84/(b.len+.2)),b.load,b.len*2)});
+  // lot
+  ctx.fillStyle='#3d566e';rr(gx-8,gy-8,s*lvl.W+16,s*lvl.H+16,14);ctx.fill();
+  ctx.strokeStyle='#ffffff22';ctx.lineWidth=1;for(let x=0;x<=lvl.W;x++){ctx.beginPath();ctx.moveTo(gx+x*s,gy);ctx.lineTo(gx+x*s,gy+lvl.H*s);ctx.stroke()}
+  for(let y=0;y<=lvl.H;y++){ctx.beginPath();ctx.moveTo(gx,gy+y*s);ctx.lineTo(gx+lvl.W*s,gy+y*s);ctx.stroke()}
+  lvl.buses.forEach(b=>{if(b.gone&&!b.leaving)return;const[dx,dy]=DIRS[b.d];const cs=cellsOf(b);
+    const mx=(cs[0][0]+cs[cs.length-1][0])/2,my=(cs[0][1]+cs[cs.length-1][1])/2;
+    const sh=b.shake>0?Math.sin(t/20)*4*b.shake:0;
+    drawBus(gx+(mx+.5)*s+b.ax*s+sh*dy,gy+(my+.5)*s+b.ay*s+sh*dx,b.len,b.d,b.col,s)})}
+function frame(t){anims=anims.filter(a=>a(t));lvl.buses.forEach(b=>{if(b.shake>0)b.shake=Math.max(0,b.shake-.04)});draw(t);requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+function hit(px,py){const{s,gx,gy}=lay;const cx=Math.floor((px-gx)/s),cy=Math.floor((py-gy)/s);
+  return lvl.buses.find(b=>!b.gone&&cellsOf(b).some(([a,c])=>a===cx&&c===cy))}
+cv.addEventListener('pointerdown',e=>{if(over)return;const b=hit(e.clientX,e.clientY);if(!b)return;
+  if(!pathClear(b,lvl.buses,lvl.W,lvl.H)){b.shake=1;return}
+  const bi=bays.indexOf(null);if(bi<0){b.shake=1;return}
+  b.gone=true;b.leaving=true;bays[bi]={col:b.col,len:b.len,load:0,pending:true};
+  const[dx,dy]=DIRS[b.d];const dist=Math.max(lvl.W,lvl.H)+3;const t0=performance.now();
+  anims.push(t=>{const k=Math.min(1,(t-t0)/450);b.ax=dx*dist*k*k;b.ay=dy*dist*k*k;if(k>=1){b.leaving=false;bays[bi].pending=false;board()}return k<1})});
+let boarding=false;
+function board(){if(boarding)return;boarding=true;
+  const tick=()=>{const c=lvl.queue[0];const bay=bays.find(x=>x&&!x.pending&&x.col===c&&x.load<x.len*2);
+    if(c!==undefined&&bay){lvl.queue.shift();bay.load++;ui();
+      if(bay.load===bay.len*2){setTimeout(()=>{bays[bays.indexOf(bay)]=null;check();},250)}
+      setTimeout(tick,110)}else{boarding=false;check()}};tick()}
+function check(){if(over)return;
+  if(!lvl.queue.length&&lvl.buses.every(b=>b.gone)&&bays.every(b=>!b||b.load===b.len*2)){over=true;
+    if(L+2>prog.best&&L+1<LV.length)prog.best=L+2;persist();const last=L===LV.length-1;
+    setTimeout(()=>show(last?'All 5 levels cleared! 🚌':'Level '+(L+1)+' cleared!','Everyone got a seat.',last?[['Play again',()=>load(0)]]:[['Next level',()=>load(L+1)],['Replay',()=>load(L)]]),400);return}
+  if(boarding||bays.some(b=>b&&b.pending))return;
+  const full=bays.every(b=>b);const c=lvl.queue[0];
+  if(full&&!bays.some(b=>b.col===c&&b.load<b.len*2)){over=true;setTimeout(()=>show('Traffic jam!','All bays are full and nobody can board.',[['Try again',()=>load(L)]]),300)}}
+function show(t,b,btns){document.getElementById('mt').textContent=t;document.getElementById('mb').textContent=b;const d=document.getElementById('mbtns');d.innerHTML='';
+  btns.forEach(([l,f])=>{const e=document.createElement('button');e.className='btn';e.textContent=l;e.onclick=f;d.appendChild(e)});document.getElementById('msg').style.display='flex'}
+function hide(){document.getElementById('msg').style.display='none'}
+document.getElementById('rst').onclick=()=>load(L);
+load(Math.min(prog.best,LV.length)-1);
+</script></body></html>
