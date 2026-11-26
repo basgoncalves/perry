@@ -24,7 +24,7 @@ select{background:#263247;color:#fff;border:0;border-radius:8px;padding:7px;font
 </style></head><body>
 <div id="app"></div><nav id="nav"></nav>
 <script>
-const VERSION='1.0.0',KEY='hoopsmgr1';
+const VERSION='1.2.0',KEY='hoopsmgr1';
 // 30 fictional clubs: [city, name, abbr, conference(0 East,1 West), division]
 const TEAMS=[['Boston','Shamrocks','BOS',0,0],['New York','Empire','NYE',0,0],['Brooklyn','Bridges','BKN',0,0],['Philadelphia','Founders','PHI',0,0],['Toronto','Northmen','TOR',0,0],
 ['Chicago','Gale','CHI',0,1],['Cleveland','Forge','CLE',0,1],['Detroit','Engines','DET',0,1],['Indiana','Racers','IND',0,1],['Milwaukee','Brewmasters','MIL',0,1],
@@ -37,12 +37,13 @@ const LAST='Carter Brooks Okafor Petrov Hayes Mendoza Lindqvist Walker Banks Dup
 const KEYS=['ins','mid','tp','pas','reb','def','ath'],POS=['PG','SG','SF','PF','C'];
 const PROF={PG:{ins:-4,mid:2,tp:5,pas:12,reb:-12,def:0,ath:3},SG:{ins:-2,mid:4,tp:7,pas:2,reb:-8,def:0,ath:3},SF:{ins:1,mid:2,tp:2,pas:-1,reb:-1,def:2,ath:2},PF:{ins:5,mid:0,tp:-5,pas:-5,reb:8,def:2,ath:0},C:{ins:8,mid:-5,tp:-14,pas:-7,reb:13,def:4,ath:-3}};
 const WT={PG:{ins:.12,mid:.12,tp:.18,pas:.24,reb:.03,def:.16,ath:.15},SG:{ins:.14,mid:.15,tp:.22,pas:.12,reb:.05,def:.17,ath:.15},SF:{ins:.17,mid:.13,tp:.17,pas:.1,reb:.1,def:.19,ath:.14},PF:{ins:.22,mid:.1,tp:.1,pas:.07,reb:.2,def:.2,ath:.11},C:{ins:.25,mid:.06,tp:.04,pas:.06,reb:.25,def:.24,ath:.1}};
-const MINS=[36,34,32,30,28,22,18,16,12,8,4];
+const ROT=[[36,34,32,30,28,22,18,16,12,8,4],[40,39,38,36,34,18,14,10,6,3,2],[30,29,28,27,26,24,22,20,16,10,8]];
+const PACE=['Slow','Normal','Fast'],FOC=['Attack inside','Balanced','Shoot threes'],DEFN=['Man-to-man','Zone','Full-court press'],ROTN=['Normal rotation','Ride the starters','Deep bench'];let PRE=null;
 const R=(a,b)=>a+Math.random()*(b-a),RI=(a,b)=>Math.floor(R(a,b+1)),pick=a=>a[Math.floor(Math.random()*a.length)],clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const gauss=()=>{let s=0;for(let i=0;i<6;i++)s+=Math.random();return(s-3)/.7071};
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const blank=()=>({g:0,min:0,pts:0,reb:0,ast:0,stl:0,blk:0,fgm:0,fga:0,tpm:0,tpa:0,ftm:0,fta:0,to:0});
-let S=null,UI={view:'home',tt:0,give:{},get:{},msg:''};
+let S=null,UI={live:null,view:'menu',tt:0,give:{},get:{},msg:''};
 const P=id=>S.P[id],T=id=>S.teams[id],tn=id=>TEAMS[id][0]+' '+TEAMS[id][1],ab=id=>TEAMS[id][2];
 function ovr(p){let s=0;for(const k of KEYS)s+=p.r[k]*WT[p.pos][k];return Math.round(s)}
 function mkPlayer(pos,q,age){const r={};for(const k of KEYS)r[k]=Math.round(clamp(q+PROF[pos][k]+gauss()*6,20,99));
@@ -62,10 +63,10 @@ function genSchedule(){let arr=shuffle([...Array(30).keys()]);const rounds=[];
   const flip=d=>d.map(([a,b])=>[b,a]);const days=[...rounds,...rounds.map(flip),...shuffle(rounds.slice()).slice(0,24).map((d,i)=>i%2?flip(d):d)];S.sched=shuffle(days)}
 // ---------- match engine ----------
 function wp(list,f){let tot=0;const w=list.map(x=>{const v=f(x);tot+=v;return v});let r=Math.random()*tot;for(let i=0;i<list.length;i++){r-=w[i];if(r<=0)return list[i]}return list[list.length-1]}
-function projMin(t){const act=t.order.map(P).filter(p=>!p.inj).slice(0,11),m={};const tot=MINS.slice(0,act.length).reduce((a,b)=>a+b,0)||1;act.forEach((p,i)=>m[p.id]=Math.round(MINS[i]*240/tot));return m}
-function prep(t){const m=projMin(t),pl=t.order.map(P).filter(p=>m[p.id]).map(p=>({p,min:m[p.id],b:{...blank(),id:p.id,min:m[p.id]},use:m[p.id]*Math.pow((p.r.ins*.4+p.r.mid*.25+p.r.tp*.35)/60,1.7)}));
+function projMin(t){const MINS=ROT[t.rot||0],act=t.order.map(P).filter(p=>!p.inj).slice(0,11),m={};const tot=MINS.slice(0,act.length).reduce((a,b)=>a+b,0)||1;act.forEach((p,i)=>m[p.id]=Math.round(MINS[i]*240/tot));return m}
+function prep(t,box){const m=projMin(t),pl=t.order.map(P).filter(p=>m[p.id]).map(p=>({p,min:m[p.id],b:box[p.id]||(box[p.id]={...blank(),id:p.id}),use:m[p.id]*Math.pow((p.r.ins*.4+p.r.mid*.25+p.r.tp*.35)/60,1.7)}));
   const av=(f,wf=()=>1)=>{let s=0,w=0;pl.forEach(x=>{const k=x.min*wf(x.p);s+=f(x.p)*k;w+=k});return s/w};const big=p=>p.pos=='C'||p.pos=='PF';
-  return{t,tac:t.tac,pl,def:av(p=>p.r.def),reb:av(p=>p.r.reb),pas:av(p=>p.r.pas),defI:av(p=>p.r.def*.8+p.r.ath*.2,p=>big(p)?1.6:.6),defP:av(p=>p.r.def*.7+p.r.ath*.3,p=>big(p)?.6:1.4)}}
+  return{t,tac:t.tac,fat:t.rot==1?.006:0,pl,def:av(p=>p.r.def),reb:av(p=>p.r.reb),pas:av(p=>p.r.pas),defI:av(p=>p.r.def*.8+p.r.ath*.2,p=>big(p)?1.6:.6),defP:av(p=>p.r.def*.7+p.r.ath*.3,p=>big(p)?.6:1.4)}}
 function poss(O,X,home){let pts=0;
   const toP=.125+(X.tac.def==2?.025:0)+(O.tac.pace==2?.008:0)-(O.pas-60)*.0007+(X.def-60)*.0006;
   if(Math.random()<toP){wp(O.pl,x=>x.use).b.to++;if(Math.random()<.55)wp(X.pl,x=>x.min*x.p.r.def*x.p.r.ath).b.stl++;return 0}
@@ -73,7 +74,7 @@ function poss(O,X,home){let pts=0;
     const p3=clamp(.1+(r.tp-45)*.011,.02,.6)*[.72,1,1.3][O.tac.focus];
     const type=Math.random()<p3?2:Math.random()<r.ins/(r.ins+r.mid*.7)*[1.15,1,.95][O.tac.focus]?0:1;
     let pct=type==2?.33+(r.tp-60)*.0035-(X.defP-60)*.0025+(zone?.015:0):type==1?.405+(r.mid-60)*.0035-(X.def-60)*.0025:.575+(r.ins-60)*.004-(X.defI-60)*.003-(zone?.02:0);
-    pct+=(press?.012:0)+(home?.008:0);
+    pct+=(press?.012:0)+(home?.008:0)-O.fat;
     if(Math.random()<[.18,.06,.03][type]+(press?.015:0)){const fp=clamp(.62+((r.mid+r.tp)/2-50)*.005,.4,.93);let lastIn=0;
       for(let i=0;i<(type==2?3:2);i++){s.b.fta++;lastIn=Math.random()<fp;if(lastIn){s.b.ftm++;s.b.pts++;pts++}}
       if(!lastIn)wp(X.pl,x=>x.min*x.p.r.reb**1.5).b.reb++;return pts}
@@ -84,14 +85,19 @@ function poss(O,X,home){let pts=0;
     if(Math.random()<clamp(.26+(O.reb-X.reb)*.005,.12,.4)){wp(O.pl,x=>x.min*x.p.r.reb**1.5).b.reb++;continue}
     wp(X.pl,x=>x.min*x.p.r.reb**1.5).b.reb++;return pts}
   return pts}
-function simGame(h,a,po){const H=prep(T(h)),A=prep(T(a)),q=[[],[]];let hs=0,as=0;
-  const n=Math.round((101+(H.tac.pace-1)*3+(A.tac.pace-1)*3+R(-3,3))/4);
-  const period=len=>{let x=0,y=0;for(let i=0;i<len;i++){x+=poss(H,A,true);y+=poss(A,H,false)}q[0].push(x);q[1].push(y);hs+=x;as+=y};
-  for(let i=0;i<4;i++)period(n);while(hs==as)period(Math.round(n*5/12));
-  const key=po?'ps':'st';[H,A].forEach(X=>X.pl.forEach(x=>{const st=x.p[key];st.g++;for(const k in st)if(k!='g')st[k]+=x.b[k];if(Math.random()<.004)x.p.inj=RI(1,14)}));
+function startGame(h,a,po){return{h,a,po,q:[[],[]],hs:0,as:0,per:0,box:[{},{}],rnd:R(-3,3),done:false}}
+function playPeriod(G){const ot=G.per>=4,H=prep(T(G.h),G.box[0]),A=prep(T(G.a),G.box[1]);const n=Math.round((101+(H.tac.pace-1)*3+(A.tac.pace-1)*3+G.rnd)/4),len=ot?Math.round(n*5/12):n;
+  [H,A].forEach(X=>X.pl.forEach(x=>x.b.min+=x.min*(ot?5/48:.25)));let x=0,y=0;for(let i=0;i<len;i++){x+=poss(H,A,true);y+=poss(A,H,false)}
+  G.q[0].push(x);G.q[1].push(y);G.hs+=x;G.as+=y;G.per++;G.done=G.per>=4&&G.hs!=G.as}
+function finishGame(G){const{h,a,po,hs,as}=G,key=po?'ps':'st';const rows=G.box.map(o=>Object.values(o).sort((x,y)=>y.min-x.min));
+  rows.forEach((r,i)=>{const risk=T(i?a:h).rot==1?.008:.004;r.forEach(b=>{const p=P(b.id);b.min=Math.round(b.min);const st=p[key];st.g++;for(const k in st)if(k!='g')st[k]+=b[k];if(Math.random()<risk)p.inj=RI(1,14)})});
   if(!po){const th=T(h),ta=T(a);th.pf+=hs;th.pa+=as;ta.pf+=as;ta.pa+=hs;hs>as?(th.w++,ta.l++):(ta.w++,th.l++)}
-  const g={h,a,hs,as,q,win:hs>as?h:a,lose:hs>as?a:h};
-  if(h==S.user||a==S.user)S.last={...g,box:[H.pl.map(x=>x.b),A.pl.map(x=>x.b)],po};return g}
+  const g={h,a,hs,as,q:G.q,win:hs>as?h:a,lose:hs>as?a:h};if(h==S.user||a==S.user)S.last={...g,box:rows,po};return g}
+function simGame(h,a,po){if(PRE&&PRE.h==h&&PRE.a==a){const g=PRE;PRE=null;return g}const G=startGame(h,a,po);while(!G.done)playPeriod(G);return finishGame(G)}
+function nextPOGame(){const po=S.po,u=S.user;if(!po||po.champ!=null)return null;const s=po.seeds[TEAMS[u][3]];
+  if(po.stage=='pi1')return[s[6],s[7]].includes(u)?[s[6],s[7]]:[s[8],s[9]].includes(u)?[s[8],s[9]]:null;
+  if(po.stage=='pi2'){const[g1,g2]=po.pi[TEAMS[u][3]];return u==g1.lose||u==g2.win?[g1.lose,g2.win]:null}
+  const x=po.rounds[po.rounds.length-1].find(x=>(x.a==u||x.b==u)&&x.wa<4&&x.wb<4);if(!x)return null;return[0,1,4,6].includes(x.wa+x.wb)?[x.a,x.b]:[x.b,x.a]}
 function heal(){for(const id in S.P)if(S.P[id].inj>0)S.P[id].inj--;S.teams.forEach(t=>{if(t.id!=S.user)sortRoster(t)})}
 function playDay(){if(S.phase!='regular')return;S.sched[S.day].forEach(([h,a])=>{const g=simGame(h,a,false);if(h==S.user||a==S.user)S.res[S.day]=[g.hs,g.as]});S.day++;heal();if(S.day>=82)startPlayoffs()}
 // ---------- standings & playoffs ----------
@@ -151,14 +157,14 @@ function bracketHTML(){const po=S.po;if(!po)return'';let h='<div class="card"><h
   ['First round','Conference semi-finals','Conference finals','Finals'].forEach((n,i)=>{if(po.rounds[i])h+=`<h3>${n}</h3>`+po.rounds[i].map(s=>`<div>${me(s.a)} <b>${s.wa}–${s.wb}</b> ${me(s.b)}</div>`).join('')});
   if(po.champ!=null)h+=`<h3>🏆 Champions: ${tn(po.champ)}</h3>`;return h+'</div>'}
 const V={};
-V.pick=()=>`<h2>🏀 Hoops Manager</h2><div class="card">Pick a club to coach. You set the depth chart and tactics, make trades, sign free agents and draft rookies. 82 games, then the playoffs.<div class="mut">Clubs and players are fictional. Strength = average rating of the best 8 players.</div></div><div class="card">`+
+V.pick=()=>`<h2>🏀 Hoops Manager <button class="btn s" data-a="nav" data-v="menu">☰ Menu</button></h2><div class="card">Pick a club to coach. You set the depth chart and tactics, make trades, sign free agents and draft rookies. 82 games, then the playoffs.<div class="mut">Clubs and players are fictional. Strength = average rating of the best 8 players.</div></div><div class="card">`+
   [0,1].map(c=>`<h3>${c?'Western':'Eastern'} Conference</h3>`+S.teams.filter(t=>TEAMS[t.id][3]==c).map(t=>`<div class="team"><span>${tn(t.id)} <span class="mut">strength ${f1(strength(t))}</span></span><button class="btn s" data-a="choose" data-v="${t.id}">Coach</button></div>`).join('')).join('')+'</div>';
-V.home=()=>{const t=T(S.user);let h=`<h2>${tn(S.user)} <span class="mut">${S.season-1}–${String(S.season).slice(2)} · v${VERSION}</span></h2>`;
+V.home=()=>{const t=T(S.user);let h=`<h2>${tn(S.user)} <span class="mut">${S.season-1}–${String(S.season).slice(2)} · v${VERSION}</span></h2>`;if(UI.live)return h+liveHTML();
   if(S.phase=='regular'){const n=nextGame();h+=`<div class="card"><div class="row"><div><div class="mut">Record</div><div class="big">${rec(t)}</div></div><div><div class="mut">Conference seed</div><div class="big">#${seedOf(S.user)}</div></div><div><div class="mut">Game</div><div class="big">${S.day+1}/82</div></div></div>
     <div class="mut">Owner expects: ${S.exp}</div><p>Next: <b>${n.home?'vs':'@'} ${tn(n.opp)}</b> <span class="mut">(${rec(T(n.opp))})</span></p>
-    <button class="btn" data-a="play" data-v="1">Play game</button><button class="btn g" data-a="play" data-v="7">Sim 7 games</button><button class="btn g" data-a="play" data-v="82">Sim rest of season</button></div>`+boxHTML()}
+    <button class="btn" data-a="live">Coach this game live</button><button class="btn g" data-a="play" data-v="1">Quick sim</button><button class="btn g" data-a="play" data-v="7">Sim 7 games</button><button class="btn g" data-a="play" data-v="82">Sim rest of season</button></div>`+boxHTML()}
   else if(S.phase=='playoffs'){h+=`<div class="card"><div class="mut">Regular season finished ${rec(t)} (seed #${seedOf(S.user)})</div><p>${userAlive()?'Your season is still alive.':'Your season is over — sim on to see who wins it all.'}</p>
-    <button class="btn" data-a="po" data-v="1">Play next playoff day</button><button class="btn g" data-a="po" data-v="200">Sim to the end</button></div>`+bracketHTML()+boxHTML()}
+    ${nextPOGame()?'<button class="btn" data-a="live">Coach next game live</button>':''}<button class="btn g" data-a="po" data-v="1">Quick sim next day</button><button class="btn g" data-a="po" data-v="200">Sim to the end</button></div>`+bracketHTML()+boxHTML()}
   else if(S.phase=='offseason'){const res=userResult();h+=`<div class="card"><div class="big">${res}</div><p>Final record ${rec(t)}. Champions: <b>${tn(S.po.champ)}</b>.</p><p>Owner wanted: ${S.exp} — <b class="${expMet(res)?'w':'lo'}">${expMet(res)?'target met':'target missed'}</b></p><button class="btn" data-a="off">Go to the off-season & draft</button></div>`+bracketHTML()}
   else if(S.phase=='draft'){const d=S.draft;h+=`<div class="card"><h3 style="margin-top:0">Rookie draft — pick #${d.pick+1}: you're on the clock</h3><button class="btn g" data-a="autodraft">Auto-draft the rest</button>
     <div class="sc"><table><tr><th>Prospect</th><th>Pos</th><th>Age</th><th>OVR</th><th>POT</th><th></th></tr>`+d.pool.slice().sort((a,b)=>dval(P(b))-dval(P(a))).slice(0,25).map(i=>{const p=P(i);return`<tr><td>${p.name}</td><td>${p.pos}</td><td>${p.age}</td><td>${p.ovr}</td><td>${p.pot}</td><td><button class="btn s" data-a="draft" data-v="${i}">Draft</button></td></tr>`}).join('')+
@@ -166,9 +172,19 @@ V.home=()=>{const t=T(S.user);let h=`<h2>${tn(S.user)} <span class="mut">${S.sea
   else if(S.phase=='pre'){const n=t.order.length;h+=`<div class="card"><p>Draft done. Players have aged and developed — check your roster, the free agents and the trade market.</p><p>Roster: <b>${n}</b> players ${n>15?'<span class="lo">— release '+(n-15)+' to get down to 15</span>':n<10?'<span class="lo">— sign players to reach at least 10</span>':''}</p>
     <div class="mut">${S.draft.log.filter(l=>l.includes(' '+ab(S.user)+' ')).join('<br>')}</div><button class="btn" data-a="season" ${n>15||n<10?'disabled':''}>Start the ${S.season}–${String(S.season+1).slice(2)} season</button></div>`}
   return h};
-V.roster=()=>{const t=T(S.user),m=projMin(t),opt=(k,arr)=>`<select data-c="tac" data-k="${k}">${arr.map((n,i)=>`<option value="${i}" ${t.tac[k]==i?'selected':''}>${n}</option>`).join('')}</select>`;
-  return`<h2>Roster & tactics</h2><div class="card"><div class="row"><label>Pace ${opt('pace',['Slow','Normal','Fast'])}</label><label>Offence ${opt('focus',['Attack inside','Balanced','Shoot threes'])}</label><label>Defence ${opt('def',['Man-to-man','Zone','Full-court press'])}</label></div>
-  <div class="mut">Zone protects the rim but gives up threes. The press forces turnovers but concedes fouls and easier shots. Fast pace means more possessions and a few more turnovers.</div></div>
+function tacHTML(){const t=T(S.user),opt=(k,arr,cur)=>`<select data-c="tac" data-k="${k}">${arr.map((n,i)=>`<option value="${i}" ${cur==i?'selected':''}>${n}</option>`).join('')}</select>`;
+  return`<div class="row"><label>Pace ${opt('pace',PACE,t.tac.pace)}</label><label>Offence ${opt('focus',FOC,t.tac.focus)}</label><label>Defence ${opt('def',DEFN,t.tac.def)}</label><label>Minutes ${opt('rot',ROTN,t.rot||0)}</label></div>`}
+function liveHTML(){const G=UI.live,u=S.user,me=G.h==u?0:1,opp=T(me?G.h:G.a),qs=i=>G.q[i].map(x=>`<td>${x}</td>`).join(''),us=me?G.as:G.hs,th=me?G.hs:G.as;
+  const nxt=G.per<4?'Q'+(G.per+1):'overtime',rows=o=>Object.values(o).sort((a,b)=>b.pts-a.pts);
+  const tb=(o,n)=>`<h3>${n}</h3><div class="sc"><table><tr><th>Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>3P</th><th>TO</th></tr>`+rows(o).map(b=>{const p=P(b.id);return`<tr><td>${p.name} <span class="mut">${p.pos}</span></td><td>${Math.round(b.min)}</td><td><b>${b.pts}</b></td><td>${b.reb}</td><td>${b.ast}</td><td>${b.fgm}-${b.fga}</td><td>${b.tpm}-${b.tpa}</td><td>${b.to}</td></tr>`}).join('')+'</table></div>';
+  return`<div class="card"><div class="mut">LIVE${G.po?' · playoffs':''} · ${G.per?'end of '+(G.per<=4?'Q'+G.per:'OT'):'tip-off'}</div><div class="big ${us>th?'w':us<th?'lo':''}">${ab(G.h)} ${G.hs} – ${G.as} ${ab(G.a)}</div>
+  ${G.per?`<div class="sc"><table><tr><th></th>${G.q[0].map((_,i)=>`<th>${i<4?'Q'+(i+1):'OT'}</th>`).join('')}</tr><tr><td>${ab(G.h)}</td>${qs(0)}</tr><tr><td>${ab(G.a)}</td>${qs(1)}</tr></table></div>`:''}
+  <h3>Your game plan for ${nxt}</h3>${tacHTML()}<div class="mut">To change who plays, reorder the depth chart in the Roster tab — it applies from the next period.</div>
+  <p class="mut">${tn(opp.id)} are playing: ${PACE[opp.tac.pace].toLowerCase()} pace · ${FOC[opp.tac.focus].toLowerCase()} · ${DEFN[opp.tac.def].toLowerCase()}</p>
+  <button class="btn" data-a="period">Play ${nxt}</button><button class="btn g" data-a="finish">Sim to the final whistle</button><button class="btn g" data-a="relive">↺ Restart game</button></div>`+(G.per?`<div class="card">${tb(G.box[me],tn(u))}${tb(G.box[1-me],tn(opp.id))}</div>`:'')}
+V.roster=()=>{const t=T(S.user),m=projMin(t);
+  return`<h2>Roster & tactics</h2><div class="card">${tacHTML()}
+  <div class="mut">Zone protects the rim but gives up threes. The press forces turnovers but concedes fouls and easier shots. Fast pace means more possessions and a few more turnovers. Riding the starters gives them more minutes but tires them (slightly worse shooting, double the injury risk).</div></div>
   <div class="card"><div class="row"><b>Depth chart</b><button class="btn s" data-a="auto">Sort by rating</button><span class="mut">Order sets minutes: top 5 start, 11 play. ${t.order.length}/15</span></div>
   <div class="sc"><table><tr><th>#</th><th class="l">Player</th><th>Pos</th><th>Age</th><th>OVR</th><th>POT</th><th>MIN</th><th>INS</th><th>MID</th><th>3PT</th><th>PAS</th><th>REB</th><th>DEF</th><th>ATH</th><th></th></tr>`+
   t.order.map((id,i)=>{const p=P(id);return`<tr class="${i==4?'cut':''}"><td>${i+1}</td><td class="l">${p.name}${p.inj?` <span class="inj">✚${p.inj}g</span>`:''}</td><td>${p.pos}</td><td>${p.age}</td><td><b>${p.ovr}</b></td><td>${p.pot}</td><td>${m[id]||0}</td>${KEYS.map(k=>`<td>${p.r[k]}</td>`).join('')}<td><button class="btn s" data-a="up" data-v="${i}">▲</button><button class="btn s" data-a="down" data-v="${i}">▼</button><button class="btn s" data-a="release" data-v="${id}">✕</button></td></tr>`}).join('')+'</table></div></div>'};
@@ -181,16 +197,23 @@ V.stats=()=>{const key=S.phase=='playoffs'||S.phase=='offseason'?'ps':'st',all=O
   const t=T(S.user);return`<h2>Stats</h2><div class="card"><h3 style="margin-top:0">${tn(S.user)} — ${key=='ps'?'playoffs':'regular season'} per game</h3><div class="sc"><table><tr><th>Player</th><th>G</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>FG%</th><th>3P%</th><th>FT%</th></tr>`+
   t.order.map(P).map(p=>{const s=p[key],g=s.g||1,pc=(a,b)=>b?f1(100*a/b):'–';return`<tr><td>${p.name}</td><td>${s.g}</td><td>${f1(s.min/g)}</td><td><b>${f1(s.pts/g)}</b></td><td>${f1(s.reb/g)}</td><td>${f1(s.ast/g)}</td><td>${f1(s.stl/g)}</td><td>${f1(s.blk/g)}</td><td>${pc(s.fgm,s.fga)}</td><td>${pc(s.tpm,s.tpa)}</td><td>${pc(s.ftm,s.fta)}</td></tr>`}).join('')+
   `</table></div></div><h3>League leaders (regular season)</h3>`+lead('Points per game',p=>p.st.pts/p.st.g)+lead('Rebounds per game',p=>p.st.reb/p.st.g)+lead('Assists per game',p=>p.st.ast/p.st.g)};
-V.market=()=>{if(S.phase=='playoffs'||S.phase=='offseason'||S.phase=='draft')return'<h2>Market</h2><div class="card">The market is closed until the draft is over.</div>';if(UI.tt==S.user)UI.tt=(S.user+1)%30;
+V.market=()=>{if(UI.live)return'<h2>Market</h2><div class="card">No deals during a game.</div>';if(S.phase=='playoffs'||S.phase=='offseason'||S.phase=='draft')return'<h2>Market</h2><div class="card">The market is closed until the draft is over.</div>';if(UI.tt==S.user)UI.tt=(S.user+1)%30;
   const row=(p,side)=>`<tr><td><label><input type="checkbox" data-c="tr" data-k="${side}" data-v="${p.id}" ${UI[side][p.id]?'checked':''}> ${p.name}</label></td><td>${p.pos}</td><td>${p.age}</td><td><b>${p.ovr}</b></td><td>${p.pot}</td></tr>`,hd='<tr><th>Player</th><th>Pos</th><th>Age</th><th>OVR</th><th>POT</th></tr>';
   return`<h2>Market</h2><div class="card"><h3 style="margin-top:0">Trade</h3>${UI.msg?`<p><b>${UI.msg}</b></p>`:''}<select data-c="tt">${S.teams.filter(t=>t.id!=S.user).map(t=>`<option value="${t.id}" ${t.id==UI.tt?'selected':''}>${tn(t.id)} (${rec(t)})</option>`).join('')}</select>
   <h3>You give</h3><div class="sc"><table>${hd}${T(S.user).order.map(i=>row(P(i),'give')).join('')}</table></div><h3>You get</h3><div class="sc"><table>${hd}${T(UI.tt).order.map(i=>row(P(i),'get')).join('')}</table></div><button class="btn" data-a="trade">Propose trade</button></div>
   <div class="card"><h3 style="margin-top:0">Free agents</h3><div class="sc"><table><tr><th>Player</th><th>Pos</th><th>Age</th><th>OVR</th><th>POT</th><th></th></tr>`+S.fa.map(P).sort((a,b)=>b.ovr-a.ovr).map(p=>`<tr><td>${p.name}</td><td>${p.pos}</td><td>${p.age}</td><td><b>${p.ovr}</b></td><td>${p.pot}</td><td><button class="btn s" data-a="sign" data-v="${p.id}">Sign</button></td></tr>`).join('')+'</table></div></div>'};
-V.history=()=>'<h2>History</h2><div class="card">'+(S.hist.length?S.hist.slice().reverse().map(h=>`<p><b>${h.s-1}–${String(h.s).slice(2)}</b>: ${h.w}–${h.l}, ${h.res}. <span class="${h.met?'w':'lo'}">${h.met?'Target met':'Target missed'}</span> <span class="mut">(${h.exp}). Champions: ${h.champ}</span></p>`).join(''):'No finished seasons yet.')+'<button class="btn g" data-a="reset">Start a new career</button></div>';
-const NAV=[['home','🏠','Home'],['roster','👥','Roster'],['table','🏆','Table'],['games','📅','Games'],['stats','📊','Stats'],['market','🔁','Market'],['history','📜','History']];
-function render(){const pk=S.phase=='pick';document.getElementById('app').innerHTML=pk?V.pick():V[UI.view]();document.getElementById('nav').innerHTML=pk?'':NAV.map(([v,i,n])=>`<button class="${UI.view==v?'on':''}" data-a="nav" data-v="${v}"><b>${i}</b>${n}</button>`).join('')}
+V.history=()=>'<h2>History <button class="btn s" data-a="nav" data-v="menu">☰ Menu</button></h2><div class="card">'+(S.hist.length?S.hist.slice().reverse().map(h=>`<p><b>${h.s-1}–${String(h.s).slice(2)}</b>: ${h.w}–${h.l}, ${h.res}. <span class="${h.met?'w':'lo'}">${h.met?'Target met':'Target missed'}</span> <span class="mut">(${h.exp}). Champions: ${h.champ}</span></p>`).join(''):'No finished seasons yet.')+'</div>';
+V.menu=()=>{const has=S.user>=0,t=has&&T(S.user);return`<div style="text-align:center;padding:26px 0 10px"><div style="font-size:54px">🏀</div><h2 style="font-size:26px">Hoops Manager</h2><div class="mut">v${VERSION}</div></div>
+  <div class="card" style="text-align:center">${has?`<p><b>${tn(S.user)}</b><br><span class="mut">${S.season-1}–${String(S.season).slice(2)} season · ${rec(t)} · ${S.hist.length} season${S.hist.length==1?'':'s'} completed</span></p><button class="btn" style="width:100%" data-a="nav" data-v="home">▶ Continue career</button>`:''}
+  <button class="btn ${has?'g':''}" style="width:100%" data-a="reset">${has?'↺ Restart — new career':'▶ New career'}</button>${has?'<button class="btn g" style="width:100%" data-a="nav" data-v="history">📜 Career history</button>':''}</div>
+  <div class="card"><h3 style="margin-top:0">How to play</h3><div class="mut">Pick one of 30 clubs. Set your depth chart and tactics in <b>Roster</b>. On <b>Home</b>, coach each game live quarter by quarter — changing your game plan between periods — or quick-sim. After 82 games come the play-in and playoffs, then the draft. Use <b>Market</b> for trades and free agents. Progress saves automatically.</div></div>`};
+const NAV=[['home','🏠','Home'],['roster','👥','Roster'],['table','🏆','Table'],['games','📅','Games'],['stats','📊','Stats'],['market','🔁','Market'],['menu','☰','Menu']];
+function render(){const mn=UI.view=='menu',pk=S.phase=='pick'&&!mn;document.getElementById('app').innerHTML=pk?V.pick():V[UI.view]();document.getElementById('nav').innerHTML=pk||mn?'':NAV.map(([v,i,n])=>`<button class="${UI.view==v?'on':''}" data-a="nav" data-v="${v}"><b>${i}</b>${n}</button>`).join('')}
+function endLive(){PRE=finishGame(UI.live);UI.live=null;S.phase=='regular'?playDay():playPO()}
 const A={nav(v){UI.view=v;UI.msg='';window.scrollTo(0,0)},choose(v){S.user=+v;startSeason(true);UI.view='home'},
-  play(v){for(let i=0;i<+v&&S.phase=='regular';i++)playDay()},po(v){for(let i=0;i<+v&&S.phase=='playoffs';i++)playPO()},
+  live(){let m;if(S.phase=='regular'){const n=nextGame();m=n.home?[S.user,n.opp]:[n.opp,S.user]}else m=nextPOGame();if(m)UI.live=startGame(m[0],m[1],S.phase!='regular')},
+  period(){const G=UI.live;playPeriod(G);if(G.done)endLive()},finish(){const G=UI.live;while(!G.done)playPeriod(G);endLive()},
+  play(v){if(UI.live)return;for(let i=0;i<+v&&S.phase=='regular';i++)playDay()},po(v){if(UI.live)return;for(let i=0;i<+v&&S.phase=='playoffs';i++)playPO()},
   off(){offseason()},draft(v){draftPick(+v);runDraft()},autodraft(){runDraft(true)},season(){startSeason(false)},auto(){sortRoster(T(S.user))},
   up(v){const o=T(S.user).order,i=+v;if(i>0)[o[i-1],o[i]]=[o[i],o[i-1]]},down(v){const o=T(S.user).order,i=+v;if(i<o.length-1)[o[i+1],o[i]]=[o[i],o[i+1]]},
   release(v){if(T(S.user).order.length>8&&confirm('Release '+P(+v).name+'?'))release(+v)},
@@ -200,8 +223,9 @@ const A={nav(v){UI.view=v;UI.msg='';window.scrollTo(0,0)},choose(v){S.user=+v;st
     if(mine>15||theirs>15||mine<10||theirs<10){UI.msg='Rosters must stay between 10 and 15 players.';return}
     const vg=g.reduce((s,i)=>s+val(P(i)),0),vr=r.reduce((s,i)=>s+val(P(i)),0);if(vg<vr*1.05){UI.msg=`${tn(UI.tt)} say no — they want more in return.`;return}
     g.forEach(i=>{me.order=me.order.filter(x=>x!=i);th.order.push(i);P(i).tid=th.id});r.forEach(i=>{th.order=th.order.filter(x=>x!=i);me.order.push(i);P(i).tid=me.id});sortRoster(th);aiTactics(th);UI.give={};UI.get={};UI.msg='Trade accepted! New players are at the bottom of your depth chart.'},
-  reset(){if(confirm('Delete this career and start again?')){newLeague();UI.view='home'}}};
+  reset(){if(S.user<0||confirm('Delete this career and start a new one?')){newLeague();UI.live=null;UI.view='home'}},
+  relive(){const G=UI.live;if(confirm('Restart this game from tip-off?'))UI.live=startGame(G.h,G.a,G.po)}};
 document.body.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;A[b.dataset.a](b.dataset.v);save();render()});
-document.body.addEventListener('change',e=>{const el=e.target,c=el.dataset.c;if(!c)return;if(c=='tac')T(S.user).tac[el.dataset.k]=+el.value;if(c=='tt'){UI.tt=+el.value;UI.give={};UI.get={};UI.msg=''}if(c=='tr'){UI[el.dataset.k][el.dataset.v]=el.checked;return}save();render()});
+document.body.addEventListener('change',e=>{const el=e.target,c=el.dataset.c;if(!c)return;if(c=='tac'){if(el.dataset.k=='rot')T(S.user).rot=+el.value;else T(S.user).tac[el.dataset.k]=+el.value}if(c=='tt'){UI.tt=+el.value;UI.give={};UI.get={};UI.msg=''}if(c=='tr'){UI[el.dataset.k][el.dataset.v]=el.checked;return}save();render()});
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S||S.v!=1)newLeague();render();
 </script></body></html>
