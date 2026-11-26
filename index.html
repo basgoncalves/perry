@@ -18,7 +18,7 @@
   <div class="core" id="core" title="Talk to Perry"><img src="perry-head.png" alt="Perry"></div>
   <div>
     <h1>PERRY</h1>
-    <button id="ver" class="ver" title="Click to check for updates">v80 · 22 Nov 2026</button>
+    <button id="ver" class="ver" title="Click to check for updates">v90 · 26 Nov 2026</button>
     <p class="sub" id="status">Online. All systems nominal.</p>
   </div>
   <a class="dl" id="dl" href="https://github.com/basgoncalves/perry/releases/latest/download/PerrySetup.exe" title="Get Perry for Windows"><span class="ico">⬇</span><span><span id="dl-l">Download for Windows</span><small id="dl-s">desktop assistant</small></span></a>
@@ -361,6 +361,11 @@
     <script>document.querySelectorAll('.game-pick').forEach(b=>b.onclick=()=>{document.getElementById('game-frame').src=b.dataset.src})</script>
   </section>
 
+  <!-- QUANTUM -->
+  <section id="tab-quantum" class="tab">
+    <iframe data-src="quantum.html?v=1.0.0" title="Perry Quantum" style="width:100%;height:calc(100vh - 150px);border:0;border-radius:12px;background:#0b1220"></iframe>
+  </section>
+
   <!-- SETTINGS -->
   <section id="tab-set" class="tab cols">
     <div class="card">
@@ -390,6 +395,7 @@
   <button data-tab="biz">✚<span>Biz</span></button>
   <button data-tab="office">⌂<span>Office</span></button>
   <button data-tab="games">♣<span>Games</span></button>
+  <button data-tab="quantum">⚛<span>Quantum</span></button>
   <button data-tab="set">⚙<span>Settings</span></button>
 </nav>
 

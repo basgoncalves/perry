@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Perry Quantum</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;font-family:system-ui,sans-serif;background:#0b1220;color:#dbe7ff;font-size:14px}
+#app{padding:10px;max-width:820px;margin:0 auto}
+h2{margin:4px 0 8px;font-size:18px}h3{margin:0 0 6px;font-size:14px;color:#5fd4ff}
+.card{background:#111c30;border:1px solid #1f3152;border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.mut{color:#8aa0c6;font-size:12px}.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.b{background:#1b2c4a;border:1px solid #2c4470;color:#dbe7ff;border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600}
+.b.on{background:#5fd4ff;color:#06203a;border-color:#5fd4ff}.b.go{background:#2e9e6b;border-color:#2e9e6b}
+select{background:#1b2c4a;color:#fff;border:1px solid #2c4470;border-radius:8px;padding:7px;font-size:13px;max-width:100%}
+.sc{overflow-x:auto;padding-bottom:4px}
+.grid{display:grid;gap:0;width:max-content}
+.ql{height:46px;display:flex;align-items:center;padding-right:8px;font-family:monospace;color:#5fd4ff;position:sticky;left:0;background:#111c30;z-index:2}
+.cell{width:46px;height:46px;position:relative;display:flex;align-items:center;justify-content:center}
+.cell::before{content:'';position:absolute;left:0;right:0;top:50%;height:2px;background:#2c4470}
+.cell.pend{background:#5fd4ff22}
+.g{position:relative;z-index:1;width:34px;height:34px;border-radius:7px;background:#5fd4ff;color:#06203a;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;line-height:1;text-align:center}
+.g.rot{background:#c792ff}.g.ph{background:#ffd166}
+.dot{position:relative;z-index:1;width:14px;height:14px;border-radius:50%;background:#ff7b9c}
+.tg{position:relative;z-index:1;width:28px;height:28px;border-radius:50%;border:3px solid #ff7b9c;color:#ff7b9c;font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;background:#111c30;line-height:1}
+.sw{position:relative;z-index:1;color:#ff7b9c;font-size:22px;font-weight:800}
+.vl{position:absolute;left:50%;width:2px;margin-left:-1px;background:#ff7b9c}.vl.f{top:0;bottom:0}.vl.t{top:0;height:50%}.vl.bt{bottom:0;height:50%}
+.bar{display:grid;grid-template-columns:64px 1fr 110px;gap:8px;align-items:center;margin:3px 0;font-family:monospace;font-size:12px}
+.bar i{display:block;height:14px;border-radius:4px;min-width:1px}
+.track{background:#1b2c4a;border-radius:4px;overflow:hidden}
+.qb{display:inline-block;text-align:center;margin-right:10px;font-size:11px}
+</style></head><body><div id="app">
+<h2>⚛ Perry Quantum <span class="mut" id="ver"></span></h2>
+<div class="card"><div class="row"><select id="preset"></select><label>Qubits <select id="nq"></select></label><button class="b" id="clear">Clear</button></div><div class="mut" id="desc" style="margin-top:6px"></div></div>
+<div class="card"><h3>Gates</h3><div class="row" id="pal"></div>
+<div class="row" style="margin-top:6px"><label class="mut">Rotation angle θ = <b id="thv"></b> <input id="th" type="range" min="1" max="16" value="4" style="width:140px;vertical-align:middle"></label></div>
+<div class="mut" id="hint" style="margin-top:6px"></div></div>
+<div class="card"><h3>Circuit <span class="mut">(time runs left → right; every qubit starts at |0⟩ and is measured at the end)</span></h3><div class="sc"><div class="grid" id="grid"></div></div></div>
+<div class="card"><h3>Qubits</h3><div id="bloch"></div><div class="mut">Each disc shows a qubit's state arrow: up = |0⟩, down = |1⟩, sideways = superposition. A short arrow means the qubit is entangled with others.</div></div>
+<div class="card"><h3>State vector — exact probabilities</h3><div id="probs"></div><div class="mut">Bar colour shows the phase of the amplitude.</div></div>
+<div class="card"><h3>Run it</h3><div class="row"><button class="b go" id="run">▶ Run 1024 shots</button><button class="b" id="one">Measure once</button></div><div id="shots" style="margin-top:8px"></div>
+<div class="mut">A real quantum computer only ever gives you measurement results like these, never the state vector above.</div></div>
+</div>
+<script>
+const VERSION='1.0.0';document.getElementById('ver').textContent='v'+VERSION+' · simulator, up to 6 qubits';
+const s2=Math.SQRT1_2,PI=Math.PI;
+// 2x2 complex matrices as [ar,ai,br,bi,cr,ci,dr,di]
+const M={H:[s2,0,s2,0,s2,0,-s2,0],X:[0,0,1,0,1,0,0,0],Y:[0,0,0,-1,0,1,0,0],Z:[1,0,0,0,0,0,-1,0],S:[1,0,0,0,0,0,0,1],T:[1,0,0,0,0,0,s2,s2],
+  RX:t=>[Math.cos(t/2),0,0,-Math.sin(t/2),0,-Math.sin(t/2),Math.cos(t/2),0],RY:t=>[Math.cos(t/2),0,-Math.sin(t/2),0,Math.sin(t/2),0,Math.cos(t/2),0],RZ:t=>[Math.cos(t/2),-Math.sin(t/2),0,0,0,0,Math.cos(t/2),Math.sin(t/2)]};
+const TOOLS=[['H','H','Hadamard: puts a qubit into an equal superposition'],['X','X','NOT: flips |0⟩ ↔ |1⟩'],['Y','Y','Pauli-Y'],['Z','Z','Phase flip: |1⟩ → −|1⟩'],['S','S','Quarter-turn phase (90°)'],['T','T','Eighth-turn phase (45°)'],
+  ['RX','Rx','Rotate about X by θ'],['RY','Ry','Rotate about Y by θ'],['RZ','Rz','Rotate about Z by θ'],['CX','CNOT','Controlled-NOT: tap the control qubit, then the target in the same column'],['CZ','CZ','Controlled-Z: tap one qubit, then the other in the same column'],['SW','SWAP','Swap two qubits: tap one, then the other in the same column'],['DEL','✕ Erase','Tap a gate to remove it']];
+const PRESETS=[['Empty circuit','Build your own: pick a gate, then tap a spot on a qubit line.',2,[]],
+ ['Superposition (quantum coin)','One Hadamard gate makes a perfect 50/50 coin — a true random bit.',1,[[{g:'H',q:0}]]],
+ ['Bell pair (entanglement)','H then CNOT entangles two qubits: you only ever measure 00 or 11, never 01 or 10.',2,[[{g:'H',q:0}],[{g:'CX',c:0,t:1}]]],
+ ['GHZ state (3 entangled qubits)','All three qubits agree: 000 or 111, each half the time.',3,[[{g:'H',q:0}],[{g:'CX',c:0,t:1}],[{g:'CX',c:1,t:2}]]],
+ ['Interference (H · Z · H)','Two Hadamards cancel out, but a phase flip between them turns the result into a certain |1⟩. Remove the Z and watch it go back to |0⟩.',1,[[{g:'H',q:0}],[{g:'Z',q:0}],[{g:'H',q:0}]]],
+ ["Grover's search (2 qubits)","Finds the marked item |11⟩ among 4 in a single step — a classical search needs 2–3 tries on average.",2,[[{g:'H',q:0},{g:'H',q:1}],[{g:'CZ',c:0,t:1}],[{g:'H',q:0},{g:'H',q:1}],[{g:'X',q:0},{g:'X',q:1}],[{g:'CZ',c:0,t:1}],[{g:'X',q:0},{g:'X',q:1}],[{g:'H',q:0},{g:'H',q:1}]]],
+ ['Deutsch–Jozsa','One query tells whether a hidden function is constant or balanced: q0 reads 1 here because the oracle (the CNOT) is balanced. Delete the CNOT and q0 reads 0.',2,[[{g:'X',q:1}],[{g:'H',q:0},{g:'H',q:1}],[{g:'CX',c:0,t:1}],[{g:'H',q:0}]]],
+ ['Random number (0–7)','Three coins at once: a uniformly random 3-bit number.',3,[[{g:'H',q:0},{g:'H',q:1},{g:'H',q:2}]]]];
+let n=2,circ=[],tool='H',pend=null,theta=PI/2;
+const $=id=>document.getElementById(id);
+const qs=o=>o.q!=null?[o.q]:[o.c,o.t];
+function simulate(){const N=1<<n,re=new Float64Array(N),im=new Float64Array(N);re[0]=1;
+  const bit=q=>1<<(n-1-q);
+  const ap=(m,q,c)=>{const mk=bit(q),ck=c==null?0:bit(c);for(let i=0;i<N;i++){if(i&mk||(ck&&!(i&ck)))continue;const j=i|mk,xr=re[i],xi=im[i],yr=re[j],yi=im[j];
+    re[i]=m[0]*xr-m[1]*xi+m[2]*yr-m[3]*yi;im[i]=m[0]*xi+m[1]*xr+m[2]*yi+m[3]*yr;re[j]=m[4]*xr-m[5]*xi+m[6]*yr-m[7]*yi;im[j]=m[4]*xi+m[5]*xr+m[6]*yi+m[7]*yr}};
+  for(const col of circ)for(const o of col){if(o.g=='CX')ap(M.X,o.t,o.c);else if(o.g=='CZ')ap(M.Z,o.t,o.c);
+    else if(o.g=='SW'){const a=bit(o.c),b=bit(o.t);for(let i=0;i<N;i++)if(i&a&&!(i&b)){const j=i^a^b;[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]]}}
+    else ap(o.g[0]=='R'?M[o.g](o.th):M[o.g],o.q)}
+  return{re,im}}
+const ket=i=>'|'+i.toString(2).padStart(n,'0')+'⟩';
+function place(q,c){while(circ.length<=c)circ.push([]);const col=circ[c],free=list=>{circ[c]=col.filter(o=>!qs(o).some(x=>list.includes(x)));return circ[c]};
+  if(tool=='DEL'){free([q]);pend=null}
+  else if(['CX','CZ','SW'].includes(tool)){if(pend&&pend.c==c&&pend.q!=q){const lo=Math.min(pend.q,q),hi=Math.max(pend.q,q),span=[];for(let i=lo;i<=hi;i++)span.push(i);free(span).push({g:tool,c:pend.q,t:q});pend=null}else pend={q,c}}
+  else{const o={g:tool,q};if(tool[0]=='R')o.th=theta;free([q]).push(o);pend=null}
+  while(circ.length&&!circ[circ.length-1].length)circ.pop();save();draw()}
+function thLabel(t){const k=Math.round(t/(PI/8));return k==8?'π':k==16?'2π':k%8==0?k/8+'π':k%4==0?(k/4==1?'':k/4)+'π/2':k%2==0?(k/2==1?'':k/2)+'π/4':(k==1?'':k)+'π/8'}
+function draw(){
+  $('pal').innerHTML=TOOLS.map(([k,l])=>`<button class="b ${tool==k?'on':''}" data-t="${k}">${l}</button>`).join('');
+  $('hint').textContent=pend?'Now tap the second qubit in the same column.':TOOLS.find(t=>t[0]==tool)[2];$('thv').textContent=thLabel(theta);
+  const cols=Math.max(8,circ.length+2),g=$('grid');g.style.gridTemplateColumns=`auto repeat(${cols},46px)`;let h='';
+  for(let q=0;q<n;q++){h+=`<div class="ql">q${q} |0⟩</div>`;
+    for(let c=0;c<cols;c++){let inner='';const col=circ[c]||[];
+      for(const o of col){if(o.q===q){const r=o.g[0]=='R';inner=`<div class="g ${r?'rot':'STZ'.includes(o.g)?'ph':''}">${r?'R'+o.g[1].toLowerCase()+'<br>'+thLabel(o.th):o.g}</div>`}
+        else if(o.q==null){const lo=Math.min(o.c,o.t),hi=Math.max(o.c,o.t);if(q<lo||q>hi)continue;inner+=`<div class="vl ${q==lo?'bt':q==hi?'t':'f'}"></div>`;
+          if(q==o.c)inner+=o.g=='SW'?'<div class="sw">✕</div>':'<div class="dot"></div>';if(q==o.t)inner+=o.g=='CX'?'<div class="tg">+</div>':o.g=='CZ'?'<div class="dot"></div>':'<div class="sw">✕</div>'}}
+      h+=`<div class="cell ${pend&&pend.q==q&&pend.c==c?'pend':''}" data-q="${q}" data-c="${c}">${inner}</div>`}}
+  g.innerHTML=h;
+  const{re,im}=simulate(),N=1<<n,P=[...re].map((r,i)=>r*r+im[i]*im[i]);
+  // per-qubit Bloch vectors
+  let bh='';for(let q=0;q<n;q++){const mk=1<<(n-1-q);let x=0,y=0,z=0;for(let i=0;i<N;i++){if(i&mk)continue;const j=i|mk;z+=P[i]-P[j];x+=2*(re[i]*re[j]+im[i]*im[j]);y+=2*(re[i]*im[j]-im[i]*re[j])}
+    const p1=(1-z)/2,ax=28+x*22,ay=28-z*22;bh+=`<div class="qb"><svg width="56" height="56"><circle cx="28" cy="28" r="23" fill="#0b1220" stroke="#2c4470" stroke-width="2"/><line x1="28" y1="5" x2="28" y2="51" stroke="#1f3152"/><line x1="5" y1="28" x2="51" y2="28" stroke="#1f3152"/><line x1="28" y1="28" x2="${ax}" y2="${ay}" stroke="#5fd4ff" stroke-width="3" stroke-linecap="round"/><circle cx="${ax}" cy="${ay}" r="4" fill="#5fd4ff"/></svg><br><b>q${q}</b><br>P(1) = ${(p1*100).toFixed(0)}%</div>`}
+  $('bloch').innerHTML=bh;
+  const show=P.map((p,i)=>i).filter(i=>N<=8||P[i]>.0005);
+  $('probs').innerHTML=show.map(i=>{const ph=Math.atan2(im[i],re[i]),hue=((ph*180/PI)+360)%360,a=`${re[i]>=0?' ':'−'}${Math.abs(re[i]).toFixed(3)} ${im[i]>=0?'+':'−'} ${Math.abs(im[i]).toFixed(3)}i`;
+    return`<div class="bar"><span>${ket(i)}</span><span class="track"><i style="width:${P[i]*100}%;background:hsl(${hue},80%,60%)"></i></span><span>${(P[i]*100).toFixed(1)}% <span class="mut">${a}</span></span></div>`}).join('')+(show.length<N?`<div class="mut">${N-show.length} states with zero probability hidden.</div>`:'');
+  window._P=P}
+function sample(P){let r=Math.random();for(let i=0;i<P.length;i++){r-=P[i];if(r<=0)return i}return P.length-1}
+function run(k){const P=window._P,cnt={};for(let i=0;i<k;i++){const s=sample(P);cnt[s]=(cnt[s]||0)+1}
+  if(k==1){const s=+Object.keys(cnt)[0];$('shots').innerHTML=`<div style="font:800 22px monospace">Result: ${ket(s)} <span class="mut">= ${s} in decimal</span></div>`;return}
+  $('shots').innerHTML=Object.keys(cnt).map(Number).sort((a,b)=>a-b).map(i=>`<div class="bar"><span>${ket(i)}</span><span class="track"><i style="width:${cnt[i]/k*100}%;background:#2e9e6b"></i></span><span>${cnt[i]} <span class="mut">(${(cnt[i]/k*100).toFixed(1)}%)</span></span></div>`).join('')}
+function save(){try{localStorage.setItem('perry-quantum',JSON.stringify({n,circ}))}catch(e){}}
+function load(i){const p=PRESETS[i];n=p[2];circ=JSON.parse(JSON.stringify(p[3]));pend=null;$('nq').value=n;$('desc').textContent=p[1];$('shots').innerHTML='';save();draw()}
+$('preset').innerHTML=PRESETS.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('');$('nq').innerHTML=[1,2,3,4,5,6].map(i=>`<option>${i}</option>`).join('');
+$('preset').onchange=e=>load(+e.target.value);
+$('nq').onchange=e=>{n=+e.target.value;circ=circ.map(col=>col.filter(o=>qs(o).every(q=>q<n)));pend=null;$('shots').innerHTML='';save();draw()};
+$('clear').onclick=()=>{circ=[];pend=null;$('shots').innerHTML='';save();draw()};
+$('pal').onclick=e=>{const b=e.target.closest('[data-t]');if(b){tool=b.dataset.t;pend=null;draw()}};
+$('grid').onclick=e=>{const c=e.target.closest('.cell');if(c){$('shots').innerHTML='';place(+c.dataset.q,+c.dataset.c)}};
+$('th').oninput=e=>{theta=e.target.value*PI/8;$('thv').textContent=thLabel(theta)};
+$('run').onclick=()=>run(1024);$('one').onclick=()=>run(1);
+let sv=null;try{sv=JSON.parse(localStorage.getItem('perry-quantum'))}catch(e){}
+if(sv&&sv.circ&&sv.circ.length){n=sv.n;circ=sv.circ;$('nq').value=n;$('desc').textContent=PRESETS[0][1];draw()}else{$('preset').value=2;load(2)}
+</script></body></html>
